@@ -1,0 +1,29 @@
+version: '3.3'
+
+services:
+  openpose:
+    env_file: .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        user_id: "${UID}"
+        group_id: "${GID}"
+    container_name: hearai_openpose
+    restart: always
+    ports:
+      - "${EXT_SSH}:22"
+      - "${EXT_JUPYTER}:8888"
+    volumes:
+      - "${EXT_DATA}:/data"
+      - "${EXT_CODE}:/code"
+    tty: true
+    stdin_open: true
+    #entrypoint: bash
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            device_ids: ["${EXT_GPUID}"]
+            capabilities: [gpu]
