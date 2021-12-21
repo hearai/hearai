@@ -1,5 +1,6 @@
-import timm
-import torch.nn as nn
+import torch 
+import torch.nn as nn 
+from torchvision import models 
 
 
 class CnnExtractor(nn.Module):
@@ -15,8 +16,8 @@ class CnnExtractor(nn.Module):
         """
         super().__init__()
         self.model = timm.create_model(model_path, pretrained=True, num_classes=representation_size)
-        # this is a dummy example but in practice this will be longer 
+        # this is a dummy example but in practice this will be longer
 
     def forward(self, input, **kwargs):
-        # this is a dummy example but in practice this will be longer 
+        # this is a dummy example but in practice this will be longer
         return self.model(input)
