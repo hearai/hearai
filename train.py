@@ -1,3 +1,4 @@
+import os
 import argparse
 import torch
 import yaml
@@ -63,7 +64,6 @@ def main(args):
 
     # prepare model
     model = GlossTranslationModel(lr=args.lr, feature_extractor_name="cnn_extractor")
-
 
     # create NeptuneLogger
     # TO - DO

@@ -4,6 +4,7 @@ from torchvision import models
 
 
 class CnnExtractor(nn.Module):
+
     """Basic timm model"""
 
     def __init__(self, representation_size=128, model_path='efficientnet_b1'):
