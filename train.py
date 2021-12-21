@@ -1,3 +1,4 @@
+import os
 import argparse
 import torch
 import yaml
@@ -57,7 +58,7 @@ def main(args):
                                 num_workers=args.workers, drop_last=False)
 
     # prepare model
-    model = GlossTranslationModel(lr=args.lr
+    model = GlossTranslationModel(lr=args.lr,
                                   feature_extractor_path="cnn_extractor")
 
     
