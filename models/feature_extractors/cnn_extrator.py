@@ -1,21 +1,43 @@
-import timm
+#import timm
+import torch
 import torch.nn as nn
+import numpy as np
+from torch.autograd import Variable
 
-class Model(nn.Module):
-    """Basic timm model"""
+"""
+in this version of scipt we:
+- create tensor with random input
+- run simple 2-layer linear network (which is not a target architecture, WiP)
+- return a tensor of given size with random output, so it can be passed to the next step
+"""
 
-    def __init__(self,representation_size=128,model_path='efficientnet_b0'):
+# TODO rewrite extractor definition to use a sequential and extract desired layer
+# TODO when having target architecture, refactor all dependencies in other modules so whole pipeline can be run
+
+class TwoLayerExctractor(torch.nn.Module):
+    def __init__(self,input_dimension, hidden_dimension, output_dimension):
         """
-        Dummy example of __init__ function of basic timm model. Simply loads a timm model and does nothing else.
+        instantiate two nn.Linear modules
+        """
+        super(TwoLayerExctractor, self).__init__()
+        self.linear1 = torch.nn.Linear(input_dimension, hidden_dimension)
+        self.linear2 = torch.nn.Linear(hidden_dimension, output_dimension)
 
-        Args:
-            representation_size (int, optional): Output size. Defaults to 128.
-            model_path (str, optional): Path to timm pretrained model. List of models is defined in timm docs. Defaults to 'efficientnet_b0'.
-        """        
-        super().__init__()
-        self.model = timm.create_model(model_path, pretrained=True, num_classes=representation_size)
-        # this is a dummy example but in practice this will be longer 
-      
-    def forward(self, input, **kwargs):
-        # this is a dummy example but in practice this will be longer 
-        return  self.model(input)
+    def forward(self, x):
+        """
+        return tensor with prediction
+        """
+        h_relu = self.linear1(x).clamp(min=0)
+        y_pred = self.linear2(h_relu)
+        return y_pred
+
+
+batch_size, input_dimension, hidden_dimension, output_dimension = 128, 1000, 100, 10
+
+# Create random Tensors to hold inputs and outputs
+x = Variable(torch.randn(batch_size, input_dimension))
+y = Variable(torch.randn(batch_size, output_dimension))
+
+model = TwoLayerExctractor(input_dimension, hidden_dimension, output_dimension)
+
+y
