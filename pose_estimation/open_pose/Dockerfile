@@ -1,7 +1,21 @@
-FROM nvidia/cuda:11.4.0-cudnn8-devel-ubuntu18.04
+FROM nvidia/cuda:11.4.0-cudnn8-devel-ubuntu20.04
 
-RUN apt-get -y update --fix-missing && apt-get -y upgrade
+ENV TZ=Europe/Warsaw
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get -y update --fix-missing
+# && apt-get -y upgrade
+RUN apt-get install -y software-properties-common
+RUN apt-get -y update
 RUN apt-get install -y sudo wget bzip2 git vim cmake unzip mc nano
+
+#RUN apt-get -y update
+RUN apt-get install -y python3
+RUN apt-get install -y python3-dev
+RUN apt-get install -y python3-venv
+RUN apt-get install -y python3-distutils
+RUN apt-get install -y python3-wheel
+RUN apt-get install -y python3-pip
 
 # settings
 ARG user_name=ubuntu
