@@ -2,13 +2,22 @@ import torch
 import torch.nn as nn 
 from torchvision import models 
 
-original_model = models.resnet50(pretrained=True) 
 
-class FeatureExtractorModule(nn.Module): 
-    def __init__(self): 
-        super(FeatureExtractorModule, self).__init__() 
-        self.features = nn.Sequential(
-             *list(original_model.features.children())[:-1] ) 
-    def forward(self, x): 
-        x = self.features(x) 
-        return x 
+class CnnExtractor(nn.Module):
+    """Basic timm model"""
+
+    def __init__(self, representation_size=128, model_path='efficientnet_b1'):
+        """
+        Dummy example of __init__ function of basic timm model. Simply loads a timm model and does nothing else.
+
+        Args:
+            representation_size (int, optional): Output size. Defaults to 128.
+            model_path (str, optional): Path to timm pretrained model. List of models is defined in timm docs. Defaults to 'efficientnet_b0'.
+        """
+        super().__init__()
+        self.model = timm.create_model(model_path, pretrained=True, num_classes=representation_size)
+        # this is a dummy example but in practice this will be longer 
+
+    def forward(self, input, **kwargs):
+        # this is a dummy example but in practice this will be longer 
+        return self.model(input)

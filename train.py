@@ -3,9 +3,11 @@ import torch
 import yaml
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset, random_split
-from pytorch_lightning.loggers import NeptuneLogger
-from datasets.dataset import CustomDataset
 from models.model import GlossTranslationModel
+from torchvision.datasets.fakedata import FakeData
+import torchvision.transforms as T
+
+import os
 
 def get_args_parser():
     parser = argparse.ArgumentParser()
@@ -34,51 +36,47 @@ def main(args):
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
-    
+
     # set torch seed
     torch.manual_seed(args.seed)
 
-    # load data
-    dataset = CustomDataset(args.data)
+    # basic transforms
+    test_transforms = T.Compose([
+    T.PILToTensor(),
+    T.ConvertImageDtype(torch.float)])
     
-    
+    # load fake data
+    dataset = FakeData(image_size=(3,256,256), transform=test_transforms)
+
     # split into train/val
     train_val_ratio = 0.9
-    train_len = round(len(dataset)*train_val_ratio)
+    train_len = round(len(dataset) * train_val_ratio)
     val_len = len(dataset) - train_len
     train, val = random_split(dataset, [train_len, val_len])
-    
-    
+
     # prepare dataloaders
     dataloader_train = DataLoader(train, shuffle=True, batch_size=args.batch_size,
-                                        num_workers=args.workers, drop_last=False)
-        
+                                  num_workers=args.workers, drop_last=False)
+
     dataloader_val = DataLoader(val, shuffle=False, batch_size=args.batch_size,
                                 num_workers=args.workers, drop_last=False)
 
     # prepare model
-    model = GlossTranslationModel(lr=args.lr
-                                  feature_extractor_path="cnn_extractor")
+    model = GlossTranslationModel(lr=args.lr, feature_extractor_name="cnn_extractor")
 
-    
+
     # create NeptuneLogger
-    neptune_logger = NeptuneLogger(
-        api_key="ANONYMOUS",  # replace with your own
-        project="common/pytorch-lightning-integration",  # "<WORKSPACE/PROJECT>"
-        tags=["training", "test"],  # optional
-    )
+    # TO - DO
 
-    # pass it to the Trainer
-    trainer = pl.Trainer(max_epochs=args.epochs, 
-                    val_check_interval=0.3,
-                    gpus=[0], 
-                    progress_bar_refresh_rate=20,
-                    logger=neptune_logger,
-                    callbacks=[lr_monitor],
-                    accumulate_grad_batches=1)
+    trainer = pl.Trainer(max_epochs=args.epochs,
+                         val_check_interval=0.3,
+                         gpus=[0],
+                         progress_bar_refresh_rate=20,
+                         accumulate_grad_batches=1)
 
     # run training
     trainer.fit(model, dataloader_train, dataloader_val)
+
 
 if __name__ == '__main__':
     parser = get_args_parser()
