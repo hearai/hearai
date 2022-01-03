@@ -17,7 +17,7 @@ class GlossTranslationModel(pl.LightningModule):
                  num_classes=1000,
                  feature_extractor_name="cnn_extractor",
                  transformer_name="vanilla_transformer",
-                 model_save_dir="path/to/model/save/dir"):
+                 model_save_dir=""):
         super().__init__()
 
         # parameters
