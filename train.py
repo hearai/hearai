@@ -62,7 +62,7 @@ def main(args):
                                 num_workers=args.workers, drop_last=False)
 
     # prepare model
-    model = GlossTranslationModel(lr=args.lr, feature_extractor_name="cnn_extractor")
+    model = GlossTranslationModel(lr=args.lr, feature_extractor_name="resnet50_extractor")
 
 
     # create NeptuneLogger
