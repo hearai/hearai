@@ -1,6 +1,5 @@
-import torch 
-import torch.nn as nn 
-from torchvision import models 
+import timm
+import torch.nn as nn
 
 
 class CnnExtractor(nn.Module):
