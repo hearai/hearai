@@ -8,7 +8,8 @@ class ModelLoader:
     Only models specified in feature_extractors_ or transformers_ can be loaded.
     """
     feature_extractors_ = {
-        'cnn_extractor': feature_extractors.CnnExtractor
+        'cnn_extractor': feature_extractors.CnnExtractor,
+        'resnet50_extractor': feature_extractors.Resnet50Extractor
     }
 
     transformers_ = {
