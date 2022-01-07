@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from models.model_loader import ModelLoader
 
-class FeatureExtractor(nn.Module):
+class MultiFrameFeatureExtractor(nn.Module):
     """
     Class to extract features from every frame of the video.
 
