@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import MultiplicativeLR
 from models.model_loader import ModelLoader
+from models.feature_extractors.multi_frame_feature_extractor import MultiFrameFeatureExtractor
 
 
 class GlossTranslationModel(pl.LightningModule):
@@ -32,11 +33,12 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(feature_extractor_name, representation_size)
+        self.multi_frame = MultiFrameFeatureExtractor(self.feature_extractor)
         self.transformer = self.model_loader.load_transformer(transformer_name, representation_size, transformer_output_size)
         self.cls_head = nn.Linear(transformer_output_size, num_classes)
 
     def forward(self, input, **kwargs):
-        x = self.feature_extractor(input)
+        x = self.multi_frame(input)
         x = self.transformer(x)
         prediction = self.cls_head(x)
         return prediction
