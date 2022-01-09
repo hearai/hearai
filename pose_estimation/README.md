@@ -1,7 +1,9 @@
-# hearai/pose_estimation
-Here we are going to check different pose estimation libraries:
-1. requirements and functionality
-2. performance
-3. comparison
+Scripts for container configuration with CUDA and CUDnn suport
 
-https://3.basecamp.com/3105098/buckets/24328381/todolists/4382490071
+.env file contains uid and gid to be set for current user, id for gpu to be used inside the container
+
+start.sh builds an image then starts the container with a name hearai_openpose, finally opens a bash console inside the container
+
+enter.sh enters into container and enables operations
+
+clean.sh stops and removes container with its image
