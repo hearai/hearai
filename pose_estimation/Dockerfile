@@ -30,7 +30,10 @@ RUN apt-get install -y python3-setuptools
 RUN apt-get install -y python3-wheel
 RUN apt-get install -y python3-pip
 
-RUN pip3 install --upgrade numpy protobuf opencv-python
+COPY requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
+
+#RUN pip3 install --upgrade numpy protobuf opencv-python
 
 # OpenCL Generic
 RUN apt-get install -y opencl-headers ocl-icd-opencl-dev
