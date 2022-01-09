@@ -1,1 +1,1 @@
-from .vanilla_trasnformer import VanillaTransformer
+from .vanilla_transformer import VanillaTransformer
