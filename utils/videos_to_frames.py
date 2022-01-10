@@ -1,10 +1,8 @@
-
 import argparse
 import cv2
 import os
 import threading
 from queue import Queue
-from tqdm.auto import tqdm
 
 def get_args_parser():
     parser = argparse.ArgumentParser(

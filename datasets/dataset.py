@@ -54,9 +54,9 @@ class VideoRecord(object):
     @property
     def label(self) -> Union[str, List[str]]:
         # just one label as gloss
-        if len(self._data) == 4:
-            return self._data[3]
-        # sample associated with multiple labels
+        if len(self._data) > 4: # PLACEHOLDER
+            return int(self._data[3])
+        # TO DO - sample associated with multiple labels
         else:
             return [label.encode('utf-8') for label in self._data[3:]]
 
