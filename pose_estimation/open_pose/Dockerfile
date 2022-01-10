@@ -46,7 +46,7 @@ RUN git submodule update --init --recursive --remote
 # Prepraing build config
 RUN mkdir build && cd build
 RUN sudo apt-get install cmake-curses-gui
-# Insert console build setup - in this section, in console you have to disable -DUSE_CUDNN=OFF
+# Insert console build setup - in this section, in console, you have to disable -DUSE_CUDNN=OFF
 # and enable -DUSE_PYTHON=ON
 #RUN ccmake .
 # Openpose Building
@@ -54,6 +54,7 @@ RUN sudo apt-get install cmake-curses-gui
 #Download models
 #RUN cd ../models/ && ./getModels.sh
 
+#For full description please read README.md
 
 # settings
 ARG user_name=ubuntu
