@@ -24,68 +24,37 @@ if __name__ == "__main__":
     holistic = mp_holistic.Holistic()
 
 
-    def get_pose_columns():
+    def get_landmarks_columns_names(landmarks_names, prefix='Landmark'):
         output = []
-        
-        for landmark_name in pose_landmarks_names:
-            x_name = "Pose."+landmark_name+".x"
-            y_name = "Pose."+landmark_name+".y"
-            z_name = "Pose."+landmark_name+".z"
-            v_name = "Pose."+landmark_name+".v"
-            
+
+        for landmark_name in landmarks_names:
+            x_name = prefix + "." + str(landmark_name) + ".x"
+            y_name = prefix + "." + str(landmark_name) + ".y"
+            z_name = prefix + "." + str(landmark_name) + ".z"
+            v_name = prefix + "." + str(landmark_name) + ".v"
+
             output.append(x_name)
             output.append(y_name)
             output.append(z_name)
             output.append(v_name)
-        
+
         return output
 
-    def get_left_hand_columns():
-        output = []
-        
-        for landmark_name in hand_landmarks_names:
-            x_name = "Left_hand."+landmark_name+".x"
-            y_name = "Left_hand."+landmark_name+".y"
-            z_name = "Left_hand."+landmark_name+".z"
-            v_name = "Left_hand."+landmark_name+".v"
-            
-            output.append(x_name)
-            output.append(y_name)
-            output.append(z_name)
-            output.append(v_name)
-        
+
+    def get_pose_columns_names():
+        output = get_landmarks_columns_names(pose_landmarks_names, prefix='Pose')
         return output
 
-    def get_right_hand_columns():
-        output = []
-        
-        for landmark_name in hand_landmarks_names:
-            x_name = "Right_hand."+landmark_name+".x"
-            y_name = "Right_hand."+landmark_name+".y"
-            z_name = "Right_hand."+landmark_name+".z"
-            v_name = "Right_hand."+landmark_name+".v"
-            
-            output.append(x_name)
-            output.append(y_name)
-            output.append(z_name)
-            output.append(v_name)
-        
+    def get_left_hand_columns_names():
+        output = get_landmarks_columns_names(hand_landmarks_names, prefix='Left_hand')
         return output
 
-    def get_face_columns():
-        output = []
-        
-        for landmark_name in range(468):
-            x_name = "Face."+str(landmark_name)+".x"
-            y_name = "Face."+str(landmark_name)+".y"
-            z_name = "Face."+str(landmark_name)+".z"
-            v_name = "Face."+str(landmark_name)+".v"
-            
-            output.append(x_name)
-            output.append(y_name)
-            output.append(z_name)
-            output.append(v_name)
-        
+    def get_right_hand_columns_names():
+        output = get_landmarks_columns_names(hand_landmarks_names, prefix='Right_hand')
+        return output
+
+    def get_face_columns_names():
+        output = get_landmarks_columns_names(range(468), prefix='Face')
         return output
 
 
@@ -95,15 +64,24 @@ if __name__ == "__main__":
     success, frame = video.read()
     counter = 0
 
-    face_columns = get_face_columns()
-    pose_columns = get_pose_columns()
-    left_hand_columns = get_left_hand_columns()
-    right_hand_columns = get_right_hand_columns()
+    face_columns_names = get_face_columns_names()
+    pose_columns_names = get_pose_columns_names()
+    left_hand_columns_names = get_left_hand_columns_names()
+    right_hand_columns_names = get_right_hand_columns_names()
 
-    video_face_df = pd.DataFrame(columns=face_columns)
-    video_pose_df = pd.DataFrame(columns=pose_columns)
-    video_left_hand_df = pd.DataFrame(columns=left_hand_columns)
-    video_right_hand_df = pd.DataFrame(columns=right_hand_columns)
+    face_nan_df = pd.DataFrame([[np.nan for _ in range(len(face_columns_names))]],
+                               columns=face_columns_names)
+    pose_nan_df = pd.DataFrame([[np.nan for _ in range(len(pose_columns_names))]],
+                               columns=pose_columns_names)
+    left_hand_nan_df = pd.DataFrame([[np.nan for _ in range(len(left_hand_columns_names))]],
+                                    columns=left_hand_columns_names)
+    right_hand_nan_df = pd.DataFrame([[np.nan for _ in range(len(right_hand_columns_names))]],
+                                     columns=right_hand_columns_names)
+
+    video_face_df = pd.DataFrame(columns=face_columns_names)
+    video_pose_df = pd.DataFrame(columns=pose_columns_names)
+    video_left_hand_df = pd.DataFrame(columns=left_hand_columns_names)
+    video_right_hand_df = pd.DataFrame(columns=right_hand_columns_names)
 
 
     while success:
@@ -115,10 +93,9 @@ if __name__ == "__main__":
             face_row = np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in face_landmarks]).flatten()
             face_row = np.expand_dims(face_row, 0)
             
-            video_face_df = video_face_df.append(pd.DataFrame(face_row, columns=face_columns), ignore_index=True)
+            video_face_df = video_face_df.append(pd.DataFrame(face_row, columns=face_columns_names), ignore_index=True)
         except:
-            nan_df = pd.DataFrame([[np.nan for _ in range(len(face_columns))]], columns=face_columns)
-            video_face_df = video_face_df.append(nan_df, ignore_index=True)
+            video_face_df = video_face_df.append(face_nan_df, ignore_index=True)
             
         
         # Extract pose
@@ -128,10 +105,9 @@ if __name__ == "__main__":
             pose_row = np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in pose_landmarks]).flatten()
             pose_row = np.expand_dims(pose_row, 0)
 
-            video_pose_df = video_pose_df.append(pd.DataFrame(pose_row, columns=pose_columns), ignore_index=True)       
+            video_pose_df = video_pose_df.append(pd.DataFrame(pose_row, columns=pose_columns_names), ignore_index=True)
         except:
-            nan_df = pd.DataFrame([[np.nan for _ in range(len(pose_columns))]], columns=pose_columns)
-            video_pose_df = video_pose_df.append(nan_df, ignore_index=True)
+            video_pose_df = video_pose_df.append(pose_nan_df, ignore_index=True)
             
         
         # Extract left hand
@@ -141,10 +117,9 @@ if __name__ == "__main__":
             left_hand_row = np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in left_hand_landmarks]).flatten()
             left_hand_row = np.expand_dims(left_hand_row, 0)
             
-            video_left_hand_df = video_left_hand_df.append(pd.DataFrame(left_hand_row, columns=left_hand_columns), ignore_index=True)
+            video_left_hand_df = video_left_hand_df.append(pd.DataFrame(left_hand_row, columns=left_hand_columns_names), ignore_index=True)
         except:
-            nan_df = pd.DataFrame([[np.nan for _ in range(len(left_hand_columns))]], columns=left_hand_columns)
-            video_left_hand_df = video_left_hand_df.append(nan_df)
+            video_left_hand_df = video_left_hand_df.append(left_hand_nan_df)
             
         
         # Extract right hand
@@ -154,10 +129,9 @@ if __name__ == "__main__":
             right_hand_row = np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in right_hand_landmarks]).flatten()
             right_hand_row = np.expand_dims(right_hand_row, 0)
             
-            video_right_hand_df = video_right_hand_df.append(pd.DataFrame(right_hand_row, columns=right_hand_columns), ignore_index=True)
+            video_right_hand_df = video_right_hand_df.append(pd.DataFrame(right_hand_row, columns=right_hand_columns_names), ignore_index=True)
         except:
-            nan_df = pd.DataFrame([[np.nan for _ in range(len(right_hand_columns))]], columns=right_hand_columns)
-            video_right_hand_df = video_right_hand_df.append(nan_df)
+            video_right_hand_df = video_right_hand_df.append(right_hand_nan_df)
             
         success, frame = video.read()
         counter += 1
