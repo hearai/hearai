@@ -1,10 +1,8 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from pathlib import Path
 from torch.optim.lr_scheduler import MultiplicativeLR
 from models.model_loader import ModelLoader
-
 
 class GlossTranslationModel(pl.LightningModule):
     """Awesome model for Gloss Translation"""
@@ -18,7 +16,7 @@ class GlossTranslationModel(pl.LightningModule):
                  num_classes=1000,
                  feature_extractor_name="cnn_extractor",
                  transformer_name="vanilla_transformer",
-                 model_save_dir= str(Path(__file__).parent.resolve()) + "/__pycache__/model.cpython-36.pyc"):
+                 model_save_dir=""):
         super().__init__()
 
         # parameters

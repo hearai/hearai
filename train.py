@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from models.model import GlossTranslationModel
 from torchvision.datasets.fakedata import FakeData
 import torchvision.transforms as T
+from pathlib import Path
+import os
 
 import os
 
@@ -62,8 +64,12 @@ def main(args):
     dataloader_val = DataLoader(val, shuffle=False, batch_size=args.batch_size,
                                 num_workers=args.workers, drop_last=False)
 
+    # create a directory for checkpoints
+    checkpoint_path = os.path.join(str(Path(__file__).parent.resolve()), "models", "checkpoints", "training1")
+    os.makedirs(checkpoint_path, exist_ok=True)
+
     # prepare model
-    model = GlossTranslationModel(lr=args.lr, feature_extractor_name="resnet50_extractor")
+    model = GlossTranslationModel(lr=args.lr, feature_extractor_name="resnet50_extractor", model_save_dir=os.path.join(checkpoint_path, "cp.cpkt"))
 
     # create NeptuneLogger
     # TO - DO
