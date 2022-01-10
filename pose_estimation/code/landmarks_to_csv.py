@@ -154,7 +154,7 @@ if __name__ == "__main__":
             right_hand_row = np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in right_hand_landmarks]).flatten()
             right_hand_row = np.expand_dims(right_hand_row, 0)
             
-            video_right_hand_df = video_right_hand_df.append(pd.DataFrame(right_row, columns=right_hand_columns), ignore_index=True)
+            video_right_hand_df = video_right_hand_df.append(pd.DataFrame(right_hand_row, columns=right_hand_columns), ignore_index=True)
         except:
             nan_df = pd.DataFrame([[np.nan for _ in range(len(right_hand_columns))]], columns=right_hand_columns)
             video_right_hand_df = video_right_hand_df.append(nan_df)
