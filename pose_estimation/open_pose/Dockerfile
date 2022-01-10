@@ -38,13 +38,22 @@ RUN apt-get install -y libviennacl-dev
 
 
 # Clone Openpose
-#RUN git clone  --depth 1 -b "${OPENPOSE_VERSION}" https://github.com/CMU-Perceptual-Computing-Lab/openpose.git 
+RUN git clone https://github.com/CMU-Perceptual-Computing-Lab/openpose
 # Create build directory
-#RUN cd openpose 
-#RUN mkdir build && cd build
-
+RUN cd openpose 
+# Add additional dependencies
+RUN git submodule update --init --recursive --remote
+# Prepraing build config
+RUN mkdir build && cd build
+RUN sudo apt-get install cmake-curses-gui
+# Insert console build setup - in this section, in console you have to disable -DUSE_CUDNN=OFF
+# and enable -DUSE_PYTHON=ON
+#RUN ccmake .
 # Openpose Building
 #RUN cd openpose/build && make -j`nproc`
+#Download models
+#RUN cd ../models/ && ./getModels.sh
+
 
 # settings
 ARG user_name=ubuntu
