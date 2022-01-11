@@ -9,33 +9,44 @@ import os
 
 from datasets.dataset import ImglistToTensor, VideoFrameDataset
 
+
 def get_args_parser():
     parser = argparse.ArgumentParser()
     # Data parameters and paths
-    parser.add_argument('--data',
-                        help='path to data',
-                        default='/dih4/dih4_2/hearai/data/frames/pjm')
-    parser.add_argument('--classes', type=int, default=2400,
-                        help='number of classes')
-    parser.add_argument('--ratio', type=float, default=0.9,
-                        help='train/test ratio (default: 0.9)')
+    parser.add_argument(
+        "--data", help="path to data", default="/dih4/dih4_2/hearai/data/frames/pjm"
+    )
+    parser.add_argument("--classes", type=int, default=2400, help="number of classes")
+    parser.add_argument(
+        "--ratio", type=float, default=0.9, help="train/test ratio (default: 0.9)"
+    )
     # Training parameters
-    parser.add_argument('--lr', type=float, default=3e-5,
-                        help='learning rate (default: 3e-5)')
-    parser.add_argument('-b', '--batch-size', type=int, default=8,
-                        help='input batch size for training (default: 8)')
-    parser.add_argument('--epochs', type=int, default=10, metavar='EPOCHS',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--workers', type=int, default=0,
-                        help='number of parallel workers (default: 0)')
+    parser.add_argument(
+        "--lr", type=float, default=3e-5, help="learning rate (default: 3e-5)"
+    )
+    parser.add_argument(
+        "-b",
+        "--batch-size",
+        type=int,
+        default=8,
+        help="input batch size for training (default: 8)",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=10,
+        metavar="EPOCHS",
+        help="number of epochs to train (default: 10)",
+    )
+    parser.add_argument(
+        "--workers", type=int, default=0, help="number of parallel workers (default: 0)"
+    )
     # Other
-    parser.add_argument('--gpu', type=int, default=0,
-                        help='number of GPU to use')
-    parser.add_argument('--save',
-                        help='path to save model',
-                        default='./best.pth')
-    parser.add_argument('--seed', type=int, default=2021,
-                        help='random seed (default: 2021)')
+    parser.add_argument("--gpu", type=int, default=0, help="number of GPU to use")
+    parser.add_argument("--save", help="path to save model", default="./best.pth")
+    parser.add_argument(
+        "--seed", type=int, default=2021, help="random seed (default: 2021)"
+    )
     return parser
 
 
@@ -49,19 +60,19 @@ def main(args):
     torch.manual_seed(args.seed)
 
     # basic transforms
-    test_transforms = T.Compose([
-    T.PILToTensor(),
-    T.ConvertImageDtype(torch.float)])
+    test_transforms = T.Compose([T.PILToTensor(), T.ConvertImageDtype(torch.float)])
 
     # load data
     videos_root = args.data
-    annotation_file = os.path.join(videos_root, 'annotations.txt')
-    preprocess = T.Compose([
-        ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
-        T.Resize(256),  # image batch, resize smaller edge to 256
-        T.CenterCrop(256),  # image batch, center crop to square 256x256
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    annotation_file = os.path.join(videos_root, "annotations.txt")
+    preprocess = T.Compose(
+        [
+            ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
+            T.Resize(256),  # image batch, resize smaller edge to 256
+            T.CenterCrop(256),  # image batch, center crop to square 256x256
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
     dataset = VideoFrameDataset(
         root_path=videos_root,
@@ -69,7 +80,7 @@ def main(args):
         num_segments=1,
         frames_per_segment=1,
         transform=preprocess,
-        test_mode=False
+        test_mode=False,
     )
 
     # split into train/val
@@ -79,32 +90,46 @@ def main(args):
     train, val = random_split(dataset, [train_len, val_len])
 
     # prepare dataloaders
-    dataloader_train = DataLoader(train, shuffle=True, batch_size=args.batch_size,
-                                  num_workers=args.workers, drop_last=False)
+    dataloader_train = DataLoader(
+        train,
+        shuffle=True,
+        batch_size=args.batch_size,
+        num_workers=args.workers,
+        drop_last=False,
+    )
 
-    dataloader_val = DataLoader(val, shuffle=False, batch_size=args.batch_size,
-                                num_workers=args.workers, drop_last=False)
+    dataloader_val = DataLoader(
+        val,
+        shuffle=False,
+        batch_size=args.batch_size,
+        num_workers=args.workers,
+        drop_last=False,
+    )
 
     # prepare model
-    model = GlossTranslationModel(lr=args.lr,
-                                  num_classes=args.classes,
-                                  feature_extractor_name="cnn_extractor",
-                                  model_save_dir=args.save)
+    model = GlossTranslationModel(
+        lr=args.lr,
+        num_classes=args.classes,
+        feature_extractor_name="cnn_extractor",
+        model_save_dir=args.save,
+    )
 
     # create NeptuneLogger
     # TO - DO
 
-    trainer = pl.Trainer(max_epochs=args.epochs,
-                         val_check_interval=0.3,
-                         gpus=[0],
-                         progress_bar_refresh_rate=20,
-                         accumulate_grad_batches=1)
+    trainer = pl.Trainer(
+        max_epochs=args.epochs,
+        val_check_interval=0.3,
+        gpus=[0],
+        progress_bar_refresh_rate=20,
+        accumulate_grad_batches=1,
+    )
 
     # run training
     trainer.fit(model, dataloader_train, dataloader_val)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = get_args_parser()
     args = parser.parse_args()
     main(args)
