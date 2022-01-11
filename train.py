@@ -4,7 +4,8 @@ import yaml
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset, random_split
 from models.model import GlossTranslationModel
-from torchvision.datasets.fakedata import FakeData
+from datasets import FakeData
+#from torchvision.datasets.fakedata import FakeData
 import torchvision.transforms as T
 
 import os
@@ -62,7 +63,7 @@ def main(args):
                                 num_workers=args.workers, drop_last=False)
 
     # prepare model
-    model = GlossTranslationModel(lr=args.lr, feature_extractor_name="resnet50_extractor")
+    model = GlossTranslationModel(lr=args.lr, feature_extractor_name="cnn_extractor")
 
 
     # create NeptuneLogger
