@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim
 
 
-class TransformerModel(nn.Module):
+class VanillaTransformer(nn.Module):
     """Basic transformer model"""
 
     def __init__(self,

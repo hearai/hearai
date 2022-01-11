@@ -9,7 +9,7 @@ class ModelLoader:
     """
     feature_extractors_ = {
         'cnn_extractor': feature_extractors.CnnExtractor,
-        'resnet50_extractor': feature_extractors.Resnet50Extractor
+        'resnet50_extractor': feature_extractors.Resnet50Extractor,
     }
 
     transformers_ = {
