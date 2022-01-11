@@ -7,18 +7,17 @@ class MultiFrameFeatureExtractor(nn.Module):
 
     Input to the model should have shape NxCxHxW (frames x channels x height x width).
 
-    Output from the model is a Tensor of shape NxM (count_of_frames x representation_size).
-
-    Args:
-        feature_extractor_name (str): the feature extractor.
+    Output from the model is a Tensor of shape NxM (frames x representation_size).
     """
 
     def __init__(self,
-                 feature_extractor):
-
-        super().__init__()
-
+                 feature_extractor: nn.Module):
+        """
+        Args:
+            feature_extractor (nn.Module): the feature extractor.
+        """
         
+        super().__init__()
         self.feature_extractor = feature_extractor
 
 

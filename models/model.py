@@ -33,12 +33,12 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(feature_extractor_name, representation_size)
-        self.multi_frame = MultiFrameFeatureExtractor(self.feature_extractor)
+        self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(self.feature_extractor)
         self.transformer = self.model_loader.load_transformer(transformer_name, representation_size, transformer_output_size)
         self.cls_head = nn.Linear(transformer_output_size, num_classes)
 
     def forward(self, input, **kwargs):
-        x = self.multi_frame(input)
+        x = self.multi_frame_feature_extractor(input)
         x = self.transformer(x)
         prediction = self.cls_head(x)
         return prediction
