@@ -8,11 +8,14 @@ from PIL import Image
 from torchvision import transforms
 import torch
 from typing import List, Union, Tuple, Any
+
 # for non-latin encoding
 import sys
-if sys.version[0] == '2':
+
+if sys.version[0] == "2":
     reload(sys)
     sys.setdefaultencoding("utf-8")
+
 
 class VideoRecord(object):
     """
@@ -30,6 +33,7 @@ class VideoRecord(object):
              4) the fourth element is the gloss,
              5) any following elements are labels in the case of multi label provided.
     """
+
     def __init__(self, row, root_datapath):
         self._data = row
         self._path = os.path.join(root_datapath, row[0])
@@ -54,11 +58,12 @@ class VideoRecord(object):
     @property
     def label(self) -> Union[str, List[str]]:
         # just one label as gloss
-        if len(self._data) > 4: # PLACEHOLDER
+        if len(self._data) > 4:  # PLACEHOLDER
             return int(self._data[3])
         # TO DO - sample associated with multiple labels
         else:
-            return [label.encode('utf-8') for label in self._data[3:]]
+            return [label.encode("utf-8") for label in self._data[3:]]
+
 
 class VideoFrameDataset(torch.utils.data.Dataset):
     r"""
@@ -92,14 +97,17 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         test_mode: If True, frames are taken from the center of each
                    segment, instead of a random location in each segment.
     """
-    def __init__(self,
-                 root_path: str,
-                 annotationfile_path: str,
-                 num_segments: int = 3,
-                 frames_per_segment: int = 1,
-                 imagefile_template: str='{:s}_{:d}.jpg',
-                 transform = None,
-                 test_mode: bool = False):
+
+    def __init__(
+        self,
+        root_path: str,
+        annotationfile_path: str,
+        num_segments: int = 3,
+        frames_per_segment: int = 1,
+        imagefile_template: str = "{:s}_{:d}.jpg",
+        transform=None,
+        test_mode: bool = False,
+    ):
         super(VideoFrameDataset, self).__init__()
 
         self.root_path = root_path
@@ -114,27 +122,36 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self._sanity_check_samples()
 
     def _load_image(self, directory: str, idx: int) -> Image.Image:
-        return Image.open(os.path.join(directory,
-        self.imagefile_template.format(os.path.basename(directory), idx))).convert('RGB')
+        return Image.open(
+            os.path.join(
+                directory,
+                self.imagefile_template.format(os.path.basename(directory), idx),
+            )
+        ).convert("RGB")
 
     def _parse_annotationfile(self):
-        self.video_list = [VideoRecord(x.strip().split(),
-        self.root_path) for x in open(self.annotationfile_path)]
+        self.video_list = [
+            VideoRecord(x.strip().split(), self.root_path)
+            for x in open(self.annotationfile_path)
+        ]
 
     def _sanity_check_samples(self):
         for record in self.video_list:
             if record.num_frames <= 0 or record.start_frame == record.end_frame:
                 print(
-                    f"\nDataset Warning: video {record.path} seems to have zero RGB frames on disk!\n")
+                    f"\nDataset Warning: video {record.path} seems to have zero RGB frames on disk!\n"
+                )
 
             elif record.num_frames < (self.num_segments * self.frames_per_segment):
-                print(f"\nDataset Warning: video {record.path} has {record.num_frames} frames "
-                      f"but the dataloader is set up to load "
-                      f"(num_segments={self.num_segments})*(frames_per_segment={self.frames_per_segment})"
-                      f"={self.num_segments * self.frames_per_segment} frames. Dataloader will throw an "
-                      f"error when trying to load this video.\n")
+                print(
+                    f"\nDataset Warning: video {record.path} has {record.num_frames} frames "
+                    f"but the dataloader is set up to load "
+                    f"(num_segments={self.num_segments})*(frames_per_segment={self.frames_per_segment})"
+                    f"={self.num_segments * self.frames_per_segment} frames. Dataloader will throw an "
+                    f"error when trying to load this video.\n"
+                )
 
-    def _get_start_indices(self, record: VideoRecord) -> 'np.ndarray[int]':
+    def _get_start_indices(self, record: VideoRecord) -> "np.ndarray[int]":
         """
         For each segment, choose a start index from where frames
         are to be loaded from.
@@ -147,24 +164,37 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         """
         # choose start indices that are perfectly evenly spread across the video frames.
         if self.test_mode:
-            distance_between_indices = (record.num_frames - self.frames_per_segment + 1) / float(self.num_segments)
+            distance_between_indices = (
+                record.num_frames - self.frames_per_segment + 1
+            ) / float(self.num_segments)
 
-            start_indices = np.array([int(distance_between_indices / 2.0 + distance_between_indices * x)
-                                      for x in range(self.num_segments)])
+            start_indices = np.array(
+                [
+                    int(distance_between_indices / 2.0 + distance_between_indices * x)
+                    for x in range(self.num_segments)
+                ]
+            )
         # randomly sample start indices that are approximately evenly spread across the video frames.
         else:
-            max_valid_start_index = (record.num_frames - self.frames_per_segment + 1) // self.num_segments
+            max_valid_start_index = (
+                record.num_frames - self.frames_per_segment + 1
+            ) // self.num_segments
 
-            start_indices = np.multiply(list(range(self.num_segments)), max_valid_start_index) + \
-                      np.random.randint(max_valid_start_index, size=self.num_segments)
+            start_indices = np.multiply(
+                list(range(self.num_segments)), max_valid_start_index
+            ) + np.random.randint(max_valid_start_index, size=self.num_segments)
 
         return start_indices
 
-    def __getitem__(self, idx: int) -> Union[
+    def __getitem__(
+        self, idx: int
+    ) -> Union[
         Tuple[List[Image.Image], Union[int, List[int]]],
-        Tuple['torch.Tensor[num_frames, channels, height, width]', Union[int, List[int]]],
+        Tuple[
+            "torch.Tensor[num_frames, channels, height, width]", Union[int, List[int]]
+        ],
         Tuple[Any, Union[int, List[int]]],
-        ]:
+    ]:
         """
         For video with id idx, loads self.NUM_SEGMENTS * self.FRAMES_PER_SEGMENT
         frames from evenly chosen locations across the video.
@@ -181,15 +211,19 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         """
         record: VideoRecord = self.video_list[idx]
 
-        frame_start_indices: 'np.ndarray[int]' = self._get_start_indices(record)
+        frame_start_indices: "np.ndarray[int]" = self._get_start_indices(record)
 
         return self._get(record, frame_start_indices)
 
-    def _get(self, record: VideoRecord, frame_start_indices: 'np.ndarray[int]') -> Union[
+    def _get(
+        self, record: VideoRecord, frame_start_indices: "np.ndarray[int]"
+    ) -> Union[
         Tuple[List[Image.Image], Union[int, List[int]]],
-        Tuple['torch.Tensor[num_frames, channels, height, width]', Union[int, List[int]]],
+        Tuple[
+            "torch.Tensor[num_frames, channels, height, width]", Union[int, List[int]]
+        ],
         Tuple[Any, Union[str, List[str]]],
-        ]:
+    ]:
         """
         Loads the frames of a video at the corresponding
         indices.
@@ -231,14 +265,18 @@ class VideoFrameDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.video_list)
 
+
 class ImglistToTensor(torch.nn.Module):
     """
     Converts a list of PIL images in the range [0,255] to a torch.FloatTensor
     of shape (NUM_IMAGES x CHANNELS x HEIGHT x WIDTH) in the range [0,1].
     Can be used as first transform for ``VideoFrameDataset``.
     """
+
     @staticmethod
-    def forward(img_list: List[Image.Image]) -> 'torch.Tensor[NUM_IMAGES, CHANNELS, HEIGHT, WIDTH]':
+    def forward(
+        img_list: List[Image.Image],
+    ) -> "torch.Tensor[NUM_IMAGES, CHANNELS, HEIGHT, WIDTH]":
         """
         Converts each PIL image in a list to
         a torch Tensor and stacks them into

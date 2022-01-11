@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class MultiFrameFeatureExtractor(nn.Module):
     """
     Class to extract features from every frame of the video.
@@ -11,8 +12,7 @@ class MultiFrameFeatureExtractor(nn.Module):
         feature_extractor_name (str): the feature extractor.
     """
 
-    def __init__(self,
-                 feature_extractor):
+    def __init__(self, feature_extractor):
         super().__init__()
         self.feature_extractor = feature_extractor
 

@@ -6,9 +6,7 @@ import torch.optim
 class VanillaTransformer(nn.Module):
     """Basic transformer model"""
 
-    def __init__(self,
-                 input_size: int = 128,
-                 output_size: int = 1000):
+    def __init__(self, input_size: int = 128, output_size: int = 1000):
         """
         Dummy example of __init__ function of basic transformer model. Does nothing as transformer is not even implemented.
         
@@ -19,7 +17,7 @@ class VanillaTransformer(nn.Module):
         super().__init__()
         self.__fully_connected = nn.Linear(input_size, output_size)
         self.__output_layer = nn.Softmax(dim=1)
-        # this is a dummy example but in practice this will be longer 
+        # this is a dummy example but in practice this will be longer
 
     def forward(self, input, **kwargs):
         x = self.__fully_connected(input)
