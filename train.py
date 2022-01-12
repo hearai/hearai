@@ -13,11 +13,11 @@ def get_args_parser():
     parser = argparse.ArgumentParser()
     # Data parameters and paths
     parser.add_argument(
-        "--data", help="path to data", default="/dih4/dih4_2/hearai/data/frames/pjm"
+        "--data", help="path to data", default="assets/sanity_check_data"
     )
     parser.add_argument("--classes", type=int, default=2400, help="number of classes")
     parser.add_argument(
-        "--ratio", type=float, default=0.9, help="train/test ratio (default: 0.9)"
+        "--ratio", type=float, default=0.8, help="train/test ratio (default: 0.8)"
     )
     # Training parameters
     parser.add_argument(
@@ -140,8 +140,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    # parser = get_args_parser()
-    # args = parser.parse_args()
-    # main(args)
-    print('Hello github actions!')
-
+    parser = get_args_parser()
+    args = parser.parse_args()
+    main(args)
