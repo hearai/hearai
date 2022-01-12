@@ -79,6 +79,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = get_args_parser()
-    args = parser.parse_args()
-    main(args)
+    # parser = get_args_parser()
+    # args = parser.parse_args()
+    # main(args)
+    print('Hello github actions!')
