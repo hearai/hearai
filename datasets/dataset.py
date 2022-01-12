@@ -58,11 +58,11 @@ class VideoRecord(object):
     @property
     def label(self) -> Union[str, List[str]]:
         # just one label as gloss
-        if len(self._data) > 4:  # PLACEHOLDER
+        if len(self._data) == 4:  # PLACEHOLDER
             return int(self._data[3])
         # TO DO - sample associated with multiple labels
         else:
-            return [label.encode("utf-8") for label in self._data[3:]]
+            return [int(label) for label in self._data[3:]]
 
 
 class VideoFrameDataset(torch.utils.data.Dataset):

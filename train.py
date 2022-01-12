@@ -64,7 +64,7 @@ def main(args):
 
     # load data
     videos_root = args.data
-    annotation_file = os.path.join(videos_root, "annotations.txt")
+    annotation_file = os.path.join(videos_root, "test_gloss.txt")
     preprocess = T.Compose(
         [
             ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
