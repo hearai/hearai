@@ -3,6 +3,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Images and movies
+*.png
+*.jpg
+*.mp4
+
+# Pytorch models
+*.pth
+lightning_logs/
+
 # C extensions
 *.so
 
