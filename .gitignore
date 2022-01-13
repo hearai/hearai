@@ -5,7 +5,11 @@ __pycache__/
 
 # Images and movies
 *.png
+*.jpg
 *.mp4
+
+# Uningore images in the assets dir
+!assets/sanity_check_data/**/*.jpg
 
 # Pytorch models
 *.pth
