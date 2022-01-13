@@ -8,6 +8,9 @@ __pycache__/
 *.jpg
 *.mp4
 
+# Uningore images in the assets dir
+!assets/sanity_check_data/**/*.jpg
+
 # Pytorch models
 *.pth
 lightning_logs/

@@ -1,24 +1,23 @@
 import argparse
-import torch
-import yaml
-import pytorch_lightning as pl
-from torch.utils.data import DataLoader, Dataset, random_split
-from models.model import GlossTranslationModel
-import torchvision.transforms as T
 import os
-
+import pytorch_lightning as pl
+import torch
+import torchvision.transforms as T
+import yaml
 from datasets.dataset import ImglistToTensor, VideoFrameDataset
+from models.model import GlossTranslationModel
+from torch.utils.data import DataLoader, Dataset, random_split
 
 
 def get_args_parser():
     parser = argparse.ArgumentParser()
     # Data parameters and paths
     parser.add_argument(
-        "--data", help="path to data", default="/dih4/dih4_2/hearai/data/frames/pjm"
+        "--data", help="path to data", default="assets/sanity_check_data"
     )
     parser.add_argument("--classes", type=int, default=2400, help="number of classes")
     parser.add_argument(
-        "--ratio", type=float, default=0.9, help="train/test ratio (default: 0.9)"
+        "--ratio", type=float, default=0.8, help="train/test ratio (default: 0.8)"
     )
     # Training parameters
     parser.add_argument(
@@ -42,19 +41,30 @@ def get_args_parser():
         "--workers", type=int, default=0, help="number of parallel workers (default: 0)"
     )
     # Other
-    parser.add_argument("--gpu", type=int, default=0, help="number of GPU to use")
+    parser.add_argument(
+        "--gpu",
+        type=int,
+        default=-1,
+        help="number of GPU to use, run on CPU if default (-1) used",
+    )
     parser.add_argument("--save", help="path to save model", default="./best.pth")
     parser.add_argument(
         "--seed", type=int, default=2021, help="random seed (default: 2021)"
+    )
+    parser.add_argument(
+        "--fast-dev-run",
+        action="store_true",
+        help="Flag for a sanity-check, runs single loop for the training phase",
     )
     return parser
 
 
 def main(args):
     # set GPU to use
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-    os.environ["TOKENIZERS_PARALLELISM"] = "true"
+    if args.gpu > 0:
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+        os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
     # set torch seed
     torch.manual_seed(args.seed)
@@ -114,15 +124,15 @@ def main(args):
         model_save_dir=args.save,
     )
 
-    # create NeptuneLogger
-    # TO - DO
+    # TODO - create NeptuneLogger
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         val_check_interval=0.3,
-        gpus=[0],
+        gpus=args.gpu if args.gpu > 0 else None,
         progress_bar_refresh_rate=20,
         accumulate_grad_batches=1,
+        fast_dev_run=args.fast_dev_run,
     )
 
     # run training
