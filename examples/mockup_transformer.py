@@ -22,7 +22,7 @@ checkpoint = 'facebook/hubert-large-ls960-ft'
 model = PretrainedTransformer(checkpoint=checkpoint)
 loss_fn = nn.functional.cross_entropy
 optimizer = Adam(model.parameters(), lr=1e-4)
-epochs = 1000
+epochs = 10
 
 epoch = 0
 for epoch in range(epochs):
