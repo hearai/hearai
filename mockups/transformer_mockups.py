@@ -35,11 +35,8 @@ def generate_mockup_output(batch_size: int, num_classes: int) -> torch.Tensor:
     Returns:
         (torch.Tensor) Mockup classification output.
     """
-    if batch_size > num_classes:
-        raise Exception("Provided batch size must be smaller than number of classes.")
-    else:
-        return torch.Tensor(
-            np.apply_along_axis(
-                np.random.permutation, 1, np.eye(num_classes)[:batch_size]
-            )
-        )
+    classes = np.random.randint(low=0, high=num_classes, size=batch_size)
+    classes_one_hot = np.zeros((batch_size, num_classes))
+    classes_one_hot[np.arange(batch_size), classes] = 1
+
+    return torch.Tensor(classes_one_hot)
