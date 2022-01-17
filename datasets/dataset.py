@@ -85,6 +85,8 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         root_path: The root path in which video folders lie.
         annotationfile_path: The .txt annotation file containing
                              one row per video sample as described above.
+        classification_mode: mode for classification, choose from
+                             classification_mode.py
         num_segments: The number of segments the video should
                       be divided into to sample frames from.
         frames_per_segment: The number of frames that should
