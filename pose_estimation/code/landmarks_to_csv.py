@@ -1,13 +1,12 @@
 import argparse
 import os
-import os.path
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
 import cv2 as cv
 import mediapipe as mp
+from tqdm import tqdm
 
 
 POSE_LANDMARKS_NAMES = [name.name for name in mp.solutions.holistic.PoseLandmark]
@@ -62,6 +61,18 @@ def get_landmarks_coordinates_row(landmarks):
 
 
 def video_to_landmarks(video):
+    face_columns_names = get_face_columns_names()
+    pose_columns_names = get_pose_columns_names()
+    left_hand_columns_names = get_left_hand_columns_names()
+    right_hand_columns_names = get_right_hand_columns_names()
+
+    face_nans_row = [np.nan for _ in range(len(face_columns_names))]
+    pose_nans_row = [np.nan for _ in range(len(pose_columns_names))]
+    left_hand_nans_row = [np.nan for _ in range(len(left_hand_columns_names))]
+    right_hand_nans_row = [np.nan for _ in range(len(right_hand_columns_names))]
+
+    mp_holistic = mp.solutions.holistic
+
     video_n_frames = int(video.get(cv.CAP_PROP_FRAME_COUNT))
     video_fps = video.get(cv.CAP_PROP_FPS)
     video_width = int(video.get(cv.CAP_PROP_FRAME_WIDTH))
@@ -77,7 +88,6 @@ def video_to_landmarks(video):
     right_hand_frames_ls = []
 
     counter = 1
-    start_time = time.time()
 
     with mp_holistic.Holistic(model_complexity=1,
                               smooth_landmarks=True,
@@ -86,6 +96,8 @@ def video_to_landmarks(video):
                               min_tracking_confidence=0.5) as holistic:
         success, frame = video.read()
 
+        progress_bar = tqdm(total=video_n_frames,
+                            unit="frames")
         while success:
             results = holistic.process(frame)
 
@@ -125,51 +137,27 @@ def video_to_landmarks(video):
 
             right_hand_frames_ls.append(right_hand_row)
 
-            if counter % 25 == 0:
-                current_time = time.time()
-                current_fps = counter / (current_time - start_time)
-                print(str(counter) + '/' + str(video_n_frames) + ' average FPS = ' + str(current_fps))
-
+            progress_bar.update()
             counter += 1
             success, frame = video.read()
+
+        progress_bar.close()
 
     video_face = pd.DataFrame(face_frames_ls, columns=face_columns_names)
     video_pose = pd.DataFrame(pose_frames_ls, columns=pose_columns_names)
     video_left_hand = pd.DataFrame(left_hand_frames_ls, columns=left_hand_columns_names)
     video_right_hand = pd.DataFrame(right_hand_frames_ls, columns=right_hand_columns_names)
 
-    final_time = time.time()
-    final_fps = (counter - 1) / (final_time - start_time)
-    print(str(counter - 1) + '/' + str(video_n_frames) + "Final FPS = " + str(final_fps))
     return video_face, video_pose, video_left_hand, video_right_hand
 
 
-if __name__ == "__main__":
-    face_columns_names = get_face_columns_names()
-    pose_columns_names = get_pose_columns_names()
-    left_hand_columns_names = get_left_hand_columns_names()
-    right_hand_columns_names = get_right_hand_columns_names()
-
-    face_nans_row = [np.nan for _ in range(len(face_columns_names))]
-    pose_nans_row = [np.nan for _ in range(len(pose_columns_names))]
-    left_hand_nans_row = [np.nan for _ in range(len(left_hand_columns_names))]
-    right_hand_nans_row = [np.nan for _ in range(len(right_hand_columns_names))]
-
-    mp_holistic = mp.solutions.holistic
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("input", help="Path to input video")
-    parser.add_argument("output", help="Path to save outputs")
-    args = parser.parse_args()
-    print(args.input)
-
-    video_path = args.input
-    video_file_basename = os.path.basename(video_path)
+def process_single_video_file(video_file, output_directory):
+    video_file_basename = os.path.basename(video_file)
     video_file_main_name = os.path.splitext(video_file_basename)[0]
 
-    video = cv.VideoCapture(video_path)
+    video = cv.VideoCapture(video_file)
 
-    print('Processing file ' + video_path)
+    print('Processing file ' + video_file)
 
     video_face_df, video_pose_df, video_left_hand_df, video_right_hand_df = video_to_landmarks(video)
 
@@ -182,9 +170,29 @@ if __name__ == "__main__":
     for i in range(len(dfs)):
         df = dfs[i]
         filename = dfs_filenames[i]
-        path = args.output+filename
-        print(path)
+        path = os.path.join(output_directory, filename)
         df.to_csv(path)
 
     print('Output saved to files:')
     print(dfs_filenames)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", help="Path to input video")
+    parser.add_argument("output", help="Path to save outputs")
+    args = parser.parse_args()
+    print(args.input)
+
+    video_paths = []
+
+    if os.path.isdir(args.input):
+        video_paths = [os.path.join(args.input, f) for f in os.listdir(args.input)]
+        video_paths = [vp for vp in video_paths if os.path.isfile(vp)]
+    elif os.path.isfile(args.input):
+        video_paths = [args.input]
+    else:
+        raise Exception("Incorrect input file name or directory!")
+
+    for video_path in video_paths:
+        process_single_video_file(video_path, args.output)
