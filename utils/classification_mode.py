@@ -12,6 +12,6 @@ def create_heads_dict(classification_mode):
             "hand_location_y": 5,
         }  # number of classes for each head
     else:
-        num_classes_dict = {"gloss": 2400}  # number of classes for each head
+        sys.exit("Wrong classification_mode passed to pipeline")
 
     return num_classes_dict
