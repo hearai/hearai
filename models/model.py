@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.optim.lr_scheduler import MultiplicativeLR
+from sklearn.metrics import classification_report
 from models.model_loader import ModelLoader
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
@@ -84,9 +85,24 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = self(input)
         loss = summary_loss(predictions, targets)
         self.log("metrics/batch/validation_loss", loss)
+        return{'loss': loss, 'target': target, 'prediction': prediction}
 
     def validation_epoch_end(self, out):
-        # TO-DO validation metrics at the epoch end
+        for i, outputs in enumerate(out):
+            target, prediction = outputs['target'], outputs['prediction']
+
+            if i == 0:
+                targets = target
+                predictions = prediction
+            else:
+                targets = torch.cat((targets, target), 0)
+                predictions = torch.cat((predictions, prediction), 0)
+
+        predictions = torch.argmax(predictions, dim=1).cpu().detach().numpy()
+        targets = targets.cpu().detach().numpy()
+
+        print(classification_report(targets, predictions, zero_division = 0))
+
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
