@@ -22,16 +22,19 @@ class FakeData(VisionDataset):
     """
 
     def __init__(
-            self,
-            size: int = 1000,
-            image_size: Tuple[int, int, int] = (3, 224, 224),
-            num_classes: int = 10,
-            transform: Optional[Callable] = None,
-            target_transform: Optional[Callable] = None,
-            random_offset: int = 0,
+        self,
+        size: int = 1000,
+        image_size: Tuple[int, int, int] = (3, 224, 224),
+        num_classes: int = 10,
+        transform: Optional[Callable] = None,
+        target_transform: Optional[Callable] = None,
+        random_offset: int = 0,
     ) -> None:
-        super(FakeData, self).__init__(None, transform=transform,  # type: ignore[arg-type]
-                                       target_transform=target_transform)
+        super(FakeData, self).__init__(
+            None,
+            transform=transform,  # type: ignore[arg-type]
+            target_transform=target_transform,
+        )
         self.size = size
         self.num_classes = num_classes
         self.image_size = image_size
@@ -51,8 +54,8 @@ class FakeData(VisionDataset):
         rng_state = torch.get_rng_state()
         torch.manual_seed(index + self.random_offset)
         img = torch.randn(*self.image_size)
-        #create random target 
-        num_of_classes = [6,3,4,18,8,14,5]
+        # create random target
+        num_of_classes = [6, 3, 4, 18, 8, 14, 5]
         target = []
         for i in range(0, len(num_of_classes)):
             n_classes = num_of_classes[i]

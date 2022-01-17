@@ -7,6 +7,18 @@ from models.model_loader import ModelLoader
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
+from utils.classification_mode import create_heads_dict
+
+
+def summary_loss(predictions, targets):
+    loss = nn.CrossEntropyLoss()
+    losses = []
+    loss_sum = 0
+    for prediction, target in zip(predictions, targets):
+        one_loss = loss(prediction.to("cpu"), target.to("cpu"))
+        losses.append(one_loss)
+        loss_sum = loss_sum + one_loss
+    return loss_sum
 
 
 class GlossTranslationModel(pl.LightningModule):
@@ -19,7 +31,7 @@ class GlossTranslationModel(pl.LightningModule):
         warmup_steps=100.0,
         transformer_output_size=1024,
         representation_size=2048,
-        num_classes=1000,
+        classification_mode="gloss",
         feature_extractor_name="cnn_extractor",
         transformer_name="vanilla_transformer",
         model_save_dir="",
@@ -31,9 +43,10 @@ class GlossTranslationModel(pl.LightningModule):
         self.model_save_dir = model_save_dir
         self.warmup_steps = warmup_steps
         self.multiply_lr_step = multiply_lr_step
+        self.num_classes_dict = create_heads_dict(classification_mode)
 
         # losses
-        self.ce_loss = nn.CrossEntropyLoss()
+        # self.summary_loss = summary_loss(predictions, targets)
 
         # models-parts
         self.model_loader = ModelLoader()
@@ -46,32 +59,30 @@ class GlossTranslationModel(pl.LightningModule):
         self.transformer = self.model_loader.load_transformer(
             transformer_name, representation_size, transformer_output_size
         )
-        self.cls_head = nn.Linear(transformer_output_size, num_classes)
+        self.cls_head = []
+        print(self.num_classes_dict)
+        for value in self.num_classes_dict.values():
+            self.cls_head.append(nn.Linear(transformer_output_size, value))
 
     def forward(self, input, **kwargs):
+        predictions = []
         x = self.multi_frame_feature_extractor(input)
         x = self.transformer(x)
-        for i in range(0, len(self.cls_head)):
-            predictions.append(self.cls_head[i](x.to("cpu")))   
+        for head in self.cls_head:
+            predictions.append(head(x))
         return predictions
 
     def training_step(self, batch, batch_idx):
-        losses=[]
-        input, target = batch
+        input, targets = batch
         predictions = self(input)
-        for i in range(0, len(predictions)):
-            losses.append(self.ce_loss(predictions[i].to("cpu"), target[i].to("cpu")))
-        loss = np.sum(losses)
+        loss = summary_loss(predictions, targets)
         self.log("metrics/batch/training_loss", loss, prog_bar=False)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
-        losses=[]
-        input, target = batch
+        input, targets = batch
         predictions = self(input)
-        for i in range(0, len(predictions)):
-            losses.append(self.ce_loss(predictions[i].to("cpu"), target[i].to("cpu")))
-        loss = np.sum(losses)
+        loss = summary_loss(predictions, targets)
         self.log("metrics/batch/validation_loss", loss)
 
     def validation_epoch_end(self, out):

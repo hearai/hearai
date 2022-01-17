@@ -8,6 +8,7 @@ from PIL import Image
 from torchvision import transforms
 import torch
 from typing import List, Union, Tuple, Any
+from utils.classification_mode import create_heads_dict
 
 # for non-latin encoding
 import sys
@@ -102,6 +103,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self,
         root_path: str,
         annotationfile_path: str,
+        classification_mode: str,
         num_segments: int = 3,
         frames_per_segment: int = 1,
         imagefile_template: str = "{:s}_{:d}.jpg",
@@ -120,6 +122,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
         self._parse_annotationfile()
         self._sanity_check_samples()
+        self.num_classes_dict = create_heads_dict(classification_mode)
 
     def _load_image(self, directory: str, idx: int) -> Image.Image:
         return Image.open(
@@ -256,11 +259,23 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
                 if frame_index < record.end_frame:
                     frame_index += 1
+        # create target in one-hot encoding form
+        target = []
+        labels = []
+        if type(record.label) == int:
+            labels.append(record.label)
+        else:
+            labels = record.label
+        for value, class_label in zip(self.num_classes_dict.values(), labels):
+            x = np.zeros(value)
+            J = np.random.choice(class_label)
+            x[J] = 1
+            target.append(torch.tensor(x))
 
         if self.transform is not None:
             images = self.transform(images)
 
-        return images, record.label
+        return images, target
 
     def __len__(self):
         return len(self.video_list)
