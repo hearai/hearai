@@ -1,4 +1,5 @@
 import argparse
+import os
 import os.path
 
 import numpy as np
@@ -60,37 +61,12 @@ def get_landmarks_coordinates_row(landmarks):
     return row
 
 
-if __name__ == "__main__":
-    face_columns_names = get_face_columns_names()
-    pose_columns_names = get_pose_columns_names()
-    left_hand_columns_names = get_left_hand_columns_names()
-    right_hand_columns_names = get_right_hand_columns_names()
-
-    face_nans_row = [np.nan for _ in range(len(face_columns_names))]
-    pose_nans_row = [np.nan for _ in range(len(pose_columns_names))]
-    left_hand_nans_row = [np.nan for _ in range(len(left_hand_columns_names))]
-    right_hand_nans_row = [np.nan for _ in range(len(right_hand_columns_names))]
-
-    mp_holistic = mp.solutions.holistic
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("input", help="Path to input video")
-    parser.add_argument("output", help="Path to save outputs")
-    args = parser.parse_args()
-    print(args.input)
-
-    video_path = args.input
-    video_file_basename = os.path.basename(video_path)
-    video_file_main_name = os.path.splitext(video_file_basename)[0]
-
-    video = cv.VideoCapture(video_path)
-
+def video_to_landmarks(video):
     video_n_frames = int(video.get(cv.CAP_PROP_FRAME_COUNT))
     video_fps = video.get(cv.CAP_PROP_FPS)
     video_width = int(video.get(cv.CAP_PROP_FRAME_WIDTH))
     video_height = int(video.get(cv.CAP_PROP_FRAME_HEIGHT))
 
-    print('Processing file ' + video_path)
     print('\tFPS:    ' + str(video_fps))
     print('\tFrames: ' + str(video_n_frames))
     print('\tSize:   ' + str(video_width) + 'x' + str(video_height))
@@ -157,14 +133,45 @@ if __name__ == "__main__":
             counter += 1
             success, frame = video.read()
 
-    video_face_df = pd.DataFrame(face_frames_ls, columns=face_columns_names)
-    video_pose_df = pd.DataFrame(pose_frames_ls, columns=pose_columns_names)
-    video_left_hand_df = pd.DataFrame(left_hand_frames_ls, columns=left_hand_columns_names)
-    video_right_hand_df = pd.DataFrame(right_hand_frames_ls, columns=right_hand_columns_names)
+    video_face = pd.DataFrame(face_frames_ls, columns=face_columns_names)
+    video_pose = pd.DataFrame(pose_frames_ls, columns=pose_columns_names)
+    video_left_hand = pd.DataFrame(left_hand_frames_ls, columns=left_hand_columns_names)
+    video_right_hand = pd.DataFrame(right_hand_frames_ls, columns=right_hand_columns_names)
 
     final_time = time.time()
     final_fps = (counter - 1) / (final_time - start_time)
     print(str(counter - 1) + '/' + str(video_n_frames) + "Final FPS = " + str(final_fps))
+    return video_face, video_pose, video_left_hand, video_right_hand
+
+
+if __name__ == "__main__":
+    face_columns_names = get_face_columns_names()
+    pose_columns_names = get_pose_columns_names()
+    left_hand_columns_names = get_left_hand_columns_names()
+    right_hand_columns_names = get_right_hand_columns_names()
+
+    face_nans_row = [np.nan for _ in range(len(face_columns_names))]
+    pose_nans_row = [np.nan for _ in range(len(pose_columns_names))]
+    left_hand_nans_row = [np.nan for _ in range(len(left_hand_columns_names))]
+    right_hand_nans_row = [np.nan for _ in range(len(right_hand_columns_names))]
+
+    mp_holistic = mp.solutions.holistic
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", help="Path to input video")
+    parser.add_argument("output", help="Path to save outputs")
+    args = parser.parse_args()
+    print(args.input)
+
+    video_path = args.input
+    video_file_basename = os.path.basename(video_path)
+    video_file_main_name = os.path.splitext(video_file_basename)[0]
+
+    video = cv.VideoCapture(video_path)
+
+    print('Processing file ' + video_path)
+
+    video_face_df, video_pose_df, video_left_hand_df, video_right_hand_df = video_to_landmarks(video)
 
     dfs = [video_face_df, video_pose_df, video_left_hand_df, video_right_hand_df]
     dfs_filenames = [video_file_main_name + "_face.csv",
