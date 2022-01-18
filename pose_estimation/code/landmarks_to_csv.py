@@ -228,6 +228,10 @@ def video_to_landmarks(video, generate_new_video=True):
 
 
 def process_single_video_file(video_file, output_directory, save_annotated_video=True):
+    output_video_codec = 'mp4v'
+    resize_factor = 1
+    output_video_suffix = '_annotated.avi'
+
     video_file_basename = os.path.basename(video_file)
     video_file_main_name = os.path.splitext(video_file_basename)[0]
 
@@ -257,14 +261,20 @@ def process_single_video_file(video_file, output_directory, save_annotated_video
 
     if save_annotated_video:
         output_video_path = os.path.join(output_directory,
-                                         video_file_main_name + '_annotated.avi')
-        output_video_codec = 'mp4v'
+                                         video_file_main_name + output_video_suffix)
+
+        output_video_width = round(resize_factor * video_width)
+        output_video_height = round(resize_factor * video_height)
         fourcc = cv.VideoWriter_fourcc(*output_video_codec)
         output_video = cv.VideoWriter(output_video_path,
                                       fourcc,
                                       video_fps,
-                                      (video_width, video_height))
+                                      (output_video_width, output_video_height))
         for frame in new_video:
+            if resize_factor != 1:
+                frame = cv.resize(frame,
+                                  (output_video_width, output_video_height),
+                                  cv.INTER_AREA)
             output_video.write(frame)
         output_video.release()
 
