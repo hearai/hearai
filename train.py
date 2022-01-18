@@ -15,7 +15,11 @@ def get_args_parser():
     parser.add_argument(
         "--data", help="path to data", default="assets/sanity_check_data"
     )
-    parser.add_argument("--classes", type=int, default=2400, help="number of classes")
+    parser.add_argument(
+        "--classification-mode",
+        default="gloss",
+        help="mode for classification, choose from classification_mode.py",
+    )
     parser.add_argument(
         "--ratio", type=float, default=0.8, help="train/test ratio (default: 0.8)"
     )
@@ -74,7 +78,10 @@ def main(args):
 
     # load data
     videos_root = args.data
-    annotation_file = os.path.join(videos_root, "test_gloss.txt")
+    if args.classification_mode == "gloss":
+        annotation_file = os.path.join(videos_root, "test_gloss.txt")
+    elif args.classification_mode == "hamnosys":
+        annotation_file = os.path.join(videos_root, "toy_hamnosys.txt")
     preprocess = T.Compose(
         [
             ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
@@ -87,6 +94,7 @@ def main(args):
     dataset = VideoFrameDataset(
         root_path=videos_root,
         annotationfile_path=annotation_file,
+        classification_mode=args.classification_mode,
         num_segments=1,
         frames_per_segment=1,
         transform=preprocess,
@@ -119,7 +127,7 @@ def main(args):
     # prepare model
     model = GlossTranslationModel(
         lr=args.lr,
-        num_classes=args.classes,
+        classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
         model_save_dir=args.save,
     )
