@@ -46,10 +46,13 @@ def generate_mockup_output(batch_size: int, num_classes: int) -> torch.Tensor:
     return torch.Tensor(classes_one_hot)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     batch_size = 4
-    input_shape = (7, 512,)
-    value_range = (0., 1.)
+    input_shape = (
+        7,
+        512,
+    )
+    value_range = (0.0, 1.0)
     num_classes = 10240
 
     feature_extractor_output = generate_mockup_input(
@@ -58,7 +61,7 @@ if __name__ == '__main__':
     labels = generate_mockup_output(batch_size=batch_size, num_classes=num_classes)
 
     # simulate model training
-    checkpoint = 'facebook/hubert-large-ls960-ft'
+    checkpoint = "facebook/hubert-large-ls960-ft"
     model = HubertTransformer(checkpoint=checkpoint, output_features=34)
     loss_fn = nn.functional.cross_entropy
     optimizer = Adam(model.parameters(), lr=1e-4)
@@ -74,7 +77,7 @@ if __name__ == '__main__':
         optimizer.step()
         optimizer.zero_grad()
         if (epoch % 10) == 0:
-            print(f'Epoch {epoch}/{epochs}, loss: {loss}')
+            print(f"Epoch {epoch}/{epochs}, loss: {loss}")
 
     print(f"Predicted labels: {np.argmax(model(X).detach().numpy(), axis=1)}")
     print(f"True labels: {np.argmax(y_true, axis=1)}")

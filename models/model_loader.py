@@ -15,7 +15,7 @@ class ModelLoader:
 
     transformers_ = {
         "vanilla_transformer": transformers.VanillaTransformer,
-        "pretrained_transformer": transformers.HubertTransformer
+        "hubert_transformer": transformers.HubertTransformer,
     }
 
     def load_feature_extractor(self, feature_extractor_name, *args, **kwargs):

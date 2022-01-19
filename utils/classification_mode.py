@@ -1,5 +1,6 @@
 import sys
 
+
 def create_heads_dict(classification_mode):
     if classification_mode == "gloss":
         num_classes_dict = {"gloss": 2400}  # number of classes for each head

@@ -31,7 +31,7 @@ def get_args_parser():
         "-b",
         "--batch-size",
         type=int,
-        default=8,
+        default=1,
         help="input batch size for training (default: 8)",
     )
     parser.add_argument(
@@ -95,7 +95,7 @@ def main(args):
         root_path=videos_root,
         annotationfile_path=annotation_file,
         classification_mode=args.classification_mode,
-        num_segments=1,
+        num_segments=32,
         frames_per_segment=1,
         transform=preprocess,
         test_mode=False,
@@ -129,7 +129,7 @@ def main(args):
         lr=args.lr,
         classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
-        transformer_name='pretrained_transformer',
+        transformer_name="hubert_transformer",
         model_save_dir=args.save,
     )
 
@@ -137,7 +137,7 @@ def main(args):
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
-        val_check_interval=0.3,
+        val_check_interval=1.0,
         gpus=args.gpu if args.gpu > 0 else None,
         progress_bar_refresh_rate=20,
         accumulate_grad_batches=1,
