@@ -129,6 +129,7 @@ def main(args):
         lr=args.lr,
         classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
+        transformer_name='pretrained_transformer',
         model_save_dir=args.save,
     )
 
