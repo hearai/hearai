@@ -1,1 +1,2 @@
 from .vanilla_trasnformer import VanillaTransformer
+from .hubert_transformer import HubertTransformer

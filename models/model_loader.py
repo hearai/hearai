@@ -13,7 +13,10 @@ class ModelLoader:
         "resnet50_extractor": feature_extractors.Resnet50Extractor,
     }
 
-    transformers_ = {"vanilla_transformer": transformers.VanillaTransformer}
+    transformers_ = {
+        "vanilla_transformer": transformers.VanillaTransformer,
+        "hubert_transformer": transformers.HubertTransformer,
+    }
 
     def load_feature_extractor(self, feature_extractor_name, *args, **kwargs):
         try:
