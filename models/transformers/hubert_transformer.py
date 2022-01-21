@@ -35,5 +35,5 @@ class HubertTransformer(nn.Module):
             x = input
         x = self.model(x).last_hidden_state
         x = torch.reshape(x, (x.shape[0], -1))
-        x = nn.Linear(in_features=x.shape[1], out_features=self.__output_features)(x)
+        x = nn.Linear(in_features=x.shape[1], out_features=self.__output_features)(x.cpu())
         return x

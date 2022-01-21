@@ -31,7 +31,7 @@ def get_args_parser():
         "-b",
         "--batch-size",
         type=int,
-        default=1,
+        default=3,
         help="input batch size for training (default: 8)",
     )
     parser.add_argument(
@@ -95,7 +95,7 @@ def main(args):
         root_path=videos_root,
         annotationfile_path=annotation_file,
         classification_mode=args.classification_mode,
-        num_segments=32,
+        num_segments=8,
         frames_per_segment=1,
         transform=preprocess,
         test_mode=False,
