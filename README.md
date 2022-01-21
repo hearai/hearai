@@ -13,6 +13,10 @@ Submodels should be reusable: key variables should be variables (e.g. `input_siz
 
 Main model is written in PyTorch Lightning for easier training. But for inference we will load it like a normal PyTorch model.
 
+# Example train.py run
+
+`python3 train.py --data /dih4/dih4_2/hearai/data/frames/pjm --gpu 1`
+
 # Project organization
 ------------
 
