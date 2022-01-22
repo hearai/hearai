@@ -2,12 +2,19 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import numpy as np
+from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
+import neptune.new as neptune
 from torch.optim.lr_scheduler import MultiplicativeLR
 from models.model_loader import ModelLoader
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from utils.classification_mode import create_heads_dict
+
+
+# initialize neptune logging
+run = neptune.init(api_token=NEPTUNE_API_TOKEN,
+                   project=NEPTUNE_PROJECT_NAME)
 
 
 def summary_loss(predictions, targets):
@@ -76,7 +83,8 @@ class GlossTranslationModel(pl.LightningModule):
         input, targets = batch
         predictions = self(input)
         loss = summary_loss(predictions, targets)
-        self.log("metrics/batch/training_loss", loss, prog_bar=False)
+        run["metrics/batch/training_loss"].log(loss)
+        #self.log("metrics/batch/training_loss", loss, prog_bar=False)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
