@@ -84,14 +84,13 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = self(input)
         loss = summary_loss(predictions, targets)
         run["metrics/batch/training_loss"].log(loss)
-        #self.log("metrics/batch/training_loss", loss, prog_bar=False)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
         input, targets = batch
         predictions = self(input)
         loss = summary_loss(predictions, targets)
-        self.log("metrics/batch/validation_loss", loss)
+        run["metrics/batch/validation_loss"].log(loss)
 
     def validation_epoch_end(self, out):
         # TO-DO validation metrics at the epoch end
@@ -128,4 +127,4 @@ class GlossTranslationModel(pl.LightningModule):
                 pg["lr"] = lr_scale * self.lr
 
         optimizer.step(closure=optimizer_closure)
-        self.log("params/lr", self.lr, prog_bar=False)
+        run["params/lr"].log(self.lr)
