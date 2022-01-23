@@ -85,23 +85,21 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = self(input)
         loss = summary_loss(predictions, targets)
         self.log("metrics/batch/validation_loss", loss)
-        return {"loss": loss, "target": target, "prediction": prediction}
+        return {"loss": loss, "targets": targets, "predictions": predictions}
 
     def validation_epoch_end(self, out):
         for i, outputs in enumerate(out):
-            target, prediction = outputs["target"], outputs["prediction"]
+            targets, predictions = outputs["targets"], outputs["predictions"]
 
-            if i == 0:
-                targets = target
-                predictions = prediction
-            else:
-                targets = torch.cat((targets, target), 0)
-                predictions = torch.cat((predictions, prediction), 0)
-
-        predictions = torch.argmax(predictions, dim=1).cpu().detach().numpy()
-        targets = targets.cpu().detach().numpy()
-
-        print(classification_report(targets, predictions, zero_division=0))
+            predictions = torch.cat(predictions, 0)
+            predictions = predictions.cpu().detach()
+            #predictions = torch.argmax(predictions, dim=1).cpu().detach()
+            targets = torch.cat(targets, 0)
+            targets = targets.cpu().detach()
+            #targets = torch.argmax(targets, dim=1).cpu().detach()
+            print("targets\n", targets.shape)
+            print("pred\n", predictions.shape)
+            print(classification_report(targets, predictions, zero_division=0))
 
         if self.trainer.global_step > 0:
             print("Saving model...")
