@@ -13,6 +13,15 @@ Submodels should be reusable: key variables should be variables (e.g. `input_siz
 
 Main model is written in PyTorch Lightning for easier training. But for inference we will load it like a normal PyTorch model.
 
+# Environment setup
+To create reproducible environment create virtual environment using venv and requirements defined.
+In terminal run:
+`make venv`
+
+When you install new library, please add it to the list in `requirements.txt` file so we can avoid dependency conflicts or failed build.
+
+# Style 
+
 # Example train.py run
 
 `python3 train.py --data /dih4/dih4_2/hearai/data/frames/pjm --gpu 1`
