@@ -17,6 +17,16 @@ Main model is written in PyTorch Lightning for easier training. But for inferenc
 
 `python3 train.py --data /dih4/dih4_2/hearai/data/frames/pjm --gpu 1`
 
+# How to setup logging with neptune.ai
+- go to your neptune.ai account and get your API token
+- in terminal add your personal token to environmental variables
+`export NEPTUNE_API_TOKEN = "<your_token>"`
+- go to your neptune.ai account and get your project name
+- in terminal add your project name to environmental variables
+`NEPTUNE_PROJECT_NAME = "<your_workspace/your_project_name>"`
+- if you want to make sure that your credentials are saved properly, you can use `printenv`
+- to run training with neptune logger initialized, add `--neptune` flag, i.e. `python3 train.py --neptune`
+
 # Project organization
 ------------
 
