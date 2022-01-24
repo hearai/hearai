@@ -2,12 +2,22 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import numpy as np
+from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
+import neptune.new as neptune
 from torch.optim.lr_scheduler import MultiplicativeLR
 from models.model_loader import ModelLoader
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from utils.classification_mode import create_heads_dict
+
+
+# initialize neptune logging
+def initialize_neptun():
+    return neptune.init(
+        api_token=NEPTUNE_API_TOKEN,
+        project=NEPTUNE_PROJECT_NAME
+        )
 
 
 def summary_loss(predictions, targets):
@@ -35,8 +45,14 @@ class GlossTranslationModel(pl.LightningModule):
         feature_extractor_name="cnn_extractor",
         transformer_name="vanilla_transformer",
         model_save_dir="",
+        neptune=False,
     ):
         super().__init__()
+
+        if neptune:
+            self.run = initialize_neptun()
+        else:
+            self.run = None
 
         # parameters
         self.lr = lr
@@ -76,14 +92,16 @@ class GlossTranslationModel(pl.LightningModule):
         input, targets = batch
         predictions = self(input)
         loss = summary_loss(predictions, targets)
-        self.log("metrics/batch/training_loss", loss, prog_bar=False)
+        if self.run:
+            self.run["metrics/batch/training_loss"].log(loss)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
         input, targets = batch
         predictions = self(input)
         loss = summary_loss(predictions, targets)
-        self.log("metrics/batch/validation_loss", loss)
+        if self.run:
+            self.run["metrics/batch/validation_loss"].log(loss)
 
     def validation_epoch_end(self, out):
         # TO-DO validation metrics at the epoch end
@@ -120,4 +138,5 @@ class GlossTranslationModel(pl.LightningModule):
                 pg["lr"] = lr_scale * self.lr
 
         optimizer.step(closure=optimizer_closure)
-        self.log("params/lr", self.lr, prog_bar=False)
+        if self.run:
+            self.run["params/lr"].log(self.lr)

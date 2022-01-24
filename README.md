@@ -25,6 +25,7 @@ When you install new library, please add it to the list in `requirements.txt` fi
 
 `python3 train.py --data /dih4/dih4_2/hearai/data/frames/pjm --gpu 1`
 
+
 # Style
 
 For style formatting the `black` library is used as default.
@@ -36,6 +37,17 @@ If you want to apply changes to your code formatting style, in terminal run:
 To check code quality with linter, in terminal run:
 `make lint`
 Currently `pylint` is default linter with access to train.py and models/ (all files are evaluated altogether, if you want to test your specific file, try: `pylint yourfile.py`)
+
+# How to setup logging with neptune.ai
+- go to your neptune.ai account and get your API token
+- in terminal add your personal token to environmental variables
+`export NEPTUNE_API_TOKEN = "<your_token>"`
+- go to your neptune.ai account and get your project name
+- in terminal add your project name to environmental variables
+`NEPTUNE_PROJECT_NAME = "<your_workspace/your_project_name>"`
+- if you want to make sure that your credentials are saved properly, you can use `printenv`
+- to run training with neptune logger initialized, add `--neptune` flag, i.e. `python3 train.py --neptune`
+
 
 # Project organization
 ------------
