@@ -2,6 +2,7 @@ import math
 
 import torch
 import torch.nn as nn
+from pytorch_forecasting.models.temporal_fusion_transformer import InterpretableMultiHeadAttention
 
 
 class SignLanguageTransformer(nn.Module):
@@ -43,9 +44,12 @@ class SignLanguageTransformer(nn.Module):
         keys = positional_encoding_normalized
         questions = positional_encoding_normalized
 
-        attention_output = MultiHeadAttention()(v=values,
-                                                k=keys,
-                                                q=questions)
+        n_head = 1
+        d_model = 1
+
+        attention_output = InterpretableMultiHeadAttention(n_head=n_head, d_model=d_model)(v=values,
+                                                                                           k=keys,
+                                                                                           q=questions)
 
         # todo: Add & Norm
 
@@ -56,59 +60,3 @@ class SignLanguageTransformer(nn.Module):
         #
 
         pass
-
-
-class MultiHeadAttention(nn.Module):
-
-    def __init__(self):
-        super(MultiHeadAttention, self).__init__()
-
-    def forward(self,
-                v: torch.Tensor,
-                k: torch.Tensor,
-                q: torch.Tensor):
-        """
-        Implementation follows paper: https://arxiv.org/pdf/1706.03762.pdf
-
-        Args:
-            v (torch.Tensor): Values tensor.
-            k (torch.Tensor): Keys tensor.
-            q (torch.Tensor): Queries tensor.
-
-        Returns:
-            (torch.Tensor)
-        """
-        # todo: @Alicja
-        pass
-
-
-class ScaledDotProductAttention(nn.Module):
-
-    def __init__(self):
-        super(ScaledDotProductAttention, self).__init__()
-
-    def forward(self,
-                v: torch.Tensor,
-                k: torch.Tensor,
-                q: torch.Tensor):
-        """
-        Implementation follows paper: https://arxiv.org/pdf/1706.03762.pdf
-
-        Args:
-            v (torch.Tensor): Values tensor.
-            k (torch.Tensor): Keys tensor.
-            q (torch.Tensor): Queries tensor.
-
-        Returns:
-            (torch.Tensor)
-        """
-        # todo: @Alicja
-        pass
-
-
-if __name__ == '__main__':
-    import torch
-    import numpy as np
-
-    tmp = np.random.random((1, 4, 512))
-    input = torch.Tensor(tmp)
