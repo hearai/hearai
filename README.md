@@ -13,9 +13,30 @@ Submodels should be reusable: key variables should be variables (e.g. `input_siz
 
 Main model is written in PyTorch Lightning for easier training. But for inference we will load it like a normal PyTorch model.
 
+# Environment setup
+
+To create reproducible environment create virtual environment using venv and requirements defined.
+In terminal run:
+`make venv`
+
+When you install new library, please add it to the list in `requirements.txt` file so we can avoid dependency conflicts or failed build.
+
 # Example train.py run
 
 `python3 train.py --data /dih4/dih4_2/hearai/data/frames/pjm --gpu 1`
+
+
+# Style
+
+For style formatting the `black` library is used as default.
+If you want to check whether your code matches style requirements, in terminal run:
+`make format-check`
+If you want to apply changes to your code formatting style, in terminal run:
+`make format-apply`
+
+To check code quality with linter, in terminal run:
+`make lint`
+Currently `pylint` is default linter with access to train.py and models/ (all files are evaluated altogether, if you want to test your specific file, try: `pylint yourfile.py`)
 
 # How to setup logging with neptune.ai
 - go to your neptune.ai account and get your API token
@@ -26,6 +47,7 @@ Main model is written in PyTorch Lightning for easier training. But for inferenc
 `NEPTUNE_PROJECT_NAME = "<your_workspace/your_project_name>"`
 - if you want to make sure that your credentials are saved properly, you can use `printenv`
 - to run training with neptune logger initialized, add `--neptune` flag, i.e. `python3 train.py --neptune`
+
 
 # Project organization
 ------------
