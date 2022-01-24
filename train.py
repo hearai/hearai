@@ -60,6 +60,13 @@ def get_args_parser():
         action="store_true",
         help="Flag for a sanity-check, runs single loop for the training phase",
     )
+    # Neptune settings
+    parser.add_argument(
+        '--neptune',
+        action='store_true', 
+        default=False,
+        help='Launch experiment and log metrics with neptune',
+    )
     return parser
 
 
@@ -131,10 +138,9 @@ def main(args):
         feature_extractor_name="cnn_extractor",
         transformer_name="hubert_transformer",
         model_save_dir=args.save,
+        neptune=args.neptune
     )
-
-    # TODO - create NeptuneLogger
-
+    
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         val_check_interval=1.0,
