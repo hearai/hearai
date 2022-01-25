@@ -5,6 +5,7 @@ import numpy as np
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 import neptune.new as neptune
 from torch.optim.lr_scheduler import MultiplicativeLR
+from sklearn.metrics import classification_report
 from models.model_loader import ModelLoader
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
@@ -19,7 +20,7 @@ def initialize_neptun():
         project=NEPTUNE_PROJECT_NAME
         )
 
-
+  
 def summary_loss(predictions, targets):
     loss = nn.CrossEntropyLoss()
     losses = []
@@ -102,9 +103,39 @@ class GlossTranslationModel(pl.LightningModule):
         loss = summary_loss(predictions, targets)
         if self.run:
             self.run["metrics/batch/validation_loss"].log(loss)
+        return {"loss": loss, "targets": targets, "predictions": predictions}
 
+      
     def validation_epoch_end(self, out):
-        # TO-DO validation metrics at the epoch end
+        head_names = list(self.num_classes_dict.keys())
+        # initialize empty list with list per head
+        all_targets = [[] for name in head_names]
+        all_predictions = [[] for name in head_names]
+        for single_batch in out:
+            targets, predictions = single_batch["targets"], single_batch["predictions"]
+            # append predictions and targets for every head
+            for nr_head, head_targets in enumerate(targets):
+                all_targets[nr_head].append(
+                    torch.argmax(targets[nr_head]).cpu().detach().numpy()
+                )
+                all_predictions[nr_head].append(
+                    torch.argmax(predictions[nr_head]).cpu().detach().numpy()
+                )
+
+        for nr_head, head_targets in enumerate(all_targets):
+            head_report = "\n".join(
+                [
+                    head_names[nr_head],
+                    classification_report(
+                        all_targets[nr_head], all_predictions[nr_head], zero_division=0
+                    ),
+                ]
+            )
+            print(head_report)
+            if self.run:
+                log_path = "/".join(["metrics/epoch/", head_names[nr_head]])
+                self.run[log_path].log(head_report)
+
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
