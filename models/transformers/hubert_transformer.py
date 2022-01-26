@@ -12,7 +12,11 @@ class HubertTransformer(nn.Module):
     """
 
     def __init__(
-        self, input_features: int = 2048, output_features: int = 512, *args, **kwargs
+            self, input_features: int = 2048,
+            output_features: int = 512,
+            hidden_features: int = 38400,
+            *args,
+            **kwargs
     ):
         """
         Args:
@@ -23,10 +27,13 @@ class HubertTransformer(nn.Module):
         configuration = HubertConfig()
         self.model = HubertModel(configuration)
         self.model.feature_extractor._requires_grad = (
-            False  # fix require_grad error by blocking gradients
+            True  # fix require_grad error by blocking gradients
         )
         # TO-DO: check why transformers/models/hubert/modeling_hubert.py lines 317-318 (in .venv) is causing errors
         self.__output_features = output_features
+
+        # Define layers
+        self._linear = nn.Linear(in_features=hidden_features, out_features=self.__output_features)
 
     def forward(self, input: torch.Tensor, **kwargs):
         if len(input.shape) > 2:
@@ -35,7 +42,5 @@ class HubertTransformer(nn.Module):
             x = input
         x = self.model(x).last_hidden_state
         x = torch.reshape(x, (x.shape[0], -1))
-        x = nn.Linear(in_features=x.shape[1], out_features=self.__output_features)(
-            x.cpu()
-        )
+        x = self._linear(x)
         return x
