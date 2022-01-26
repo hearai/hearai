@@ -137,6 +137,7 @@ def main(args):
         classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
         transformer_name="hubert_transformer",
+        num_segments=8,
         model_save_dir=args.save,
         neptune=args.neptune
     )
