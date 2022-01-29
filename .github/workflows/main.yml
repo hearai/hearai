@@ -29,7 +29,11 @@ jobs:
       - name: Sanity-check
         run: |
           source .venv/bin/activate
-          python3 train.py --fast-dev-run
+          echo "Running sanity check for the gloss classification-mode..."
+          python3 train.py --fast-dev-run --classification-mode gloss
+
+          echo "Running sanity check for the hamnosys classification-mode..."
+          python3 train.py --fast-dev-run --classification-mode hamnosys
 
       - name: Clean
         run: |
