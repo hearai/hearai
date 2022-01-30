@@ -141,7 +141,12 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         ]
 
     def _sanity_check_samples(self):
-        for record in self.video_list:
+        for id, record in enumerate(self.video_list):
+            if any(isinstance(x, str) for x in record._data):
+                # Found datafile header. Removing it.
+                del self.video_list[id]
+                continue
+                
             if record.num_frames <= 0 or record.start_frame == record.end_frame:
                 print(
                     f"\nDataset Warning: video {record.path} seems to have zero RGB frames on disk!\n"

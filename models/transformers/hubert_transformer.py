@@ -6,7 +6,6 @@ import torch.nn as nn
 
 from transformers import HubertModel, HubertConfig
 
-
 class HubertTransformer(nn.Module):
     """
     Pretrained transformer model from huggingface repository.
@@ -29,10 +28,6 @@ class HubertTransformer(nn.Module):
         super(HubertTransformer, self).__init__()
         configuration = HubertConfig()
         self.model = HubertModel(configuration)
-        self.model.feature_extractor._requires_grad = (
-            False  # fix require_grad error by blocking gradients
-        )
-        # TO-DO: check why transformers/models/hubert/modeling_hubert.py lines 317-318 (in .venv) is causing errors
         self._input_features = input_features
         self._output_features = output_features
 

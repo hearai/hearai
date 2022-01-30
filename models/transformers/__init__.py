@@ -1,2 +1,2 @@
-from .vanilla_trasnformer import VanillaTransformer
+from .fake_trasnformer import FakeTransformer
 from .hubert_transformer import HubertTransformer
