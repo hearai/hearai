@@ -6,18 +6,19 @@ import torch.nn as nn
 
 from transformers import HubertModel, HubertConfig
 
+
 class HubertTransformer(nn.Module):
     """
     Pretrained transformer model from huggingface repository.
     """
 
     def __init__(
-            self,
-            input_features: int = 2048,
-            output_features: int = 512,
-            num_segments: int = 10,
-            *args,
-            **kwargs
+        self,
+        input_features: int = 2048,
+        output_features: int = 512,
+        num_segments: int = 10,
+        *args,
+        **kwargs
     ):
         """
         Args:
@@ -32,11 +33,15 @@ class HubertTransformer(nn.Module):
         self._output_features = output_features
 
         # Define layers
-        hidden_features = self.find_hidden_features_number(input_size=input_features * num_segments,
-                                                           hidden_size=configuration.hidden_size,
-                                                           kernels=configuration.conv_kernel,
-                                                           strides=configuration.conv_stride)
-        self._linear = nn.Linear(in_features=hidden_features, out_features=self._output_features)
+        hidden_features = self.find_hidden_features_number(
+            input_size=input_features * num_segments,
+            hidden_size=configuration.hidden_size,
+            kernels=configuration.conv_kernel,
+            strides=configuration.conv_stride,
+        )
+        self._linear = nn.Linear(
+            in_features=hidden_features, out_features=self._output_features
+        )
 
     def forward(self, input: torch.Tensor, **kwargs):
         if len(input.shape) > 2:
@@ -49,11 +54,9 @@ class HubertTransformer(nn.Module):
 
         return x
 
-    def find_hidden_features_number(self,
-                                    input_size: int,
-                                    hidden_size: int,
-                                    kernels: List,
-                                    strides: List):
+    def find_hidden_features_number(
+        self, input_size: int, hidden_size: int, kernels: List, strides: List
+    ):
         def compute_size(input, kernel, stride):
             return ((input - kernel) / stride) + 1
 
@@ -63,7 +66,10 @@ class HubertTransformer(nn.Module):
                 new_input = compute_size(new_input, kernel, stride)
             return new_input
 
-        hidden_features_number = (np.floor(compute_size_list(input=input_size,
-                                                             kernels=kernels,
-                                                             strides=strides)) * hidden_size).astype(int)
+        hidden_features_number = (
+            np.floor(
+                compute_size_list(input=input_size, kernels=kernels, strides=strides)
+            )
+            * hidden_size
+        ).astype(int)
         return hidden_features_number

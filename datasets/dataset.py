@@ -146,7 +146,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                 # Found datafile header. Removing it.
                 del self.video_list[id]
                 continue
-                
+
             if record.num_frames <= 0 or record.start_frame == record.end_frame:
                 print(
                     f"\nDataset Warning: video {record.path} seems to have zero RGB frames on disk!\n"

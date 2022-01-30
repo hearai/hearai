@@ -17,7 +17,7 @@ class MultiFrameFeatureExtractor(nn.Module):
     def __init__(self, feature_extractor):
         super().__init__()
         self.feature_extractor = feature_extractor
-        
+
     def forward(self, x):
         frame_features = []
 

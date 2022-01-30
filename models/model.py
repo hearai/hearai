@@ -15,10 +15,7 @@ from utils.classification_mode import create_heads_dict
 
 # initialize neptune logging
 def initialize_neptun():
-    return neptune.init(
-        api_token=NEPTUNE_API_TOKEN,
-        project=NEPTUNE_PROJECT_NAME
-        )
+    return neptune.init(api_token=NEPTUNE_API_TOKEN, project=NEPTUNE_PROJECT_NAME)
 
 
 def summary_loss(predictions, targets):
@@ -105,7 +102,6 @@ class GlossTranslationModel(pl.LightningModule):
         if self.run:
             self.run["metrics/batch/validation_loss"].log(loss)
         return {"loss": loss, "targets": targets, "predictions": predictions}
-
 
     def validation_epoch_end(self, out):
         head_names = list(self.num_classes_dict.keys())
