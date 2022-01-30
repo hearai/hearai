@@ -60,7 +60,7 @@ def get_args_parser():
     parser.add_argument(
         "--gpu",
         type=int,
-        default=1,
+        default=-1,
         help="number of GPU to use, run on CPU if default (-1) used",
     )
     parser.add_argument("--save", help="path to save model", default="./best.pth")
