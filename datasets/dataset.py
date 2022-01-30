@@ -142,7 +142,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
     def _sanity_check_samples(self):
         for id, record in enumerate(self.video_list):
-            if any(isinstance(x, str) for x in record._data):
+            if any(not x.isdigit() for x in record._data):
                 # Found datafile header. Removing it.
                 del self.video_list[id]
                 continue
