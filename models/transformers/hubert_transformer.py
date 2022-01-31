@@ -1,5 +1,6 @@
 from typing import List
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -12,21 +13,35 @@ class HubertTransformer(nn.Module):
     """
 
     def __init__(
-        self, input_features: int = 2048, output_features: int = 512, *args, **kwargs
+        self,
+        input_features: int = 2048,
+        output_features: int = 512,
+        num_segments: int = 10,
+        *args,
+        **kwargs
     ):
         """
         Args:
             input_features (int): Argument to keep name convention consistency.
             output_features (int): Expected number of output features from the model.
+            num_segments (int): Number of frames associated with single sign.
         """
         super(HubertTransformer, self).__init__()
         configuration = HubertConfig()
         self.model = HubertModel(configuration)
-        self.model.feature_extractor._requires_grad = (
-            False  # fix require_grad error by blocking gradients
+        self._input_features = input_features
+        self._output_features = output_features
+
+        # Define layers
+        hidden_features = self.find_hidden_features_number(
+            input_size=input_features * num_segments,
+            hidden_size=configuration.hidden_size,
+            kernels=configuration.conv_kernel,
+            strides=configuration.conv_stride,
         )
-        # TO-DO: check why transformers/models/hubert/modeling_hubert.py lines 317-318 (in .venv) is causing errors
-        self.__output_features = output_features
+        self._linear = nn.Linear(
+            in_features=hidden_features, out_features=self._output_features
+        )
 
     def forward(self, input: torch.Tensor, **kwargs):
         if len(input.shape) > 2:
@@ -35,7 +50,26 @@ class HubertTransformer(nn.Module):
             x = input
         x = self.model(x).last_hidden_state
         x = torch.reshape(x, (x.shape[0], -1))
-        x = nn.Linear(in_features=x.shape[1], out_features=self.__output_features)(
-            x.cpu()
-        )
+        x = self._linear(x)
+
         return x
+
+    def find_hidden_features_number(
+        self, input_size: int, hidden_size: int, kernels: List, strides: List
+    ):
+        def compute_size(input, kernel, stride):
+            return ((input - kernel) / stride) + 1
+
+        def compute_size_list(input, kernels, strides):
+            new_input = input
+            for kernel, stride in zip(kernels, strides):
+                new_input = compute_size(new_input, kernel, stride)
+            return new_input
+
+        hidden_features_number = (
+            np.floor(
+                compute_size_list(input=input_size, kernels=kernels, strides=strides)
+            )
+            * hidden_size
+        ).astype(int)
+        return hidden_features_number

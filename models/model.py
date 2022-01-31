@@ -15,12 +15,9 @@ from utils.classification_mode import create_heads_dict
 
 # initialize neptune logging
 def initialize_neptun():
-    return neptune.init(
-        api_token=NEPTUNE_API_TOKEN,
-        project=NEPTUNE_PROJECT_NAME
-        )
+    return neptune.init(api_token=NEPTUNE_API_TOKEN, project=NEPTUNE_PROJECT_NAME)
 
-  
+
 def summary_loss(predictions, targets):
     loss = nn.CrossEntropyLoss()
     losses = []
@@ -42,6 +39,7 @@ class GlossTranslationModel(pl.LightningModule):
         warmup_steps=100.0,
         transformer_output_size=1024,
         representation_size=2048,
+        num_segments=10,
         classification_mode="gloss",
         feature_extractor_name="cnn_extractor",
         transformer_name="vanilla_transformer",
@@ -74,7 +72,7 @@ class GlossTranslationModel(pl.LightningModule):
             self.feature_extractor
         )
         self.transformer = self.model_loader.load_transformer(
-            transformer_name, representation_size, transformer_output_size
+            transformer_name, representation_size, transformer_output_size, num_segments
         )
         self.cls_head = []
         print(self.num_classes_dict)
@@ -86,7 +84,7 @@ class GlossTranslationModel(pl.LightningModule):
         x = self.multi_frame_feature_extractor(input)
         x = self.transformer(x)
         for head in self.cls_head:
-            predictions.append(head(x))
+            predictions.append(head(x.cpu()))
         return predictions
 
     def training_step(self, batch, batch_idx):
@@ -105,7 +103,6 @@ class GlossTranslationModel(pl.LightningModule):
             self.run["metrics/batch/validation_loss"].log(loss)
         return {"loss": loss, "targets": targets, "predictions": predictions}
 
-      
     def validation_epoch_end(self, out):
         head_names = list(self.num_classes_dict.keys())
         # initialize empty list with list per head

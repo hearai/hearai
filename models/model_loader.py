@@ -14,7 +14,7 @@ class ModelLoader:
     }
 
     transformers_ = {
-        "vanilla_transformer": transformers.VanillaTransformer,
+        "fake_transformer": transformers.FakeTransformer,
         "hubert_transformer": transformers.HubertTransformer,
     }
 

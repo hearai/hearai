@@ -23,6 +23,18 @@ def get_args_parser():
     parser.add_argument(
         "--ratio", type=float, default=0.8, help="train/test ratio (default: 0.8)"
     )
+    parser.add_argument(
+        "--num_segments",
+        type=int,
+        default=8,
+        help="dataset parameter defining number of segments per video used as an input",
+    )
+    parser.add_argument(
+        "--frames_per_segment",
+        type=int,
+        default=1,
+        help="dataset parameter defining number of frames that will be drawn randomly from each segment",
+    )
     # Training parameters
     parser.add_argument(
         "--lr", type=float, default=3e-5, help="learning rate (default: 3e-5)"
@@ -32,7 +44,7 @@ def get_args_parser():
         "--batch-size",
         type=int,
         default=3,
-        help="input batch size for training (default: 8)",
+        help="input batch size for training (default: 3)",
     )
     parser.add_argument(
         "--epochs",
@@ -62,10 +74,10 @@ def get_args_parser():
     )
     # Neptune settings
     parser.add_argument(
-        '--neptune',
-        action='store_true', 
+        "--neptune",
+        action="store_true",
         default=False,
-        help='Launch experiment and log metrics with neptune',
+        help="Launch experiment and log metrics with neptune",
     )
     return parser
 
@@ -89,6 +101,7 @@ def main(args):
         annotation_file = os.path.join(videos_root, "test_gloss.txt")
     elif args.classification_mode == "hamnosys":
         annotation_file = os.path.join(videos_root, "toy_hamnosys.txt")
+
     preprocess = T.Compose(
         [
             ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
@@ -102,8 +115,8 @@ def main(args):
         root_path=videos_root,
         annotationfile_path=annotation_file,
         classification_mode=args.classification_mode,
-        num_segments=8,
-        frames_per_segment=1,
+        num_segments=args.num_segments,
+        frames_per_segment=args.frames_per_segment,
         transform=preprocess,
         test_mode=False,
     )
@@ -137,10 +150,11 @@ def main(args):
         classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
         transformer_name="hubert_transformer",
+        num_segments=args.num_segments * args.frames_per_segment,
         model_save_dir=args.save,
-        neptune=args.neptune
+        neptune=args.neptune,
     )
-    
+
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         val_check_interval=1.0,

@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from torch.autograd import Variable
+
 
 class MultiFrameFeatureExtractor(nn.Module):
     """
@@ -21,7 +23,7 @@ class MultiFrameFeatureExtractor(nn.Module):
 
         for frame in x:
             output = self.feature_extractor(frame).squeeze(0)
-            frame_features.append(output)
+            frame_features.append(Variable(output))
 
         frame_features = torch.stack(frame_features, dim=0)
         return frame_features

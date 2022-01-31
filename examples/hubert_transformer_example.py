@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from torch.optim import Adam
 
-from models.transformers.pretrained_transformer import HubertTransformer
+from models.transformers.hubert_transformer import HubertTransformer
 
 
 def generate_mockup_input(
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         512,
     )
     value_range = (0.0, 1.0)
-    num_classes = 10240
+    num_classes = 34
 
     feature_extractor_output = generate_mockup_input(
         batch_size=batch_size, input_shape=input_shape, value_range=value_range
