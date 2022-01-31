@@ -1,13 +1,9 @@
-# Example pipeline
-This branch presents the pseudo-code of example pipeline.
-Some parts of codes are ready-to-use, but others are just a dummy examples.
-This is an idea to share. 
-The final version of the repository might look differently, but this is a nice starter.
+# Pipeline
 
 # Idea
 We should be able to eaisly switch models used in the main model e.g. in the `GlossTranslationModel`, for instance, by giving a different path to a model
 
-We want to eaisly switch datasets (e.g. just change import) `train.py` and final model should be quite simple. Everything more complicated should be moved to submodels e.g. a transfomer model should not be implemented in the main model. Instead we would prefer to load it `models/transfomers/vanilla_transfomer`
+We want to eaisly switch datasets (e.g. just change import) `train.py` and final model should be quite simple. Everything more complicated should be moved to submodels e.g. a transfomer model should not be implemented in the main model. Instead we would prefer to load it `models/transfomers/fake_transfomer`
 
 Submodels should be reusable: key variables should be variables (e.g. `input_size`)
 

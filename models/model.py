@@ -11,22 +11,11 @@ from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from utils.classification_mode import create_heads_dict
-
+from utils.summary_loss import SummaryLoss
 
 # initialize neptune logging
 def initialize_neptun():
     return neptune.init(api_token=NEPTUNE_API_TOKEN, project=NEPTUNE_PROJECT_NAME)
-
-
-def summary_loss(predictions, targets):
-    loss = nn.CrossEntropyLoss()
-    losses = []
-    loss_sum = 0
-    for prediction, target in zip(predictions, targets):
-        one_loss = loss(prediction.to("cpu"), target.to("cpu"))
-        losses.append(one_loss)
-        loss_sum = loss_sum + one_loss
-    return loss_sum
 
 
 class GlossTranslationModel(pl.LightningModule):
@@ -42,7 +31,7 @@ class GlossTranslationModel(pl.LightningModule):
         num_segments=10,
         classification_mode="gloss",
         feature_extractor_name="cnn_extractor",
-        transformer_name="vanilla_transformer",
+        transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
     ):
@@ -61,7 +50,7 @@ class GlossTranslationModel(pl.LightningModule):
         self.num_classes_dict = create_heads_dict(classification_mode)
 
         # losses
-        # self.summary_loss = summary_loss(predictions, targets)
+        self.summary_loss = SummaryLoss(nn.CrossEntropyLoss)
 
         # models-parts
         self.model_loader = ModelLoader()
@@ -90,7 +79,7 @@ class GlossTranslationModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         input, targets = batch
         predictions = self(input)
-        loss = summary_loss(predictions, targets)
+        loss = self.summary_loss(predictions, targets)
         if self.run:
             self.run["metrics/batch/training_loss"].log(loss)
         return {"loss": loss}
@@ -98,7 +87,7 @@ class GlossTranslationModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         input, targets = batch
         predictions = self(input)
-        loss = summary_loss(predictions, targets)
+        loss = self.summary_loss(predictions, targets)
         if self.run:
             self.run["metrics/batch/validation_loss"].log(loss)
         return {"loss": loss, "targets": targets, "predictions": predictions}
