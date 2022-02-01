@@ -30,7 +30,7 @@ class GlossTranslationModel(pl.LightningModule):
         representation_size=2048,
         feedforward_size=4096,
         num_encoder_layers=1,
-        num_frames=8,
+        num_segments=8,
         classification_mode="gloss",
         feature_extractor_name="cnn_extractor",
         transformer_name="fake_transformer",
@@ -64,7 +64,7 @@ class GlossTranslationModel(pl.LightningModule):
         )
         if transformer_name == 'sign_language_transformer':
             self.transformer = self.model_loader.load_transformer(
-                transformer_name, representation_size, transformer_output_size, feedforward_size, num_encoder_layers, num_frames
+                transformer_name, representation_size, transformer_output_size, feedforward_size, num_encoder_layers, num_segments
             )
         else:
             self.transformer = self.model_loader.load_transformer(
