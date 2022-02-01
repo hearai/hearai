@@ -1,25 +1,30 @@
 ![CI workflow badge](https://github.com/hearai/hearai/workflows/CI-pipeline/badge.svg) ![Visits Badge](https://badges.pufler.dev/visits/hearai/hearai)
+
+<p align="center">
+<a href="https://www.hearai.pl"><img src="https://i.imgur.com/wKCpSOh.png" height="auto" width="200"></a>
+</p>
+
 # HearAI
 Model Sign Language with Machine Learning.
 
 Deaf people are affected by many forms of exclusion, especially now in the pandemic world. [HearAI](https://www.hearai.pl/) aims to build a deep learning solution to make the world more accessible for the Deaf community and increase the existing knowledge base in using AI for Polish Sign Language.
 
-# Pipeline prototype
-This is a prototypical repository o the HearAI project. Be careful as the work is still in progress!
+# 🤖 Pipeline prototype
+This is a prototypical repository of the HearAI project. Be careful as the work is still in progress!
 
-## Idea
+## 💡 Idea
 
 Video --> Frames --> Feature extractor --> Transformer --> Classification heads --> Prediction for video
 
 
-## Feature extractors
+## 🧪 Feature extractors
 A feature extractor is a model used to extract features directly from the input: e.g., a set of video frames. For instance, we use a CNN that extracts features from each video frame with `multi_frame_feature_extractor`. Another approach could be extracting the pose of a signer and passing the coordinates to GCN (Graph CNN), for each frame separately. 
 Feature extractor returns a representation feature vector for every frame.
 
-## Transformer
+## 🧠 Transformer
 The transformer is a widely-used deep learning model that adopts the mechanism of self-attention, differentially weighting the significance of each part of the input data. It is used primarily in natural language processing (NLP). The Transfomer model will get representation from feature_extractor of size `num_frames,representation_size` for each video in our pipeline.
 
-## Classification heads
+## 👥 Classification heads
 Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`
 
 Hamburg Sign Language Notation System (HamNoSys) is a gesture transcription alphabetic system that describes the symbols and gestures such as hand shape, hand location, and movement. Read more about HamNoSys [here - Introduction to HamNoSys](https://www.hearai.pl/post/4-hamnosys/) and [here - Introduction to HamNoSys Part 2](https://www.hearai.pl/post/5-hamnosys2/). HamNoSys always have the same number of possible classes.
@@ -41,7 +46,7 @@ Gloss is an annotation system that applies a label (a word) to the sign. Number 
 "gloss": 2400
 ```
 
-# Environment setup
+# 🛠 Environment setup
 
 To create a reproducible environment, create a virtual environment using venv and requirements defined.
 In terminal run:
@@ -49,12 +54,12 @@ In terminal run:
 
 When you install a new library, please add it to the list in `requirements.txt` file so we can avoid dependency conflicts or failed build.
 
-# Example train.py run
+# 🏁 Example train.py run
 
 `python3 train.py --data /dih4/dih4_2/hearai/data/frames/pjm --gpu 1`
 
 
-# Style
+# 🎨 Style
 
 For style formatting, the `black` library is used as default.
 If you want to check whether your code matches style requirements, in the terminal run:
@@ -66,7 +71,7 @@ To check code quality with linter, in the terminal run:
 `make lint`
 Currently, `pylint` is the default linter with access to train.py and models/ (all files are evaluated altogether, if you want to test your specific file, try: `pylint yourfile.py`)
 
-# How to setup logging with neptune.ai
+# 🪐 How to setup logging with neptune.ai
 - go to your neptune.ai account and get your API token
 - in terminal, add your personal token to environmental variables
 `export NEPTUNE_API_TOKEN = "<your_token>"`
@@ -77,7 +82,7 @@ Currently, `pylint` is the default linter with access to train.py and models/ (a
 - to run training with Neptune logger initialized, add `--neptune` flag, i.e. `python3 train.py --neptune`
 
 
-# Project organization
+# 💻 Project organization
 ------------
 
     ├── LICENSE
