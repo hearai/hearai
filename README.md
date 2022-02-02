@@ -77,7 +77,7 @@ Currently, `pylint` is the default linter with access to train.py and models/ (a
 `export NEPTUNE_API_TOKEN = "<your_token>"`
 - go to your neptune.ai account and get your project name
 - in terminal, add your project name to environmental variables
-`NEPTUNE_PROJECT_NAME = "<your_workspace/your_project_name>"`
+`export NEPTUNE_PROJECT_NAME = "<your_workspace/your_project_name>"`
 - if you want to make sure that your credentials are saved properly, you can use `printenv`
 - to run training with Neptune logger initialized, add `--neptune` flag, i.e. `python3 train.py --neptune`
 
