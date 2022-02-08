@@ -294,6 +294,12 @@ def process_single_video_file(video_file, output_directory, save_annotated_video
     print(dfs_filenames)
 
 
+class FileWithDirectory:
+    def __init__(self, d, f_name):
+        self.directory = d
+        self.file_with_path = os.path.join(d, f_name)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="Path to input video")
@@ -302,17 +308,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args.input)
 
-    video_paths = []
+    files_with_directories = []
+
+    root_directory = ''
+    output_root_directory = args.output
 
     if os.path.isdir(args.input):
-        video_paths = [os.path.join(args.input, f) for f in os.listdir(args.input)]
-        video_paths = [vp for vp in video_paths if os.path.isfile(vp)]
+        root_directory = args.input
+        for directory, _, files in os.walk(root_directory, topdown=True):
+            for file in files:
+                files_with_directories.append(FileWithDirectory(directory, file))
     elif os.path.isfile(args.input):
-        video_paths = [args.input]
+        files_with_directories = [FileWithDirectory('.', args.input)]
     else:
         raise Exception("Incorrect input file name or directory!")
 
     save_annotated_video = args.save and ((args.save == 'true') or (args.save == 't'))
 
-    for video_path in video_paths:
-        process_single_video_file(video_path, args.output, save_annotated_video)
+    for fwd in files_with_directories:
+        subdirectory = fwd.directory[len(root_directory):]
+        output_directory = os.path.join(output_root_directory, subdirectory)
+        os.makedirs(output_directory, exist_ok=True)
+        process_single_video_file(fwd.file_with_path, output_directory, save_annotated_video)
