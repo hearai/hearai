@@ -246,6 +246,10 @@ def process_single_video_file(video_file, output_directory, save_annotated_video
     video_width = int(video.get(cv.CAP_PROP_FRAME_WIDTH))
     video_height = int(video.get(cv.CAP_PROP_FRAME_HEIGHT))
 
+    if video_n_frames is None or video_n_frames == 0:
+        print('WARNING: The file ' + video_file + ' does not look like video --> ignored')
+        return
+
     print('\tCodec:    ' + str(video_codec))
     print('\tFPS:    ' + str(video_fps))
     print('\tFrames: ' + str(video_n_frames))
@@ -329,4 +333,9 @@ if __name__ == "__main__":
         subdirectory = fwd.directory[len(root_directory):]
         output_directory = os.path.join(output_root_directory, subdirectory)
         os.makedirs(output_directory, exist_ok=True)
-        process_single_video_file(fwd.file_with_path, output_directory, save_annotated_video)
+        try:
+            process_single_video_file(fwd.file_with_path, output_directory, save_annotated_video)
+        except Exception as e:
+            print('Processing error for file ' + fwd.file_with_path)
+            print(e)
+
