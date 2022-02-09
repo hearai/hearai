@@ -1,9 +1,8 @@
 import argparse
+import json
 import os
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import time
 import cv2 as cv
 import mediapipe as mp
 from tqdm import tqdm
@@ -255,6 +254,13 @@ def process_single_video_file(video_file, output_directory, save_annotated_video
     print('\tFrames: ' + str(video_n_frames))
     print('\tSize:   ' + str(video_width) + 'x' + str(video_height))
 
+    video_properties = {'File': os.path.abspath(video_file),
+                        'Codec': video_codec,
+                        'Frames': video_n_frames,
+                        'FPS': video_fps,
+                        'Width': video_width,
+                        'Height': video_height}
+
     video_face_df, \
         video_pose_df, \
         video_left_hand_df, \
@@ -288,13 +294,17 @@ def process_single_video_file(video_file, output_directory, save_annotated_video
                      video_file_main_name + "_left_hand.csv",
                      video_file_main_name + "_right_hand.csv"]
 
+    properties_file_name = os.path.join(output_directory, video_file_main_name + "_properties.json")
+    with open(properties_file_name, 'w') as prop_file:
+        prop_file.write(json.dumps(video_properties))
+
     for i in range(len(dfs)):
         df = dfs[i]
         filename = dfs_filenames[i]
         path = os.path.join(output_directory, filename)
         df.to_csv(path)
 
-    print('Output saved to files:')
+    print('Landmarks saved to files:')
     print(dfs_filenames)
 
 
