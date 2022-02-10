@@ -10,13 +10,16 @@ class SignLanguageTransformer(nn.Module):
     https://www.cihancamgoz.com/pub/camgoz2020cvpr.pdf
     """
 
-    def __init__(self,
-                 input_size: int = 512,
-                 output_size: int = 1024,
-                 feedforward_size: int = 1024,
-                 num_encoder_layers: int = 1,
-                 num_segments: int = 8,
-                 dropout_rate: float = 0.1,):
+    def __init__(
+        self,
+        input_size: int = 512,
+        output_size: int = 1024,
+        feedforward_size: int = 1024,
+        num_encoder_layers: int = 1,
+        num_segments: int = 8,
+        dropout_rate: float = 0.1,
+        device='cpu'
+    ):
         """
         Args:
             input_size (int): Number of input features.
@@ -32,13 +35,21 @@ class SignLanguageTransformer(nn.Module):
         self._input_size = input_size
         self._num_encoder_layers = num_encoder_layers
 
-        self._slrt_layers = nn.ModuleList([SLRTEncoder(input_size=input_size,
-                                                       feedforward_size=feedforward_size,
-                                                       num_segments=num_segments,
-                                                       dropout_rate=dropout_rate)])
+        self._slrt_layers = nn.ModuleList(
+            [
+                SLRTEncoder(
+                    input_size=input_size,
+                    feedforward_size=feedforward_size,
+                    num_segments=num_segments,
+                    dropout_rate=dropout_rate,
+                    device=device
+                )
+            ]
+        )
         self._dropout_positional_encoding = nn.Dropout(dropout_rate)
         self._last_norm = nn.LayerNorm(input_size)
-        self._last_linear = nn.Linear(num_segments*input_size, output_size)
+        self._last_linear = nn.Linear(num_segments * input_size, output_size)
+        self.__device = device
 
     def forward(self, input: torch.Tensor):
         # Positional Encoding Start
@@ -46,13 +57,20 @@ class SignLanguageTransformer(nn.Module):
         position_encoding = torch.zeros(max_len, self._input_size)
         position = torch.arange(0, max_len).unsqueeze(1)
         div_term = torch.exp(
-            (torch.arange(0, self._input_size, 2, dtype=torch.float) * -(math.log(10000.0) / self._input_size))
+            (
+                torch.arange(0, self._input_size, 2, dtype=torch.float)
+                * -(math.log(10000.0) / self._input_size)
+            )
         )
         position_encoding[:, 0::2] = torch.sin(position.float() * div_term)
         position_encoding[:, 1::2] = torch.cos(position.float() * div_term)
         position_encoding = position_encoding.unsqueeze(0)
 
-        positional_encoding = input + position_encoding[:, :input.shape[1]]
+        if self.__device == 'cpu':
+            positional_encoding = input.cpu() + position_encoding[:, : input.shape[1]].cpu()
+        else:
+            positional_encoding = input.cuda() + position_encoding[:, : input.shape[1]].cuda()
+
         x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End
 
@@ -69,11 +87,15 @@ class SLRTEncoder(nn.Module):
     """
     Single Encoder layer for Sign Language Transformer.
     """
-    def __init__(self,
-                 input_size: int,
-                 feedforward_size: int,
-                 num_segments: int,
-                 dropout_rate: float):
+
+    def __init__(
+        self,
+        input_size: int,
+        feedforward_size: int,
+        num_segments: int,
+        dropout_rate: float,
+        device: str = 'cpu'
+    ):
         """
         Args:
             input_size (int): Number of input features.
@@ -89,32 +111,39 @@ class SLRTEncoder(nn.Module):
 
         self._positional_encoding_norm = nn.LayerNorm(input_size)
         self._attention_dropout = nn.Dropout(dropout_rate)
-        self._feedforward_sequential = nn.Sequential(nn.LayerNorm(input_size),
-                                                     nn.Linear(input_size, feedforward_size),
-                                                     nn.ReLU(),
-                                                     nn.Dropout(dropout_rate),
-                                                     nn.Linear(feedforward_size, input_size),
-                                                     nn.Dropout(dropout_rate))
+
+        self._multi_headed_attention = MultiHeadedAttention(
+            num_heads=self._num_segments,
+            size=self._input_size,
+            dropout_rate=self._dropout_rate,
+        )
+        self._feedforward_sequential = nn.Sequential(
+            nn.LayerNorm(input_size),
+            nn.Linear(input_size, feedforward_size),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(feedforward_size, input_size),
+            nn.Dropout(dropout_rate),
+        )
+
+        self.__device = device
 
     def forward(self, input: torch.Tensor):
-        # SLRT Start
-        positional_encoding_normalized = self._positional_encoding_norm(input)
+        if self.__device == 'cpu':
+            positional_encoding_normalized = self._positional_encoding_norm(input).cpu()
+        else:
+            positional_encoding_normalized = self._positional_encoding_norm(input).cuda()
+        # positional_encoding_normalized = self._positional_encoding_norm(input)
 
         # Self Attention (Multi-Head Attention) Start
         values = positional_encoding_normalized
         keys = positional_encoding_normalized
         questions = positional_encoding_normalized
 
-        attention_output = MultiHeadedAttention(num_heads=self._num_segments,
-                                                size=self._input_size,
-                                                dropout_rate=self._dropout_rate)(v=values,
-                                                                                 k=keys,
-                                                                                 q=questions)
-
+        attention_output = self._multi_headed_attention(v=values, k=keys, q=questions)
         attention_output = self._attention_dropout(attention_output)
-        # Self Attention (Multi-Head Attention) End
 
-        # Feedforward Start
+        # Self Attention (Multi-Head Attention) End
         feedforward_x = self._feedforward_sequential(attention_output)
         x = feedforward_x + attention_output
         # Feedforward End
@@ -129,10 +158,7 @@ class MultiHeadedAttention(nn.Module):
     https://github.com/neccam/slt
     """
 
-    def __init__(self,
-                 num_heads: int,
-                 size: int,
-                 dropout_rate: float = 0.1):
+    def __init__(self, num_heads: int, size: int, dropout_rate: float = 0.1):
         """
         Layer implemented as presented in the paper "Attention is all you need"
         https://arxiv.org/pdf/1706.03762.pdf
@@ -157,11 +183,13 @@ class MultiHeadedAttention(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
         self._dropout = nn.Dropout(dropout_rate)
 
-    def forward(self,
-                k: torch.Tensor,
-                v: torch.Tensor,
-                q: torch.Tensor,
-                mask: torch.Tensor = None):
+    def forward(
+        self,
+        k: torch.Tensor,
+        v: torch.Tensor,
+        q: torch.Tensor,
+        mask: torch.Tensor = None,
+    ):
         batch_size = k.size(0)
         num_heads = self.num_heads
 
@@ -195,8 +223,8 @@ class MultiHeadedAttention(nn.Module):
         context = torch.matmul(attention, v)
         context = (
             context.transpose(1, 2)
-                .contiguous()
-                .view(batch_size, -1, num_heads * self.head_size)
+            .contiguous()
+            .view(batch_size, -1, num_heads * self.head_size)
         )
 
         output = self.output_layer(context)
