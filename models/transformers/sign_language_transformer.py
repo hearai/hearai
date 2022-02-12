@@ -9,6 +9,7 @@ class SignLanguageTransformer(nn.Module):
     Sign Language Transformer
     https://www.cihancamgoz.com/pub/camgoz2020cvpr.pdf
     """
+    __max_len = 10000
 
     def __init__(
         self,
@@ -16,7 +17,7 @@ class SignLanguageTransformer(nn.Module):
         output_size: int = 1024,
         feedforward_size: int = 1024,
         num_encoder_layers: int = 1,
-        num_segments: int = 8,
+        num_frames: int = 8,
         dropout_rate: float = 0.1,
         device='cpu'
     ):
@@ -26,50 +27,36 @@ class SignLanguageTransformer(nn.Module):
             output_size (int): Number of output features.
             feedforward_size (int): Number of features in intermediate feedforward "layer".
             num_encoder_layers (int): Number of encoder layers.
-            num_segments (int): Number of frames in a video.
+            num_frames (int): Number of frames in a video.
             dropout_rate (float): Dropout rate.
         """
         super(SignLanguageTransformer, self).__init__()
-        self._dropout_rate = dropout_rate
-        self._feedforward_size = feedforward_size
         self._input_size = input_size
-        self._num_encoder_layers = num_encoder_layers
 
         self._slrt_layers = nn.ModuleList(
             [
                 SLRTEncoder(
                     input_size=input_size,
                     feedforward_size=feedforward_size,
-                    num_segments=num_segments,
+                    num_frames=num_frames,
                     dropout_rate=dropout_rate,
                     device=device
-                )
+                ) for _ in range(num_encoder_layers)
             ]
         )
         self._dropout_positional_encoding = nn.Dropout(dropout_rate)
         self._last_norm = nn.LayerNorm(input_size)
-        self._last_linear = nn.Linear(num_segments * input_size, output_size)
+        self._last_linear = nn.Linear(num_frames * input_size, output_size)
         self.__device = device
+
+        self._position_encoding = self.__get_position_encoding()
 
     def forward(self, input: torch.Tensor):
         # Positional Encoding Start
-        max_len = 10000
-        position_encoding = torch.zeros(max_len, self._input_size)
-        position = torch.arange(0, max_len).unsqueeze(1)
-        div_term = torch.exp(
-            (
-                torch.arange(0, self._input_size, 2, dtype=torch.float)
-                * -(math.log(10000.0) / self._input_size)
-            )
-        )
-        position_encoding[:, 0::2] = torch.sin(position.float() * div_term)
-        position_encoding[:, 1::2] = torch.cos(position.float() * div_term)
-        position_encoding = position_encoding.unsqueeze(0)
-
         if self.__device == 'cpu':
-            positional_encoding = input.cpu() + position_encoding[:, : input.shape[1]].cpu()
+            positional_encoding = input.cpu() + self._position_encoding[:, : input.shape[1]].cpu()
         else:
-            positional_encoding = input.cuda() + position_encoding[:, : input.shape[1]].cuda()
+            positional_encoding = input.cuda() + self._position_encoding[:, : input.shape[1]].cuda()
 
         x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End
@@ -82,6 +69,19 @@ class SignLanguageTransformer(nn.Module):
         x = self._last_linear(x)
         return x
 
+    def __get_position_encoding(self):
+        position_encoding = torch.zeros(self.__max_len, self._input_size)
+        position = torch.arange(0, self.__max_len).unsqueeze(1)
+        div_term = torch.exp(
+            (
+                    torch.arange(0, self._input_size, 2, dtype=torch.float)
+                    * -(math.log(10000.0) / self._input_size)
+            )
+        )
+        position_encoding[:, 0::2] = torch.sin(position.float() * div_term)
+        position_encoding[:, 1::2] = torch.cos(position.float() * div_term)
+        return position_encoding.unsqueeze(0)
+
 
 class SLRTEncoder(nn.Module):
     """
@@ -92,7 +92,7 @@ class SLRTEncoder(nn.Module):
         self,
         input_size: int,
         feedforward_size: int,
-        num_segments: int,
+        num_frames: int,
         dropout_rate: float,
         device: str = 'cpu'
     ):
@@ -100,22 +100,18 @@ class SLRTEncoder(nn.Module):
         Args:
             input_size (int): Number of input features.
             feedforward_size (int): Number of features in intermediate feedforward "layer".
-            num_segments (int): Number of frames per video.
+            num_frames (int): Number of frames per video.
             dropout_rate (float): Dropout rate.
         """
         super(SLRTEncoder, self).__init__()
-
-        self._input_size = input_size
-        self._num_segments = num_segments
-        self._dropout_rate = dropout_rate
 
         self._positional_encoding_norm = nn.LayerNorm(input_size)
         self._attention_dropout = nn.Dropout(dropout_rate)
 
         self._multi_headed_attention = MultiHeadedAttention(
-            num_heads=self._num_segments,
-            size=self._input_size,
-            dropout_rate=self._dropout_rate,
+            num_heads=num_frames,
+            size=input_size,
+            dropout_rate=dropout_rate,
         )
         self._feedforward_sequential = nn.Sequential(
             nn.LayerNorm(input_size),
@@ -133,7 +129,6 @@ class SLRTEncoder(nn.Module):
             positional_encoding_normalized = self._positional_encoding_norm(input).cpu()
         else:
             positional_encoding_normalized = self._positional_encoding_norm(input).cuda()
-        # positional_encoding_normalized = self._positional_encoding_norm(input)
 
         # Self Attention (Multi-Head Attention) Start
         values = positional_encoding_normalized
@@ -163,7 +158,7 @@ class MultiHeadedAttention(nn.Module):
         Layer implemented as presented in the paper "Attention is all you need"
         https://arxiv.org/pdf/1706.03762.pdf
         Args:
-            num_heads (int): Number of input images per single video.
+            num_heads (int): Number of output heads.
             size (int): Number of features per head.
             dropout_rate (float): Dropout rate.
         """
@@ -181,7 +176,6 @@ class MultiHeadedAttention(nn.Module):
 
         self.output_layer = nn.Linear(size, size)
         self.softmax = nn.Softmax(dim=-1)
-        self._dropout = nn.Dropout(dropout_rate)
 
     def forward(
         self,
@@ -210,16 +204,14 @@ class MultiHeadedAttention(nn.Module):
         scores = torch.matmul(q, k.transpose(2, 3))
 
         # apply the mask (if we have one)
-        # we add a dimension for the heads to it below: [B, 1, 1, M]
         if mask is not None:
             scores = scores.masked_fill(~mask.unsqueeze(1), float("-inf"))
 
         # apply attention dropout and compute context vectors.
         attention = self.softmax(scores)
-        attention = self._dropout(attention)
 
         # get context vector (select values with attention) and reshape
-        # back to [B, M, D]
+        # back to [number of items in a batch, number of segments * number of frames per segment, number of features]
         context = torch.matmul(attention, v)
         context = (
             context.transpose(1, 2)
