@@ -4,6 +4,7 @@ https://github.com/RaivoKoot/Video-Dataset-Loading-Pytorch
 """
 import os
 import numpy as np
+import pandas as pd
 from PIL import Image
 from torchvision import transforms
 import torch
@@ -109,6 +110,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         num_segments: int = 3,
         frames_per_segment: int = 1,
         imagefile_template: str = "{:s}_{:d}.jpg",
+        landmarks_path: str = "/dih4/dih4_2/hearai/data/#mediapipe_landmarks/korpus/labeled",
         transform=None,
         test_mode: bool = False,
     ):
@@ -119,6 +121,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.num_segments = num_segments
         self.frames_per_segment = frames_per_segment
         self.imagefile_template = imagefile_template
+        self.landmarks_path = landmarks_path
         self.transform = transform
         self.test_mode = test_mode
 
@@ -160,6 +163,27 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                     f"={self.num_segments * self.frames_per_segment} frames. Dataloader will throw an "
                     f"error when trying to load this video.\n"
                 )
+
+    def _get_landmarks(
+        self, video_name: str, indices: "np.ndarray[int]", col_name: str = "Unnamed: 0"
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        face = pd.read_csv(
+            os.path.join(self.landmarks_path, video_name + "_face.csv"),
+            index_col=col_name,
+        ).loc[indices, :]
+        left_hand = pd.read_csv(
+            os.path.join(self.landmarks_path, video_name + "_left_hand.csv"),
+            index_col=col_name,
+        ).loc[indices, :]
+        right_hand = pd.read_csv(
+            os.path.join(self.landmarks_path, video_name + "_right_hand.csv"),
+            index_col=col_name,
+        ).loc[indices, :]
+        pose = pd.read_csv(
+            os.path.join(self.landmarks_path, video_name + "_pose.csv"),
+            index_col=col_name,
+        ).loc[indices, :]
+        return face, right_hand, left_hand, pose
 
     def _get_start_indices(self, record: VideoRecord) -> "np.ndarray[int]":
         """
@@ -252,13 +276,20 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         """
 
         frame_start_indices = frame_start_indices + record.start_frame
-        images = list()
+        images = []
+        landmarks = {"face": [], "right_hand": [], "left_hand": [], "pose": []}
 
         # from each start_index, load self.frames_per_segment
         # consecutive frames
         for start_index in frame_start_indices:
             frame_index = int(start_index)
-
+            face, right_hand, left_hand, pose = self._get_landmarks(
+                record._data[0], frame_start_indices
+            )
+            landmarks["face"].append(face)
+            landmarks["right_hand"].append(right_hand)
+            landmarks["left_hand"].append(left_hand)
+            landmarks["pose"].append(pose)
             # load self.frames_per_segment consecutive frames
             for _ in range(self.frames_per_segment):
                 image = self._load_image(record.path, frame_index)
@@ -277,12 +308,13 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             x = np.zeros(value)
             J = np.random.choice(class_label)
             x[J] = 1
+            # x[class_label] = 1
             target.append(torch.tensor(x))
 
         if self.transform is not None:
             images = self.transform(images)
 
-        return images, target
+        return images, target  # , landmarks
 
     def __len__(self):
         return len(self.video_list)
