@@ -2,6 +2,7 @@
 This code was adopted from
 https://github.com/RaivoKoot/Video-Dataset-Loading-Pytorch
 """
+import json
 import os
 import numpy as np
 import pandas as pd
@@ -36,9 +37,15 @@ class VideoRecord(object):
              5) any following elements are labels in the case of multi label provided.
     """
 
-    def __init__(self, row, root_datapath):
+    def __init__(self, row, root_datapath, landmarks_path=None):
         self._data = row
         self._path = os.path.join(root_datapath, row[0])
+        try:
+            with open(os.path.join(landmarks_path, row[0] + "_properties.json"), 'r') as f:
+                data = json.load(f)
+            self.fps = int(data['FPS'])
+        except:
+            self.fps = None
 
     @property
     def path(self) -> str:
@@ -107,10 +114,11 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         root_path: str,
         annotationfile_path: str,
         classification_mode: str,
-        num_segments: int = 3,
+        num_segments: int = -1,
         frames_per_segment: int = 1,
+        time: Union[float, None] = None,
         imagefile_template: str = "{:s}_{:d}.jpg",
-        landmarks_path: str = "/dih4/dih4_2/hearai/data/#mediapipe_landmarks/korpus/labeled",
+        landmarks_path: Union[str, None] = None,
         transform=None,
         test_mode: bool = False,
     ):
@@ -120,6 +128,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.annotationfile_path = annotationfile_path
         self.num_segments = num_segments
         self.frames_per_segment = frames_per_segment
+        self.time = time
         self.imagefile_template = imagefile_template
         self.landmarks_path = landmarks_path
         self.transform = transform
@@ -139,11 +148,19 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
     def _parse_annotationfile(self):
         self.video_list = [
-            VideoRecord(x.strip().split(), self.root_path)
+            VideoRecord(x.strip().split(), self.root_path, self.landmarks_path)
             for x in open(self.annotationfile_path)
         ]
 
     def _sanity_check_samples(self):
+        if self.time is not None:
+            self.num_segments = -1
+            self.frames_per_segment = 1
+            print(
+                    f"\nDataset Warning: chosen time was set to {self.time} num_segments and "
+                    f"frames_per_segment were set to 1!\n"
+                )
+            
         for id, record in enumerate(self.video_list):
             if any(not x.isdigit() for x in record._data):
                 # Found datafile header. Removing it.
@@ -196,8 +213,18 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             List of indices of where the frames of each
             segment are to be loaded from.
         """
+        # choose start indices that are spread each time unit given by user
+        if self.time is not None:
+            if record.fps is None:
+                sys.exit("Number of rames per second not provided")
+
+            start_indices = np.array(
+                [
+                    int(x) for x in range(record.num_frames) if x % int(record.fps * self.time) == 0
+                ]
+            )
         # choose start indices that are perfectly evenly spread across the video frames.
-        if self.test_mode:
+        elif self.test_mode:
             distance_between_indices = (
                 record.num_frames - self.frames_per_segment + 1
             ) / float(self.num_segments)
@@ -277,19 +304,22 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
         frame_start_indices = frame_start_indices + record.start_frame
         images = []
-        landmarks = {"face": [], "right_hand": [], "left_hand": [], "pose": []}
+        if self.landmarks_path is not None:
+            landmarks = {"face": [], "right_hand": [], "left_hand": [], "pose": []}
 
         # from each start_index, load self.frames_per_segment
         # consecutive frames
         for start_index in frame_start_indices:
             frame_index = int(start_index)
-            face, right_hand, left_hand, pose = self._get_landmarks(
-                record._data[0], frame_start_indices
-            )
-            landmarks["face"].append(face)
-            landmarks["right_hand"].append(right_hand)
-            landmarks["left_hand"].append(left_hand)
-            landmarks["pose"].append(pose)
+            if self.landmarks_path is not None:
+                face, right_hand, left_hand, pose = self._get_landmarks(
+                    record._data[0], frame_start_indices
+                )
+                landmarks["face"].append(face)
+                landmarks["right_hand"].append(right_hand)
+                landmarks["left_hand"].append(left_hand)
+                landmarks["pose"].append(pose)
+
             # load self.frames_per_segment consecutive frames
             for _ in range(self.frames_per_segment):
                 image = self._load_image(record.path, frame_index)
@@ -342,3 +372,17 @@ class ImglistToTensor(torch.nn.Module):
             tensor of size ``NUM_IMAGES x CHANNELS x HEIGHT x WIDTH``
         """
         return torch.stack([transforms.functional.to_tensor(pic) for pic in img_list])
+
+
+def collate_fn_padd(batch):
+    '''
+    Padds batch of variable length
+
+    note: it converts things ToTensor manually here since the ToTensor transform
+    assume it takes in images rather than arbitrary tensors.
+    '''
+    batch_split = list(zip(*batch))
+    seqs, targs = batch_split[0], batch_split[1]
+    ## padd
+    batch = torch.nn.utils.rnn.pad_sequence(seqs, batch_first=True)
+    return batch, [torch.stack([i[0] for i in targs], 0)]
