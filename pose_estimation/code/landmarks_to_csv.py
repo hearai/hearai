@@ -269,6 +269,8 @@ def process_single_video_file(video_file, output_directory, save_annotated_video
 
     video.release()
 
+    os.makedirs(output_directory, exist_ok=True)
+
     if save_annotated_video:
         output_video_path = os.path.join(output_directory,
                                          video_file_main_name + output_video_suffix)
@@ -342,7 +344,7 @@ if __name__ == "__main__":
     for fwd in files_with_directories:
         subdirectory = fwd.directory[len(root_directory):]
         output_directory = os.path.join(output_root_directory, subdirectory)
-        os.makedirs(output_directory, exist_ok=True)
+
         try:
             process_single_video_file(fwd.file_with_path, output_directory, save_annotated_video)
         except Exception as e:
