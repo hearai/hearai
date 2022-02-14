@@ -348,7 +348,10 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         if self.transform is not None:
             images = self.transform(images)
 
-        return images, target  # , landmarks
+        if self.landmarks_path is not None:
+            target.append(landmarks)
+
+        return images, target
 
     def __len__(self):
         return len(self.video_list)
@@ -389,4 +392,8 @@ def collate_fn_padd(batch):
     seqs, targs = batch_split[0], batch_split[1]
     ## padd
     batch = torch.nn.utils.rnn.pad_sequence(seqs, batch_first=True)
-    return batch, [torch.stack([i[0] for i in targs], 0)]
+
+    if len(targs[0]) == 2 and type(type(targs[0][1])) is dict:
+        return batch, [torch.stack([i[0] for i in targs], 0), [i[1] for i in targs]]
+    else:
+        return batch, [torch.stack([i[0] for i in targs], 0), [None]]

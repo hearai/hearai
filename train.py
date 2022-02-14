@@ -101,7 +101,7 @@ def main(args):
     # load data
     videos_root = args.data
     if args.classification_mode == "gloss":
-        annotation_file = os.path.join(videos_root, "test_gloss2.txt")
+        annotation_file = os.path.join(videos_root, "test_gloss.txt")
     elif args.classification_mode == "hamnosys":
         annotation_file = os.path.join(videos_root, "toy_hamnosys.txt")
 
