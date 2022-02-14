@@ -4,9 +4,9 @@ import pytorch_lightning as pl
 import torch
 import torchvision.transforms as T
 import yaml
-from datasets.dataset import ImglistToTensor, VideoFrameDataset
+from datasets.dataset import ImglistToTensor, VideoFrameDataset, collate_fn_padd
 from models.model import GlossTranslationModel
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, random_split
 
 
 def get_args_parser():
@@ -14,6 +14,12 @@ def get_args_parser():
     # Data parameters and paths
     parser.add_argument(
         "--data", help="path to data", default="assets/sanity_check_data"
+    )
+    parser.add_argument(
+        "--landmarks_path",
+        type=str,
+        default=None,
+        help="path to landmarks annotations",
     )
     parser.add_argument(
         "--classification-mode",
@@ -30,10 +36,10 @@ def get_args_parser():
         help="dataset parameter defining number of segments per video used as an input",
     )
     parser.add_argument(
-        "--frames_per_segment",
-        type=int,
-        default=1,
-        help="dataset parameter defining number of frames that will be drawn randomly from each segment",
+        "--time",
+        type=float,
+        default=None,
+        help="dataset parameter defining time to collect frames per video used as an input",
     )
     # Training parameters
     parser.add_argument(
@@ -92,13 +98,10 @@ def main(args):
     # set torch seed
     torch.manual_seed(args.seed)
 
-    # basic transforms
-    test_transforms = T.Compose([T.PILToTensor(), T.ConvertImageDtype(torch.float)])
-
     # load data
     videos_root = args.data
     if args.classification_mode == "gloss":
-        annotation_file = os.path.join(videos_root, "test_gloss.txt")
+        annotation_file = os.path.join(videos_root, "test_gloss2.txt")
     elif args.classification_mode == "hamnosys":
         annotation_file = os.path.join(videos_root, "toy_hamnosys.txt")
 
@@ -116,7 +119,8 @@ def main(args):
         annotationfile_path=annotation_file,
         classification_mode=args.classification_mode,
         num_segments=args.num_segments,
-        frames_per_segment=args.frames_per_segment,
+        time=args.time,
+        landmarks_path=args.landmarks_path,
         transform=preprocess,
         test_mode=False,
     )
@@ -133,6 +137,7 @@ def main(args):
         shuffle=True,
         batch_size=args.batch_size,
         num_workers=args.workers,
+        collate_fn=collate_fn_padd,
         drop_last=False,
     )
 
@@ -141,6 +146,7 @@ def main(args):
         shuffle=False,
         batch_size=args.batch_size,
         num_workers=args.workers,
+        collate_fn=collate_fn_padd,
         drop_last=False,
     )
 
@@ -150,7 +156,7 @@ def main(args):
         classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
         transformer_name="hubert_transformer",
-        num_segments=args.num_segments * args.frames_per_segment,
+        num_segments=args.num_segments,
         model_save_dir=args.save,
         neptune=args.neptune,
     )

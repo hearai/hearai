@@ -41,9 +41,11 @@ class VideoRecord(object):
         self._data = row
         self._path = os.path.join(root_datapath, row[0])
         try:
-            with open(os.path.join(landmarks_path, row[0] + "_properties.json"), 'r') as f:
+            with open(
+                os.path.join(landmarks_path, row[0] + "_properties.json"), "r"
+            ) as f:
                 data = json.load(f)
-            self.fps = int(data['FPS'])
+            self.fps = int(data["FPS"])
         except:
             self.fps = None
 
@@ -157,10 +159,10 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             self.num_segments = -1
             self.frames_per_segment = 1
             print(
-                    f"\nDataset Warning: chosen time was set to {self.time} num_segments and "
-                    f"frames_per_segment were set to 1!\n"
-                )
-            
+                f"\nDataset Warning: chosen time was set to {self.time} num_segments and "
+                f"frames_per_segment were set to 1!\n"
+            )
+
         for id, record in enumerate(self.video_list):
             if any(not x.isdigit() for x in record._data):
                 # Found datafile header. Removing it.
@@ -220,7 +222,9 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
             start_indices = np.array(
                 [
-                    int(x) for x in range(record.num_frames) if x % int(record.fps * self.time) == 0
+                    int(x)
+                    for x in range(record.num_frames)
+                    if x % int(record.fps * self.time) == 0
                 ]
             )
         # choose start indices that are perfectly evenly spread across the video frames.
@@ -375,12 +379,12 @@ class ImglistToTensor(torch.nn.Module):
 
 
 def collate_fn_padd(batch):
-    '''
+    """
     Padds batch of variable length
 
     note: it converts things ToTensor manually here since the ToTensor transform
     assume it takes in images rather than arbitrary tensors.
-    '''
+    """
     batch_split = list(zip(*batch))
     seqs, targs = batch_split[0], batch_split[1]
     ## padd
