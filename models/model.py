@@ -77,8 +77,8 @@ class GlossTranslationModel(pl.LightningModule):
         return predictions
 
     def training_step(self, batch, batch_idx):
-        input, (targets, landmarks) = batch
-        targets = [targets]
+        input, target = batch
+        targets = target["target"]
         predictions = self(input)
         loss = self.summary_loss(predictions, targets)
         if self.run:
@@ -86,8 +86,8 @@ class GlossTranslationModel(pl.LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
-        input, (targets, landmarks) = batch
-        targets = [targets]
+        input, target = batch
+        targets = target["target"]
         predictions = self(input)
         loss = self.summary_loss(predictions, targets)
         if self.run:

@@ -340,18 +340,18 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             labels = record.label
         for value, class_label in zip(self.num_classes_dict.values(), labels):
             x = np.zeros(value)
-            J = np.random.choice(class_label)
-            x[J] = 1
-            # x[class_label] = 1
+            # J = np.random.choice(class_label)
+            # x[J] = 1
+            x[class_label] = 1
             target.append(torch.tensor(x))
 
         if self.transform is not None:
             images = self.transform(images)
 
-        if self.landmarks_path is not None:
-            target.append(landmarks)
+        if self.landmarks_path is None:
+            landmarks = None
 
-        return images, target
+        return images, {"target": target, "landmark": landmarks}
 
     def __len__(self):
         return len(self.video_list)
@@ -393,7 +393,13 @@ def collate_fn_padd(batch):
     ## padd
     batch = torch.nn.utils.rnn.pad_sequence(seqs, batch_first=True)
 
-    if len(targs[0]) == 2 and type(type(targs[0][1])) is dict:
-        return batch, [torch.stack([i[0] for i in targs], 0), [i[1] for i in targs]]
-    else:
-        return batch, [torch.stack([i[0] for i in targs], 0), [None]]
+    return (
+        batch,
+        {
+            "target": [
+                torch.stack([item["target"][i] for item in targs], 0)
+                for i in range(len(targs[0]["target"]))
+            ],
+            "landmark": [i["landmark"] for i in targs],
+        },
+    )
