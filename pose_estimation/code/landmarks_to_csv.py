@@ -115,7 +115,7 @@ def draw_hand_landmarks(image, landmarks):
     return image
 
 
-def video_to_landmarks(video, generate_new_video=True):
+def video_to_landmarks(video, generate_new_video=True, generate_segmentation_mask=False):
     face_columns_names = get_face_columns_names()
     pose_columns_names = get_pose_columns_names()
     left_hand_columns_names = get_left_hand_columns_names()
@@ -135,12 +135,14 @@ def video_to_landmarks(video, generate_new_video=True):
     pose_frames_ls = []
     left_hand_frames_ls = []
     right_hand_frames_ls = []
+    segmenation_frames_ls = []
 
     counter = 1
 
     with mp_holistic.Holistic(model_complexity=1,
                               smooth_landmarks=True,
                               refine_face_landmarks=False,
+                              enable_segmentation=generate_segmentation_mask,
                               min_detection_confidence=0.5,
                               min_tracking_confidence=0.5) as holistic:
         success, frame = video.read()
@@ -209,6 +211,9 @@ def video_to_landmarks(video, generate_new_video=True):
 
             right_hand_frames_ls.append(right_hand_row)
 
+            if generate_segmentation_mask:
+                segmenation_frames_ls.append(results.segmentation_mask.tolist())
+
             if generate_new_video:
                 new_video.append(annotated_frame)
 
@@ -223,10 +228,13 @@ def video_to_landmarks(video, generate_new_video=True):
     video_left_hand = pd.DataFrame(left_hand_frames_ls, columns=left_hand_columns_names)
     video_right_hand = pd.DataFrame(right_hand_frames_ls, columns=right_hand_columns_names)
 
-    return video_face, video_pose, video_left_hand, video_right_hand, new_video
+    return video_face, video_pose, video_left_hand, video_right_hand, new_video, segmenation_frames_ls
 
 
-def process_single_video_file(video_file, output_directory, save_annotated_video=True):
+def process_single_video_file(video_file,
+                              output_directory,
+                              save_annotated_video=True,
+                              generate_segmentation_mask=False):
     output_video_codec = 'mp4v'
     resize_factor = 1
     output_video_suffix = '_annotated.avi'
@@ -265,7 +273,8 @@ def process_single_video_file(video_file, output_directory, save_annotated_video
         video_pose_df, \
         video_left_hand_df, \
         video_right_hand_df, \
-        new_video = video_to_landmarks(video, save_annotated_video)
+        new_video,\
+        segmentation_masks = video_to_landmarks(video, save_annotated_video, generate_segmentation_mask)
 
     video.release()
 
@@ -289,6 +298,11 @@ def process_single_video_file(video_file, output_directory, save_annotated_video
                                   cv.INTER_AREA)
             output_video.write(frame)
         output_video.release()
+
+    if generate_segmentation_mask:
+        segmentation_file_name = os.path.join(output_directory, video_file_main_name + "_segmentations.json")
+        with open(segmentation_file_name, 'w') as prop_file:
+            prop_file.write(json.dumps(segmentation_masks))
 
     dfs = [video_face_df, video_pose_df, video_left_hand_df, video_right_hand_df]
     dfs_filenames = [video_file_main_name + "_face.csv",
