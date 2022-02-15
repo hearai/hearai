@@ -36,15 +36,15 @@ class GlossTranslationModel(pl.LightningModule):
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
-        device='cpu'
+        device="cpu",
     ):
         super().__init__()
-        
+
         if neptune:
             self.run = initialize_neptun()
         else:
             self.run = None
-    
+
         # parameters
         self.lr = lr
         self.model_save_dir = model_save_dir
@@ -71,7 +71,7 @@ class GlossTranslationModel(pl.LightningModule):
                 feedforward_size,
                 num_encoder_layers,
                 num_segments,
-                device=device
+                device=device,
             )
         else:
             self.transformer = self.model_loader.load_transformer(

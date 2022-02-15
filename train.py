@@ -159,7 +159,7 @@ def main(args):
         num_segments=args.num_segments,
         model_save_dir=args.save,
         neptune=args.neptune,
-        device='cuda:0' if args.gpu > 0 else 'cpu'
+        device="cuda:0" if args.gpu > 0 else "cpu",
     )
 
     trainer = pl.Trainer(

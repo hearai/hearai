@@ -232,7 +232,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                     f"Number of segments too small! "
                     f"{len(start_indices)} > {self.num_segments} "
                     f"Videos will be cut!"
-                    )
+                )
         # choose start indices that are perfectly evenly spread across the video frames.
         elif self.test_mode:
             distance_between_indices = (
@@ -425,7 +425,7 @@ class PadCollate:
             if length <= self.total_length:
                 new_batch[i, :length, ...] = tensor
             else:
-                new_batch[i, ...] = tensor[:self.total_length, ...]
+                new_batch[i, ...] = tensor[: self.total_length, ...]
 
         return (
             new_batch,
