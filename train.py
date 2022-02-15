@@ -155,10 +155,11 @@ def main(args):
         lr=args.lr,
         classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
-        transformer_name="hubert_transformer",
+        transformer_name="sign_language_transformer",
         num_segments=args.num_segments,
         model_save_dir=args.save,
         neptune=args.neptune,
+        device='cuda:0' if args.gpu > 0 else 'cpu'
     )
 
     trainer = pl.Trainer(

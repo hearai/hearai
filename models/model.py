@@ -28,20 +28,23 @@ class GlossTranslationModel(pl.LightningModule):
         warmup_steps=100.0,
         transformer_output_size=1024,
         representation_size=2048,
-        num_segments=10,
+        feedforward_size=4096,
+        num_encoder_layers=1,
+        num_segments=8,
         classification_mode="gloss",
         feature_extractor_name="cnn_extractor",
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
+        device='cpu'
     ):
         super().__init__()
-
+        
         if neptune:
             self.run = initialize_neptun()
         else:
             self.run = None
-
+    
         # parameters
         self.lr = lr
         self.model_save_dir = model_save_dir
@@ -55,14 +58,25 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
-            feature_extractor_name, representation_size
+            feature_extractor_name, representation_size, device=device
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
-        self.transformer = self.model_loader.load_transformer(
-            transformer_name, representation_size, transformer_output_size, num_segments
-        )
+        if transformer_name == "sign_language_transformer":
+            self.transformer = self.model_loader.load_transformer(
+                transformer_name,
+                representation_size,
+                transformer_output_size,
+                feedforward_size,
+                num_encoder_layers,
+                num_segments,
+                device=device
+            )
+        else:
+            self.transformer = self.model_loader.load_transformer(
+                transformer_name, representation_size, transformer_output_size
+            )
         self.cls_head = []
         print(self.num_classes_dict)
         for value in self.num_classes_dict.values():
@@ -88,7 +102,7 @@ class GlossTranslationModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         input, target = batch
         targets = target["target"]
-        predictions = self(input)
+        predictions = self(input.cpu())
         loss = self.summary_loss(predictions, targets)
         if self.run:
             self.run["metrics/batch/validation_loss"].log(loss)
