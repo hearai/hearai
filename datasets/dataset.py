@@ -275,8 +275,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             labels = record.label
         for value, class_label in zip(self.num_classes_dict.values(), labels):
             x = np.zeros(value)
-            J = np.random.choice(class_label)
-            x[J] = 1
+            x[class_label] = 1
             target.append(torch.tensor(x))
 
         if self.transform is not None:
