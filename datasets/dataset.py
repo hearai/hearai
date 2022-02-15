@@ -11,6 +11,7 @@ from torchvision import transforms
 import torch
 from typing import List, Union, Tuple, Any
 from utils.classification_mode import create_heads_dict
+import warnings
 
 # for non-latin encoding
 import sys
@@ -69,9 +70,9 @@ class VideoRecord(object):
     @property
     def label(self) -> Union[str, List[str]]:
         # just one label as gloss
-        if len(self._data) == 4:  # PLACEHOLDER
+        if len(self._data) == 4:
             return int(self._data[3])
-        # TO DO - sample associated with multiple labels
+        # Sample associated with multiple labels - HamNoSys
         else:
             return [int(label) for label in self._data[3:]]
 
@@ -156,11 +157,10 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
     def _sanity_check_samples(self):
         if self.time is not None:
-            self.num_segments = -1
             self.frames_per_segment = 1
-            print(
-                f"\nDataset Warning: chosen time was set to {self.time} num_segments and "
-                f"frames_per_segment were set to 1!\n"
+            warnings.warn(
+                f"\nDataset Warning: chosen time was set to {self.time} "
+                f"frames_per_segment were set to -1!\n"
             )
 
         for id, record in enumerate(self.video_list):
@@ -170,12 +170,12 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                 continue
 
             if record.num_frames <= 0 or record.start_frame == record.end_frame:
-                print(
+                warnings.warn(
                     f"\nDataset Warning: video {record.path} seems to have zero RGB frames on disk!\n"
                 )
 
             elif record.num_frames < (self.num_segments * self.frames_per_segment):
-                print(
+                warnings.warn(
                     f"\nDataset Warning: video {record.path} has {record.num_frames} frames "
                     f"but the dataloader is set up to load "
                     f"(num_segments={self.num_segments})*(frames_per_segment={self.frames_per_segment})"
@@ -218,7 +218,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         # choose start indices that are spread each time unit given by user
         if self.time is not None:
             if record.fps is None:
-                sys.exit("Number of rames per second not provided")
+                sys.exit("Number of frames per second not provided")
 
             start_indices = np.array(
                 [
@@ -227,6 +227,12 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                     if x % int(record.fps * self.time) == 0
                 ]
             )
+            if len(start_indices) > self.num_segments:
+                warnings.warn(
+                    f"Number of segments too small! "
+                    f"{len(start_indices)} > {self.num_segments} "
+                    f"Videos will be cut!"
+                    )
         # choose start indices that are perfectly evenly spread across the video frames.
         elif self.test_mode:
             distance_between_indices = (
@@ -381,25 +387,56 @@ class ImglistToTensor(torch.nn.Module):
         return torch.stack([transforms.functional.to_tensor(pic) for pic in img_list])
 
 
-def collate_fn_padd(batch):
+class PadCollate:
     """
-    Padds batch of variable length
-
-    note: it converts things ToTensor manually here since the ToTensor transform
-    assume it takes in images rather than arbitrary tensors.
+    a variant of callate_fn that pads according to the 
+    choosen total_length
     """
-    batch_split = list(zip(*batch))
-    seqs, targs = batch_split[0], batch_split[1]
-    ## padd
-    batch = torch.nn.utils.rnn.pad_sequence(seqs, batch_first=True)
 
-    return (
-        batch,
-        {
-            "target": [
-                torch.stack([item["target"][i] for item in targs], 0)
-                for i in range(len(targs[0]["target"]))
-            ],
-            "landmark": [i["landmark"] for i in targs],
-        },
-    )
+    def __init__(self, total_length):
+        """
+        args:
+            total_length - total length to be padded
+        """
+        self.total_length = total_length
+
+    def collate_fn_padd(self, batch):
+        """
+        Padds batch of variable length to have length total_length
+        args:
+            batch - list of (tensor, label, landmarks)
+
+        note: if self.total_length is smaller then num of drames
+        the sequence will be cut
+        """
+        batch_split = list(zip(*batch))
+        seqs, targs = batch_split[0], batch_split[1]
+
+        # get new dimensions
+        dims = [len(seqs)]
+        dims.extend(list(seqs[0].shape))
+        dims[1] = self.total_length
+
+        # pad all seqs to desired length with 0
+        # or get rid of too many frames
+        new_batch = torch.zeros(dims)
+        for i, tensor in enumerate(seqs):
+            length = tensor.size(0)
+            if length <= self.total_length:
+                new_batch[i, :length, ...] = tensor
+            else:
+                new_batch[i, ...] = tensor[:self.total_length, ...]
+
+        return (
+            new_batch,
+            {
+                "target": [
+                    torch.stack([item["target"][i] for item in targs], 0)
+                    for i in range(len(targs[0]["target"]))
+                ],
+                "landmark": [i["landmark"] for i in targs],
+            },
+        )
+
+    def __call__(self, batch):
+        return self.collate_fn_padd(batch)

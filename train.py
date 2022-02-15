@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 import torchvision.transforms as T
 import yaml
-from datasets.dataset import ImglistToTensor, VideoFrameDataset, collate_fn_padd
+from datasets.dataset import ImglistToTensor, VideoFrameDataset, PadCollate
 from models.model import GlossTranslationModel
 from torch.utils.data import DataLoader, random_split
 
@@ -137,7 +137,7 @@ def main(args):
         shuffle=True,
         batch_size=args.batch_size,
         num_workers=args.workers,
-        collate_fn=collate_fn_padd,
+        collate_fn=PadCollate(total_length=args.num_segments),
         drop_last=False,
     )
 
@@ -146,7 +146,7 @@ def main(args):
         shuffle=False,
         batch_size=args.batch_size,
         num_workers=args.workers,
-        collate_fn=collate_fn_padd,
+        collate_fn=PadCollate(total_length=args.num_segments),
         drop_last=False,
     )
 
