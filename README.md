@@ -24,6 +24,17 @@ Feature extractor returns a representation feature vector for every frame.
 ## 🧠 Transformer
 The transformer is a widely-used deep learning model that adopts the mechanism of self-attention, differentially weighting the significance of each part of the input data. It is used primarily in natural language processing (NLP). The Transfomer model will get representation from feature_extractor of size `num_frames,representation_size` for each video in our pipeline.
 
+## 📑 [WiP] Datasets
+In our studies we are using PJM lexicon with annotations provided at our internal server at:
+- directories with frames: `/dih4/dih4_2/hearai/data/frames/pjm/`
+- HamNoSys annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_hamnosys2.txt` - 8 heads only [WiP]
+- glosses annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_gloss2.txt`
+- landmarks directory: `/dih4/dih4_2/hearai/data/#mediapipe_landmarks/korpus/labeled/`
+
+Dataloader gives possibility to load data by:
+- choosing number of frames by setting `--num_segments` variable (in this option specify `--time` argument has to be set to `None` as default)
+- eventlty distribiuted using defined time unit (specify `--time` argument) and `--num_segments` as possible number of frames in video sequence (note that in this option `--landmarks_path` has to be set to get basic information about video, ie. `fps` value)
+
 ## 👥 Classification heads
 Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`
 
