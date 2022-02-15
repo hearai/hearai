@@ -1,8 +1,6 @@
 import timm
 import torch.nn as nn
 
-from torch.cuda import is_available as is_cuda_available
-
 
 class CnnExtractor(nn.Module):
     """Basic timm model"""
@@ -29,8 +27,6 @@ class CnnExtractor(nn.Module):
 
     def forward(self, input, **kwargs):
         # this is a dummy example but in practice this will be longer
-        if self.__device == 'cpu':
-            return self.model(input.cpu())
-        else:
-            return self.model(input.cuda())
+        return self.model(input.to(self.__device))
+
 

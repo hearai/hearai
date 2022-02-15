@@ -53,10 +53,8 @@ class SignLanguageTransformer(nn.Module):
 
     def forward(self, input: torch.Tensor):
         # Positional Encoding Start
-        if self.__device == 'cpu':
-            positional_encoding = input.cpu() + self._position_encoding[:, : input.shape[1]].cpu()
-        else:
-            positional_encoding = input.cuda() + self._position_encoding[:, : input.shape[1]].cuda()
+        positional_encoding = input.to(self.__device) + self._position_encoding[:, : input.shape[1]].to(self.__device)
+
 
         x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End
@@ -125,10 +123,8 @@ class SLRTEncoder(nn.Module):
         self.__device = device
 
     def forward(self, input: torch.Tensor):
-        if self.__device == 'cpu':
-            positional_encoding_normalized = self._positional_encoding_norm(input).cpu()
-        else:
-            positional_encoding_normalized = self._positional_encoding_norm(input).cuda()
+        
+        positional_encoding_normalized = self._positional_encoding_norm(input).to(self.__device)
 
         # Self Attention (Multi-Head Attention) Start
         values = positional_encoding_normalized
