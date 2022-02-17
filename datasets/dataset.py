@@ -159,8 +159,9 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         if self.time is not None:
             self.frames_per_segment = 1
             warnings.warn(
-                f"\nDataset Warning: chosen time was set to {self.time} "
-                f"frames_per_segment were set to -1!\n"
+                f"Dataset Warning: chosen time was set to {self.time}"
+                f"frames_per_segment were set to 1!\n"
+
             )
 
         for id, record in enumerate(self.video_list):
@@ -389,24 +390,24 @@ class ImglistToTensor(torch.nn.Module):
 
 class PadCollate:
     """
-    a variant of callate_fn that pads according to the 
-    choosen total_length
+    a variant of collate_fn that pads according to the 
+    chosen total_length
     """
 
-    def __init__(self, total_length):
+    def __init__(self, total_length: int):
         """
         args:
             total_length - total length to be padded
         """
         self.total_length = total_length
 
-    def collate_fn_padd(self, batch):
+    def collate_fn_padd(self, batch: list):
         """
-        Padds batch of variable length to have length total_length
+        Pads batch of variable length to have length total_length
         args:
-            batch - list of (tensor, label, landmarks)
+            batch - list of [tensor, label, landmarks]
 
-        note: if self.total_length is smaller then num of drames
+        note: if self.total_length is smaller than num of frames
         the sequence will be cut
         """
         batch_split = list(zip(*batch))

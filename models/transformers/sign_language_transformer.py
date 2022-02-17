@@ -55,9 +55,8 @@ class SignLanguageTransformer(nn.Module):
 
     def forward(self, input: torch.Tensor):
         # Positional Encoding Start
-        positional_encoding = input.to(self.__device) + self._position_encoding[
-            :, : input.shape[1]
-        ].to(self.__device)
+        pos_enc = self._position_encoding[:, : input.shape[1]].to(self.__device)
+        positional_encoding = input.to(self.__device) + pos_enc
 
         x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End

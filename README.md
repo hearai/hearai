@@ -31,9 +31,9 @@ In our studies we are using PJM lexicon with annotations provided at our interna
 - glosses annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_gloss2.txt`
 - landmarks directory: `/dih4/dih4_2/hearai/data/#mediapipe_landmarks/korpus/labeled/`
 
-Dataloader gives possibility to load data by:
-- choosing number of frames by setting `--num_segments` variable (in this option specify `--time` argument has to be set to `None` as default)
-- eventlty distribiuted using defined time unit (specify `--time` argument) and `--num_segments` as possible number of frames in video sequence (note that in this option `--landmarks_path` has to be set to get basic information about video, ie. `fps` value)
+Dataloader gives possibility to load data:
+- choosing number of frames by setting `--num_segments` variable (in this option `--time` argument is set to `None` as default)
+- evenly distribiuted using defined time unit by specifing `--time` argument and `--num_segments` as  number of frames in video sequence (note that in this option `--landmarks_path` has to be set to get basic information about video, eg. `fps` value)
 
 ## 👥 Classification heads
 Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`
