@@ -24,6 +24,7 @@ def get_args_parser():
     parser.add_argument(
         "--classification-mode",
         default="gloss",
+        choices=["gloss","hamnosys"],
         help="mode for classification, choose from classification_mode.py",
     )
     parser.add_argument(
