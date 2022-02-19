@@ -19,6 +19,7 @@ class SignLanguageTransformer(nn.Module):
         feedforward_size: int = 1024,
         num_encoder_layers: int = 1,
         num_frames: int = 8,
+        num_attention_heads: int = 8,
         dropout_rate: float = 0.1,
         device="cpu",
     ):
@@ -29,6 +30,7 @@ class SignLanguageTransformer(nn.Module):
             feedforward_size (int): Number of features in intermediate feedforward "layer".
             num_encoder_layers (int): Number of encoder layers.
             num_frames (int): Number of frames in a video.
+            num_attention_heads (int): Number of attention layer's heads.
             dropout_rate (float): Dropout rate.
         """
         super(SignLanguageTransformer, self).__init__()
@@ -39,7 +41,7 @@ class SignLanguageTransformer(nn.Module):
                 SLRTEncoder(
                     input_size=input_size,
                     feedforward_size=feedforward_size,
-                    num_frames=num_frames,
+                    num_attention_heads=num_attention_heads,
                     dropout_rate=dropout_rate,
                     device=device,
                 )
@@ -55,8 +57,7 @@ class SignLanguageTransformer(nn.Module):
 
     def forward(self, input: torch.Tensor):
         # Positional Encoding Start
-        pos_enc = self._position_encoding[:, : input.shape[1]].to(self.__device)
-        positional_encoding = input.to(self.__device) + pos_enc
+        positional_encoding = input.to(self.__device) + self._position_encoding[:, : input.shape[1]].to(self.__device)
 
         x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End
@@ -92,7 +93,7 @@ class SLRTEncoder(nn.Module):
         self,
         input_size: int,
         feedforward_size: int,
-        num_frames: int,
+        num_attention_heads: int,
         dropout_rate: float,
         device: str = "cpu",
     ):
@@ -100,7 +101,7 @@ class SLRTEncoder(nn.Module):
         Args:
             input_size (int): Number of input features.
             feedforward_size (int): Number of features in intermediate feedforward "layer".
-            num_frames (int): Number of frames per video.
+            num_attention_heads (int): Number of heads attention layer.
             dropout_rate (float): Dropout rate.
         """
         super(SLRTEncoder, self).__init__()
@@ -109,7 +110,9 @@ class SLRTEncoder(nn.Module):
         self._attention_dropout = nn.Dropout(dropout_rate)
 
         self._multi_headed_attention = MultiHeadedAttention(
-            num_heads=num_frames, size=input_size, dropout_rate=dropout_rate,
+            num_heads=num_attention_heads,
+            size=input_size,
+            dropout_rate=dropout_rate,
         )
         self._feedforward_sequential = nn.Sequential(
             nn.LayerNorm(input_size),

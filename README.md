@@ -67,7 +67,7 @@ When you install a new library, please add it to the list in `requirements.txt` 
 
 # 🏁 Example train.py run
 
-`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 8 --workers 32`
+`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 16 --gpu 1`
 
 
 # 🎨 Style

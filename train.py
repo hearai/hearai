@@ -18,7 +18,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser()
     # Data parameters and paths
     parser.add_argument(
-        "--data", help="path to data", default="/dih4/dih4_2/hearai/data/frames/pjm"
+        "--data", help="path to data", default="assets/sanity_check_data",
     )
     parser.add_argument(
         "--landmarks_path",
@@ -165,7 +165,9 @@ def main(args):
         lr=args.lr,
         classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
+        feature_extractor_model_path="efficientnet_b2",
         transformer_name="sign_language_transformer",
+        num_attention_heads=4,
         num_segments=args.num_segments,
         model_save_dir=args.save,
         neptune=args.neptune,
