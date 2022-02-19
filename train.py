@@ -1,19 +1,24 @@
 import argparse
 import os
+import warnings
+
 import pytorch_lightning as pl
 import torch
 import torchvision.transforms as T
 import yaml
-from datasets.dataset import ImglistToTensor, VideoFrameDataset, PadCollate
-from models.model import GlossTranslationModel
 from torch.utils.data import DataLoader, random_split
+
+from datasets.dataset import ImglistToTensor, PadCollate, VideoFrameDataset
+from models.model import GlossTranslationModel
+
+warnings.filterwarnings("ignore")
 
 
 def get_args_parser():
     parser = argparse.ArgumentParser()
     # Data parameters and paths
     parser.add_argument(
-        "--data", help="path to data", default="assets/sanity_check_data"
+        "--data", help="path to data", default="/dih4/dih4_2/hearai/data/frames/pjm"
     )
     parser.add_argument(
         "--landmarks_path",
@@ -23,8 +28,8 @@ def get_args_parser():
     )
     parser.add_argument(
         "--classification-mode",
-        default="gloss",
-        choices=["gloss","hamnosys"],
+        default="hamnosys",
+        choices=["gloss", "hamnosys"],
         help="mode for classification, choose from classification_mode.py",
     )
     parser.add_argument(
@@ -61,14 +66,17 @@ def get_args_parser():
         help="number of epochs to train (default: 10)",
     )
     parser.add_argument(
-        "--workers", type=int, default=0, help="number of parallel workers (default: 0)"
+        "--workers",
+        type=int,
+        default=0,
+        help="number of parallel workers (default: 0)",
     )
     # Other
     parser.add_argument(
         "--gpu",
         type=int,
         default=-1,
-        help="number of GPU to use, run on CPU if default (-1) used",
+        help="GPU number to use, run on CPU if default (-1) used",
     )
     parser.add_argument("--save", help="path to save model", default="./best.pth")
     parser.add_argument(
@@ -76,6 +84,7 @@ def get_args_parser():
     )
     parser.add_argument(
         "--fast-dev-run",
+        default=False,
         action="store_true",
         help="Flag for a sanity-check, runs single loop for the training phase",
     )
@@ -104,7 +113,7 @@ def main(args):
     if args.classification_mode == "gloss":
         annotation_file = os.path.join(videos_root, "test_gloss.txt")
     elif args.classification_mode == "hamnosys":
-        annotation_file = os.path.join(videos_root, "toy_hamnosys.txt")
+        annotation_file = os.path.join(videos_root, "test_hamnosys.txt")
 
     preprocess = T.Compose(
         [
@@ -161,19 +170,26 @@ def main(args):
         model_save_dir=args.save,
         neptune=args.neptune,
         device="cuda:0" if args.gpu > 0 else "cpu",
+        representation_size=512,
+        feedforward_size=1024,
+        transformer_output_size=784,
+        warmup_steps=20.0,
+        multiply_lr_step=0.95,
     )
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
-        val_check_interval=1.0,
+        val_check_interval=args.ratio,
         gpus=args.gpu if args.gpu > 0 else None,
-        progress_bar_refresh_rate=20,
+        progress_bar_refresh_rate=10,
         accumulate_grad_batches=1,
         fast_dev_run=args.fast_dev_run,
     )
 
     # run training
-    trainer.fit(model, dataloader_train, dataloader_val)
+    trainer.fit(
+        model, train_dataloader=dataloader_train, val_dataloaders=dataloader_val
+    )
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ def create_heads_dict(classification_mode):
             "hand_shape_thumb_position": 4,
             "hand_shape_bending": 6,
             "hand_position_finger_direction": 18,
-            "hand_position_palm_orientation": 8, 
+            "hand_position_palm_orientation": 8,
             "hand_location_x": 5,
             "hand_location_y": 36,
         }  # number of classes for each head

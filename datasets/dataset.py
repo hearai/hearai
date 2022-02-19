@@ -161,7 +161,6 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             warnings.warn(
                 f"Dataset Warning: chosen time was set to {self.time}"
                 f"frames_per_segment were set to 1!\n"
-
             )
 
         for id, record in enumerate(self.video_list):
