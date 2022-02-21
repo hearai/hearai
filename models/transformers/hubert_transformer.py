@@ -17,6 +17,7 @@ class HubertTransformer(nn.Module):
         input_features: int = 2048,
         output_features: int = 512,
         num_segments: int = 10,
+        device='cpu',
         *args,
         **kwargs
     ):
