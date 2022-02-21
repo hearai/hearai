@@ -9,6 +9,7 @@ class SignLanguageTransformer(nn.Module):
     Sign Language Transformer
     https://www.cihancamgoz.com/pub/camgoz2020cvpr.pdf
     """
+
     __max_len = 10000
 
     def __init__(
@@ -18,8 +19,9 @@ class SignLanguageTransformer(nn.Module):
         feedforward_size: int = 1024,
         num_encoder_layers: int = 1,
         num_frames: int = 8,
+        num_attention_heads: int = 8,
         dropout_rate: float = 0.1,
-        device='cpu'
+        device="cpu",
     ):
         """
         Args:
@@ -28,6 +30,7 @@ class SignLanguageTransformer(nn.Module):
             feedforward_size (int): Number of features in intermediate feedforward "layer".
             num_encoder_layers (int): Number of encoder layers.
             num_frames (int): Number of frames in a video.
+            num_attention_heads (int): Number of attention layer's heads.
             dropout_rate (float): Dropout rate.
         """
         super(SignLanguageTransformer, self).__init__()
@@ -38,10 +41,11 @@ class SignLanguageTransformer(nn.Module):
                 SLRTEncoder(
                     input_size=input_size,
                     feedforward_size=feedforward_size,
-                    num_frames=num_frames,
+                    num_attention_heads=num_attention_heads,
                     dropout_rate=dropout_rate,
-                    device=device
-                ) for _ in range(num_encoder_layers)
+                    device=device,
+                )
+                for _ in range(num_encoder_layers)
             ]
         )
         self._dropout_positional_encoding = nn.Dropout(dropout_rate)
@@ -54,7 +58,6 @@ class SignLanguageTransformer(nn.Module):
     def forward(self, input: torch.Tensor):
         # Positional Encoding Start
         positional_encoding = input.to(self.__device) + self._position_encoding[:, : input.shape[1]].to(self.__device)
-
 
         x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End
@@ -72,8 +75,8 @@ class SignLanguageTransformer(nn.Module):
         position = torch.arange(0, self.__max_len).unsqueeze(1)
         div_term = torch.exp(
             (
-                    torch.arange(0, self._input_size, 2, dtype=torch.float)
-                    * -(math.log(10000.0) / self._input_size)
+                torch.arange(0, self._input_size, 2, dtype=torch.float)
+                * -(math.log(10000.0) / self._input_size)
             )
         )
         position_encoding[:, 0::2] = torch.sin(position.float() * div_term)
@@ -90,15 +93,15 @@ class SLRTEncoder(nn.Module):
         self,
         input_size: int,
         feedforward_size: int,
-        num_frames: int,
+        num_attention_heads: int,
         dropout_rate: float,
-        device: str = 'cpu'
+        device: str = "cpu",
     ):
         """
         Args:
             input_size (int): Number of input features.
             feedforward_size (int): Number of features in intermediate feedforward "layer".
-            num_frames (int): Number of frames per video.
+            num_attention_heads (int): Number of heads attention layer.
             dropout_rate (float): Dropout rate.
         """
         super(SLRTEncoder, self).__init__()
@@ -107,7 +110,7 @@ class SLRTEncoder(nn.Module):
         self._attention_dropout = nn.Dropout(dropout_rate)
 
         self._multi_headed_attention = MultiHeadedAttention(
-            num_heads=num_frames,
+            num_heads=num_attention_heads,
             size=input_size,
             dropout_rate=dropout_rate,
         )
@@ -123,8 +126,10 @@ class SLRTEncoder(nn.Module):
         self.__device = device
 
     def forward(self, input: torch.Tensor):
-        
-        positional_encoding_normalized = self._positional_encoding_norm(input).to(self.__device)
+
+        positional_encoding_normalized = self._positional_encoding_norm(input).to(
+            self.__device
+        )
 
         # Self Attention (Multi-Head Attention) Start
         values = positional_encoding_normalized

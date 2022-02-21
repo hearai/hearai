@@ -9,7 +9,7 @@ from models.transformers.sign_language_transformer import SignLanguageTransforme
 
 
 def generate_mockup_input(
-        batch_size: int, input_shape: Tuple, value_range: Tuple
+    batch_size: int, input_shape: Tuple, value_range: Tuple
 ) -> torch.Tensor:
     """
     Function creates PyTorch tensor of specified shape with values in provided range.
@@ -64,12 +64,14 @@ if __name__ == "__main__":
     labels = generate_mockup_output(batch_size=batch_size, num_classes=num_classes)
 
     # simulate model training
-    model = SignLanguageTransformer(input_size=input_size,
-                                    output_size=output_size,
-                                    feedforward_size=2048,
-                                    num_encoder_layers=1,
-                                    num_frames=num_frames,
-                                    dropout_rate=0.1)
+    model = SignLanguageTransformer(
+        input_size=input_size,
+        output_size=output_size,
+        feedforward_size=2048,
+        num_encoder_layers=1,
+        num_frames=num_frames,
+        dropout_rate=0.1,
+    )
     loss_fn = nn.BCEWithLogitsLoss()
     optimizer = Adam(model.parameters(), lr=1e-4)
     epochs = 10
@@ -88,4 +90,3 @@ if __name__ == "__main__":
 
     print(f"Predicted labels: {np.argmax(model(X).detach().numpy(), axis=1)}")
     print(f"True labels: {np.argmax(y_true, axis=1)}")
-
