@@ -31,6 +31,7 @@ class GlossTranslationModel(pl.LightningModule):
         feedforward_size=4096,
         num_encoder_layers=1,
         num_segments=8,
+        num_attention_heads=16,
         classification_mode="gloss",
         feature_extractor_name="cnn_extractor",
         transformer_name="fake_transformer",
@@ -71,7 +72,8 @@ class GlossTranslationModel(pl.LightningModule):
                 feedforward_size,
                 num_encoder_layers,
                 num_segments,
-                device=device,
+                num_attention_heads,
+                device=device
             )
         else:
             self.transformer = self.model_loader.load_transformer(
