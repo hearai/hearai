@@ -16,7 +16,7 @@ class ModelLoader:
     transformers_ = {
         "fake_transformer": transformers.FakeTransformer,
         "hubert_transformer": transformers.HubertTransformer,
-        "sign_language_transformer": transformers.SignLanguageTransformer
+        "sign_language_transformer": transformers.SignLanguageTransformer,
     }
 
     def load_feature_extractor(self, feature_extractor_name, *args, **kwargs):

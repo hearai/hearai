@@ -9,6 +9,7 @@ class SignLanguageTransformer(nn.Module):
     Sign Language Transformer
     https://www.cihancamgoz.com/pub/camgoz2020cvpr.pdf
     """
+
     __max_len = 10000
 
     def __init__(
@@ -20,7 +21,7 @@ class SignLanguageTransformer(nn.Module):
         num_frames: int = 8,
         num_attention_heads: int = 8,
         dropout_rate: float = 0.1,
-        device='cpu'
+        device="cpu",
     ):
         """
         Args:
@@ -42,8 +43,9 @@ class SignLanguageTransformer(nn.Module):
                     feedforward_size=feedforward_size,
                     num_attention_heads=num_attention_heads,
                     dropout_rate=dropout_rate,
-                    device=device
-                ) for _ in range(num_encoder_layers)
+                    device=device,
+                )
+                for _ in range(num_encoder_layers)
             ]
         )
         self._dropout_positional_encoding = nn.Dropout(dropout_rate)
@@ -73,8 +75,8 @@ class SignLanguageTransformer(nn.Module):
         position = torch.arange(0, self.__max_len).unsqueeze(1)
         div_term = torch.exp(
             (
-                    torch.arange(0, self._input_size, 2, dtype=torch.float)
-                    * -(math.log(10000.0) / self._input_size)
+                torch.arange(0, self._input_size, 2, dtype=torch.float)
+                * -(math.log(10000.0) / self._input_size)
             )
         )
         position_encoding[:, 0::2] = torch.sin(position.float() * div_term)
@@ -93,7 +95,7 @@ class SLRTEncoder(nn.Module):
         feedforward_size: int,
         num_attention_heads: int,
         dropout_rate: float,
-        device: str = 'cpu'
+        device: str = "cpu",
     ):
         """
         Args:
@@ -124,8 +126,10 @@ class SLRTEncoder(nn.Module):
         self.__device = device
 
     def forward(self, input: torch.Tensor):
-        
-        positional_encoding_normalized = self._positional_encoding_norm(input).to(self.__device)
+
+        positional_encoding_normalized = self._positional_encoding_norm(input).to(
+            self.__device
+        )
 
         # Self Attention (Multi-Head Attention) Start
         values = positional_encoding_normalized

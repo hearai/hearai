@@ -6,7 +6,7 @@ import torch.optim
 class FakeTransformer(nn.Module):
     """Basic transformer model"""
 
-    def __init__(self, input_size: int = 128, output_size: int = 1000, device='cpu'):
+    def __init__(self, input_size: int = 128, output_size: int = 1000, device="cpu"):
         """
         Dummy example of __init__ function of basic transformer model. Does nothing as transformer is not even implemented.
         

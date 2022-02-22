@@ -1,21 +1,29 @@
+import neptune.new as neptune
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import numpy as np
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
-import neptune.new as neptune
-from torch.optim.lr_scheduler import MultiplicativeLR
 from sklearn.metrics import classification_report
-from models.model_loader import ModelLoader
-from models.feature_extractors.multi_frame_feature_extractor import (
-    MultiFrameFeatureExtractor,
-)
+from torch.optim.lr_scheduler import MultiplicativeLR
 from utils.classification_mode import create_heads_dict
 from utils.summary_loss import SummaryLoss
 
+from models.feature_extractors.multi_frame_feature_extractor import (
+    MultiFrameFeatureExtractor,
+)
+from models.model_loader import ModelLoader
+
+
 # initialize neptune logging
-def initialize_neptun():
-    return neptune.init(api_token=NEPTUNE_API_TOKEN, project=NEPTUNE_PROJECT_NAME)
+def initialize_neptun(tags):
+    return neptune.init(
+        api_token=NEPTUNE_API_TOKEN,
+        project=NEPTUNE_PROJECT_NAME,
+        tags=tags,
+        capture_stdout=False,
+        capture_stderr=False,
+    )
 
 
 class GlossTranslationModel(pl.LightningModule):
@@ -34,18 +42,20 @@ class GlossTranslationModel(pl.LightningModule):
         num_attention_heads=16,
         classification_mode="gloss",
         feature_extractor_name="cnn_extractor",
+        feature_extractor_model_path="efficientnet_b1",
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
-        device='cpu'
+        device="cpu",
     ):
         super().__init__()
-        
+
         if neptune:
-            self.run = initialize_neptun()
+            tags = [classification_mode, feature_extractor_name, transformer_name]
+            self.run = initialize_neptun(tags)
         else:
             self.run = None
-    
+
         # parameters
         self.lr = lr
         self.model_save_dir = model_save_dir
@@ -59,7 +69,10 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
-            feature_extractor_name, representation_size, device=device
+            feature_extractor_name,
+            representation_size,
+            device=device,
+            model_path=feature_extractor_model_path,
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
@@ -93,7 +106,8 @@ class GlossTranslationModel(pl.LightningModule):
         return predictions
 
     def training_step(self, batch, batch_idx):
-        input, targets = batch
+        input, target = batch
+        targets = target["target"]
         predictions = self(input)
         loss = self.summary_loss(predictions, targets)
         if self.run:
@@ -101,12 +115,13 @@ class GlossTranslationModel(pl.LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
-        input, targets = batch
-        predictions = self(input.cpu())
+        input, target = batch
+        targets = target["target"]
+        predictions = self(input)
         loss = self.summary_loss(predictions, targets)
         if self.run:
             self.run["metrics/batch/validation_loss"].log(loss)
-        return {"loss": loss, "targets": targets, "predictions": predictions}
+        return {"val_loss": loss, "targets": targets, "predictions": predictions}
 
     def validation_epoch_end(self, out):
         head_names = list(self.num_classes_dict.keys())
@@ -141,6 +156,7 @@ class GlossTranslationModel(pl.LightningModule):
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
+            self.scheduler.step()
 
     def configure_optimizers(self):
         # set optimizer
@@ -150,8 +166,8 @@ class GlossTranslationModel(pl.LightningModule):
         def lambd(epoch):
             return self.multiply_lr_step
 
-        scheduler = MultiplicativeLR(optimizer, lr_lambda=lambd)
-        return [optimizer], [scheduler]
+        self.scheduler = MultiplicativeLR(optimizer, lr_lambda=lambd)
+        return [optimizer], [self.scheduler]
 
     def optimizer_step(
         self,
@@ -172,4 +188,4 @@ class GlossTranslationModel(pl.LightningModule):
 
         optimizer.step(closure=optimizer_closure)
         if self.run:
-            self.run["params/lr"].log(self.lr)
+            self.run["params/lr"].log(optimizer.param_groups[0]["lr"])
