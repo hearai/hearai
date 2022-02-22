@@ -9,7 +9,7 @@ import yaml
 from torch.utils.data import DataLoader, random_split
 
 from datasets.dataset import ImglistToTensor, PadCollate, VideoFrameDataset
-from models.model import GlossTranslationModel
+from models.model_for_pretraining import GlossTranslationModel
 
 warnings.filterwarnings("ignore")
 
@@ -113,7 +113,7 @@ def main(args):
     if args.classification_mode == "gloss":
         annotation_file = os.path.join(videos_root, "test_gloss.txt")
     elif args.classification_mode == "hamnosys":
-        annotation_file = os.path.join(videos_root, "test_hamnosys.txt")
+        annotation_file = os.path.join(videos_root, "test_hamnosys2.txt")
 
     preprocess = T.Compose(
         [
