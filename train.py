@@ -18,7 +18,8 @@ def get_args_parser():
     parser = argparse.ArgumentParser()
     # Data parameters and paths
     parser.add_argument(
-        "--data", help="path to data", default="assets/sanity_check_data",
+        "--data", help="path to data", nargs="*",
+        default=["assets/sanity_check_data"],
     )
     parser.add_argument(
         "--landmarks_path",
@@ -107,14 +108,8 @@ def main(args):
 
     # set torch seed
     torch.manual_seed(args.seed)
-
-    # load data
-    videos_root = args.data
-    if args.classification_mode == "gloss":
-        annotation_file = os.path.join(videos_root, "test_gloss.txt")
-    elif args.classification_mode == "hamnosys":
-        annotation_file = os.path.join(videos_root, "test_hamnosys.txt")
-
+    
+    # trasformations
     preprocess = T.Compose(
         [
             ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
@@ -124,17 +119,31 @@ def main(args):
         ]
     )
 
-    dataset = VideoFrameDataset(
-        root_path=videos_root,
-        annotationfile_path=annotation_file,
-        classification_mode=args.classification_mode,
-        num_segments=args.num_segments,
-        time=args.time,
-        landmarks_path=args.landmarks_path,
-        transform=preprocess,
-        test_mode=False,
-    )
+    # load data
+    videos_root = args.data
+    if not isinstance(videos_root, list):
+        videos_root = [videos_root]
 
+    datasets = list()
+    for video_root in videos_root:
+        if args.classification_mode == "gloss":
+            annotation_file = os.path.join(video_root, "test_gloss.txt")
+        elif args.classification_mode == "hamnosys":
+            annotation_file = os.path.join(video_root, "test_hamnosys.txt")
+
+        dataset = VideoFrameDataset(
+            root_path=video_root,
+            annotationfile_path=annotation_file,
+            classification_mode=args.classification_mode,
+            num_segments=args.num_segments,
+            time=args.time,
+            landmarks_path=args.landmarks_path,
+            transform=preprocess,
+            test_mode=True,
+        )
+        datasets.append(dataset)
+    dataset = torch.utils.data.ConcatDataset(datasets)
+    
     # split into train/val
     train_val_ratio = args.ratio
     train_len = round(len(dataset) * train_val_ratio)
@@ -187,7 +196,7 @@ def main(args):
         accumulate_grad_batches=1,
         fast_dev_run=args.fast_dev_run,
     )
-
+    
     # run training
     trainer.fit(
         model, train_dataloader=dataloader_train, val_dataloaders=dataloader_val
