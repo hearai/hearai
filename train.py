@@ -113,7 +113,7 @@ def main(args):
     if args.classification_mode == "gloss":
         annotation_file = os.path.join(videos_root, "test_gloss.txt")
     elif args.classification_mode == "hamnosys":
-        annotation_file = os.path.join(videos_root, "toy_hamnosys.txt")
+        annotation_file = os.path.join(videos_root, "test_hamnosys.txt")
 
     preprocess = T.Compose(
         [
