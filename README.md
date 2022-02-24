@@ -53,14 +53,14 @@ Pipeline handle multihead classification. We predefine `classification_heads` fo
 Hamburg Sign Language Notation System (HamNoSys) is a gesture transcription alphabetic system that describes the symbols and gestures such as hand shape, hand location, and movement. Read more about HamNoSys [here - Introduction to HamNoSys](https://www.hearai.pl/post/4-hamnosys/) and [here - Introduction to HamNoSys Part 2](https://www.hearai.pl/post/5-hamnosys2/). HamNoSys always have the same number of possible classes.
 
 ```
-"symmetry_operator": 12,
-"hand_shape_base_form": 13,
+"symmetry_operator": 9,
+"hand_shape_base_form": 12,
 "hand_shape_thumb_position": 4,
 "hand_shape_bending": 6,
 "hand_position_finger_direction": 18,
 "hand_position_palm_orientation": 8,
-"hand_location_frontal_plane_LR": 5,
-"hand_location_frontal_plane_TB": 36,
+"hand_location_x": 5,
+"hand_location_y": 37,
 ```
 
 Gloss is an annotation system that applies a label (a word) to the sign. Number glosses depend on a language and dataset. It is usually a bigger number as it must define as many words (glosses) as possible.
