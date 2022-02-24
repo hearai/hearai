@@ -15,6 +15,11 @@ def create_heads_dict(classification_mode):
             "hand_location_x": 5,
             "hand_location_y": 37,
         }  # number of classes for each head
+    elif classification_mode == "hamnosys-less":
+        num_classes_dict = {
+            "hand_shape_base_form": 12,
+            "hand_shape_thumb_position": 4,
+        }  # number of classes for each head
     else:
         sys.exit("Wrong classification_mode passed to pipeline")
 

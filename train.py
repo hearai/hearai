@@ -30,7 +30,7 @@ def get_args_parser():
     parser.add_argument(
         "--classification-mode",
         default="hamnosys",
-        choices=["gloss", "hamnosys"],
+        choices=["gloss", "hamnosys", "hamnosys-less"],
         help="mode for classification, choose from classification_mode.py",
     )
     parser.add_argument(
@@ -128,7 +128,7 @@ def main(args):
     for video_root in videos_root:
         if args.classification_mode == "gloss":
             annotation_file = os.path.join(video_root, "test_gloss.txt")
-        elif args.classification_mode == "hamnosys":
+        elif "hamnosys" in args.classification_mode:
             annotation_file = os.path.join(video_root, "test_hamnosys.txt")
 
         dataset = VideoFrameDataset(
