@@ -49,9 +49,7 @@ class PreTrainingModel(pl.LightningModule):
         super().__init__()
 
         if neptune:
-            tags = [MODEL_CONFIG["classification_mode"],
-            MODEL_CONFIG["feature_extractor_name"],
-            MODEL_CONFIG["transformer_name"]]
+            tags = [MODEL_CONFIG["classification_mode"], MODEL_CONFIG["feature_extractor_name"], MODEL_CONFIG["transformer_name"], "pre-training"]
             self.run = initialize_neptun(tags)
         else:
             self.run = None
