@@ -100,7 +100,7 @@ def get_args_parser():
 
 def main(args):
     # set GPU to use
-    if args.gpu > 0:
+    if args.gpu >= 0:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -171,7 +171,7 @@ def main(args):
         num_segments=args.num_segments,
         model_save_dir=args.save,
         neptune=args.neptune,
-        device="cuda:0" if args.gpu > 0 else "cpu",
+        device="cuda:0" if args.gpu >= 0 else "cpu",
         representation_size=512,
         feedforward_size=1024,
         transformer_output_size=784,
@@ -182,7 +182,7 @@ def main(args):
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         val_check_interval=args.ratio,
-        gpus=args.gpu if args.gpu > 0 else None,
+        gpus=args.gpu if args.gpu >= 0 else None,
         progress_bar_refresh_rate=10,
         accumulate_grad_batches=1,
         fast_dev_run=args.fast_dev_run,
