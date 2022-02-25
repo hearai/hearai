@@ -79,13 +79,13 @@ class VideoRecord(object):
     @property
     def label(self) -> Union[str, List[str]]:
         # just one label as gloss
-        id_list = []
-        for key in self.num_classes_dict.keys():
-            id_list.append(self._data[ALL_HAMNOSYS_HEADS[key]])
         if "gloss" in self.num_classes_dict.keys():
             return int(self._data[3])
         # Sample associated with multiple labels - HamNoSys
         else:
+            id_list = []
+            for key in self.num_classes_dict.keys():
+                id_list.append(self._data[ALL_HAMNOSYS_HEADS[key]])
             return [int(label) for label in id_list]
 
 
