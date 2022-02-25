@@ -9,7 +9,8 @@ import yaml
 from torch.utils.data import DataLoader, random_split
 
 from datasets.dataset import ImglistToTensor, PadCollate, VideoFrameDataset
-from models.model_for_pretraining import GlossTranslationModel
+from models.model_for_pretraining import PreTrainingModel
+from models.model import GlossTranslationModel
 
 warnings.filterwarnings("ignore")
 
@@ -88,6 +89,12 @@ def get_args_parser():
         action="store_true",
         help="Flag for a sanity-check, runs single loop for the training phase",
     )
+    parser.add_argument(
+        "--pre-training",
+        default=False,
+        action="store_true",
+        help="Flag for a pre-training. Enables feature-extractor pre-training.",
+    )
     # Neptune settings
     parser.add_argument(
         "--neptune",
@@ -161,23 +168,28 @@ def main(args):
     )
 
     # prepare model
-    model = GlossTranslationModel(
-        lr=args.lr,
-        classification_mode=args.classification_mode,
-        feature_extractor_name="cnn_extractor",
-        feature_extractor_model_path="efficientnet_b2",
-        transformer_name="sign_language_transformer",
-        num_attention_heads=4,
-        num_segments=args.num_segments,
-        model_save_dir=args.save,
-        neptune=args.neptune,
-        device="cuda:0" if args.gpu > 0 else "cpu",
-        representation_size=512,
-        feedforward_size=1024,
-        transformer_output_size=784,
-        warmup_steps=20.0,
-        multiply_lr_step=0.95,
-    )
+    MODEL_CONFIG = {"lr": args.lr,
+        "multiply_lr_step": 0.95,
+        "warmup_steps": 20.0,
+        "transformer_output_size": 784,
+        "representation_size": 512,
+        "feedforward_size": 1024,
+        "num_encoder_layers": 1,
+        "num_segments": args.num_segments,
+        "num_attention_heads": 4,
+        "classification_mode": args.classification_mode,
+        "feature_extractor_name": "cnn_extractor",
+        "feature_extractor_model_path": "efficientnet_b2",
+        "transformer_name": "sign_language_transformer",
+        "model_save_dir": args.save,
+        "neptune": args.neptune,
+        "device": "cuda:0" if args.gpu > 0 else "cpu",    
+    }
+
+    if args.pre_training:
+        model = PreTrainingModel(MODEL_CONFIG=MODEL_CONFIG)
+    else:
+        model = GlossTranslationModel(MODEL_CONFIG=MODEL_CONFIG)
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
