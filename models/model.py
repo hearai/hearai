@@ -40,6 +40,7 @@ class GlossTranslationModel(pl.LightningModule):
         num_encoder_layers=1,
         num_segments=8,
         num_attention_heads=16,
+        transformer_dropout_rate=0.1,
         classification_mode="gloss",
         feature_extractor_name="cnn_extractor",
         feature_extractor_model_path="efficientnet_b1",
@@ -69,10 +70,10 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
-            feature_extractor_name,
-            representation_size,
-            device=device,
+            feature_extractor_name=feature_extractor_name,
+            representation_size = representation_size,
             model_path=feature_extractor_model_path,
+            device=device
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
@@ -80,12 +81,13 @@ class GlossTranslationModel(pl.LightningModule):
         if transformer_name == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
                 transformer_name,
-                representation_size,
-                transformer_output_size,
-                feedforward_size,
-                num_encoder_layers,
-                num_segments,
-                num_attention_heads,
+                input_size=representation_size,
+                output_size=transformer_output_size,
+                feedforward_size=feedforward_size,
+                num_encoder_layers=num_encoder_layers,
+                num_frames=num_segments,
+                num_attention_heads=num_attention_heads,
+                dropout_rate=transformer_dropout_rate,
                 device=device
             )
         else:
