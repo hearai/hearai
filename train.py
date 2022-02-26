@@ -205,33 +205,8 @@ def main(args):
             }
             
     # prepare model
-<<<<<<< HEAD
-    model_config = {
-        "lr": args.lr,
-        "multiply_lr_step": 0.95,
-        "warmup_steps": 20.0,
-        "transformer_output_size": 784,
-        "representation_size": 512,
-        "feedforward_size": 1024,
-        "num_encoder_layers": 1,
-        "num_segments": args.num_segments,
-        "num_attention_heads": 4,
-        "classification_mode": args.classification_mode,
-        "feature_extractor_name": "cnn_extractor",
-        "feature_extractor_model_path": "efficientnet_b2",
-        "transformer_name": "sign_language_transformer",
-        "model_save_dir": args.save,
-        "neptune": args.neptune,
-        "device": "cuda:0" if args.gpu > 0 else "cpu",    
-    }
-
     if args.pre_training:
-        model = PreTrainingModel(model_config=model_config)
-    else:
-        model = GlossTranslationModel(model_config=model_config)
-=======
-    model = GlossTranslationModel(
-        lr=args.lr,
+        model = PreTrainingModel(lr=args.lr,
         classification_mode=args.classification_mode,
         feature_extractor_name="cnn_extractor",
         feature_extractor_model_path=hyperparameters["feature_extractor__model_path"],
@@ -247,9 +222,25 @@ def main(args):
         num_encoder_layers=hyperparameters["transformer__num_encoder_layers"],
         transformer_output_size=hyperparameters["transformer__output_size"],
         warmup_steps=20.0,
-        multiply_lr_step=0.95,
-    )
->>>>>>> Added model_hyperparameters.json
+        multiply_lr_step=0.95,)
+    else:
+        model = GlossTranslationModel(lr=args.lr,
+        classification_mode=args.classification_mode,
+        feature_extractor_name="cnn_extractor",
+        feature_extractor_model_path=hyperparameters["feature_extractor__model_path"],
+        transformer_name="sign_language_transformer",
+        num_attention_heads=hyperparameters['transformer__num_attention_heads'],
+        transformer_dropout_rate=hyperparameters["transformer__dropout_rate"],
+        num_segments=args.num_segments,
+        model_save_dir=args.save,
+        neptune=args.neptune,
+        device="cuda:0" if args.gpu > 0 else "cpu",
+        representation_size=hyperparameters["feature_extractor__representation_size"],
+        feedforward_size=hyperparameters["transformer__feedforward_size"],
+        num_encoder_layers=hyperparameters["transformer__num_encoder_layers"],
+        transformer_output_size=hyperparameters["transformer__output_size"],
+        warmup_steps=20.0,
+        multiply_lr_step=0.95,)
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
