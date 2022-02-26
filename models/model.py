@@ -31,6 +31,7 @@ class GlossTranslationModel(pl.LightningModule):
 
     def __init__(
         self,
+<<<<<<< HEAD
         model_config = {
         "lr": 1e-5,
         "multiply_lr_step": 0.7,
@@ -47,6 +48,25 @@ class GlossTranslationModel(pl.LightningModule):
         "transformer_name": "fake_transformer",
         "model_save_dir": "",
         "neptune": False,}
+=======
+        lr=1e-5,
+        multiply_lr_step=0.7,
+        warmup_steps=100.0,
+        transformer_output_size=1024,
+        representation_size=2048,
+        feedforward_size=4096,
+        num_encoder_layers=1,
+        num_segments=8,
+        num_attention_heads=16,
+        transformer_dropout_rate=0.1,
+        classification_mode="gloss",
+        feature_extractor_name="cnn_extractor",
+        feature_extractor_model_path="efficientnet_b1",
+        transformer_name="fake_transformer",
+        model_save_dir="",
+        neptune=False,
+        device="cpu",
+>>>>>>> Added model_hyperparameters.json
     ):
         super().__init__()
 
@@ -75,15 +95,23 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
+<<<<<<< HEAD
             model_config["feature_extractor_name"],
             model_config["representation_size"],
             model_path=model_config["feature_extractor_model_path"],
+=======
+            feature_extractor_name=feature_extractor_name,
+            representation_size = representation_size,
+            model_path=feature_extractor_model_path,
+            device=device
+>>>>>>> Added model_hyperparameters.json
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
         if model_config["transformer_name"] == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
+<<<<<<< HEAD
                 model_config["transformer_name"],
                 model_config["representation_size"],
                 model_config["transformer_output_size"],
@@ -91,6 +119,17 @@ class GlossTranslationModel(pl.LightningModule):
                 model_config["num_encoder_layers"],
                 model_config["num_segments"],
                 model_config["num_attention_heads"],
+=======
+                transformer_name,
+                input_size=representation_size,
+                output_size=transformer_output_size,
+                feedforward_size=feedforward_size,
+                num_encoder_layers=num_encoder_layers,
+                num_frames=num_segments,
+                num_attention_heads=num_attention_heads,
+                dropout_rate=transformer_dropout_rate,
+                device=device
+>>>>>>> Added model_hyperparameters.json
             )
         else:
             self.transformer = self.model_loader.load_transformer(

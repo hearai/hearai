@@ -29,22 +29,23 @@ class PreTrainingModel(pl.LightningModule):
 
     def __init__(
         self,
-        model_config = {
-        "lr": 1e-5,
-        "multiply_lr_step": 0.7,
-        "warmup_steps": 100.0,
-        "transformer_output_size": 1024,
-        "representation_size": 2048,
-        "feedforward_size": 4096,
-        "num_encoder_layers": 1,
-        "num_segments": 8,
-        "num_attention_heads": 16,
-        "classification_mode": "gloss",
-        "feature_extractor_name": "cnn_extractor",
-        "feature_extractor_model_path": "efficientnet_b1",
-        "transformer_name": "fake_transformer",
-        "model_save_dir": "",
-        "neptune": False,}
+        lr=1e-5,
+        multiply_lr_step=0.7,
+        warmup_steps=100.0,
+        transformer_output_size=1024,
+        representation_size=2048,
+        feedforward_size=4096,
+        num_encoder_layers=1,
+        num_segments=8,
+        num_attention_heads=16,
+        transformer_dropout_rate=0.1,
+        classification_mode="gloss",
+        feature_extractor_name="cnn_extractor",
+        feature_extractor_model_path="efficientnet_b1",
+        transformer_name="fake_transformer",
+        model_save_dir="",
+        neptune=False,
+        device="cpu",
     ):
         super().__init__()
 
