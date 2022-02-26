@@ -189,7 +189,7 @@ def main(args):
         collate_fn=PadCollate(total_length=args.num_segments),
         drop_last=False,
     )
-
+    
     with open(args.model_hyperparameters_path) as file:
         hyperparameters = json.load(file)
     # prepare model
