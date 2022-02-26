@@ -189,21 +189,9 @@ def main(args):
         collate_fn=PadCollate(total_length=args.num_segments),
         drop_last=False,
     )
-    if args.model_hyperparameters_path is not None:
-        with open(args.model_hyperparameters_path) as file:
-            hyperparameters = json.load(file)
-    else:
-        hyperparameters = {
-            "feature_extractor__model_path": "efficientnet_b1",
-            "feature_extractor__representation_size": 512,
-            "transformer__feedforward_size": 1024,
-            "transformer__transformer_output_size": 784,
-            "transformer__num_attention_heads": 4,
-            "transformer__num_encoder_layers": 2,
-            "transformer__output_size": 1024,
-            "transformer__dropout_rate": 0.1
-            }
-            
+
+    with open(args.model_hyperparameters_path) as file:
+        hyperparameters = json.load(file)
     # prepare model
     if args.pre_training:
         model = PreTrainingModel(lr=args.lr,

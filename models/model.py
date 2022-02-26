@@ -31,24 +31,6 @@ class GlossTranslationModel(pl.LightningModule):
 
     def __init__(
         self,
-<<<<<<< HEAD
-        model_config = {
-        "lr": 1e-5,
-        "multiply_lr_step": 0.7,
-        "warmup_steps": 100.0,
-        "transformer_output_size": 1024,
-        "representation_size": 2048,
-        "feedforward_size": 4096,
-        "num_encoder_layers": 1,
-        "num_segments": 8,
-        "num_attention_heads": 16,
-        "classification_mode": "gloss",
-        "feature_extractor_name": "cnn_extractor",
-        "feature_extractor_model_path": "efficientnet_b1",
-        "transformer_name": "fake_transformer",
-        "model_save_dir": "",
-        "neptune": False,}
-=======
         lr=1e-5,
         multiply_lr_step=0.7,
         warmup_steps=100.0,
@@ -66,7 +48,6 @@ class GlossTranslationModel(pl.LightningModule):
         model_save_dir="",
         neptune=False,
         device="cpu",
->>>>>>> Added model_hyperparameters.json
     ):
         super().__init__()
 
@@ -96,6 +77,7 @@ class GlossTranslationModel(pl.LightningModule):
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
 <<<<<<< HEAD
+<<<<<<< HEAD
             model_config["feature_extractor_name"],
             model_config["representation_size"],
             model_path=model_config["feature_extractor_model_path"],
@@ -104,6 +86,11 @@ class GlossTranslationModel(pl.LightningModule):
             representation_size = representation_size,
             model_path=feature_extractor_model_path,
             device=device
+>>>>>>> Added model_hyperparameters.json
+=======
+            feature_extractor_name=feature_extractor_name,
+            representation_size = representation_size,
+            model_path=feature_extractor_model_path
 >>>>>>> Added model_hyperparameters.json
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
@@ -127,8 +114,12 @@ class GlossTranslationModel(pl.LightningModule):
                 num_encoder_layers=num_encoder_layers,
                 num_frames=num_segments,
                 num_attention_heads=num_attention_heads,
+<<<<<<< HEAD
                 dropout_rate=transformer_dropout_rate,
                 device=device
+>>>>>>> Added model_hyperparameters.json
+=======
+                dropout_rate=transformer_dropout_rate
 >>>>>>> Added model_hyperparameters.json
             )
         else:
