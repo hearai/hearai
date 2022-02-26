@@ -27,6 +27,12 @@ def get_args_parser():
         help="path to landmarks annotations",
     )
     parser.add_argument(
+        "--model_hyperparameters",
+        type=str,
+        default=None,
+        help="path to .json file specyfing hyperparameters of different model sections.",
+    )
+    parser.add_argument(
         "--classification-mode",
         default="hamnosys",
         choices=["gloss", "hamnosys"],
