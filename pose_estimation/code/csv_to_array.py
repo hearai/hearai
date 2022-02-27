@@ -162,7 +162,25 @@ def impute_landmark_coordinates(landmarks_df: pd.DataFrame):
         x = landmarks_df[landmark + '.x']
         y = landmarks_df[landmark + '.y']
         z = landmarks_df[landmark + '.z']
+
         landmarks_df[landmark + '.v'] = np.where(x.isna() | y.isna() | z.isna(), 1,  0)
+        landmarks_df[landmark + '.x'].interpolate(method='linear',
+                                                  axis="index",
+                                                  limit_direction='both',
+                                                  inplace=True)
+        landmarks_df[landmark + '.y'].interpolate(method='linear',
+                                                  axis="index",
+                                                  limit_direction='both',
+                                                  inplace=True)
+        landmarks_df[landmark + '.z'].interpolate(method='linear',
+                                                  axis="index",
+                                                  limit_direction='both',
+                                                  inplace=True)
+
+    # landmarks_df.interpolate(method='linear',
+    #                          axis="index",
+    #                          limit_direction='both',
+    #                          inplace=True)
 
     return landmarks_df
 
