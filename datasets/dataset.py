@@ -178,7 +178,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             )
 
         for id, record in enumerate(self.video_list):
-            if any(not x.isdigit() for x in record._data):
+            if any(not x.isdigit() for x in record._data[1:]):
                 # Found datafile header. Removing it.
                 del self.video_list[id]
                 continue
