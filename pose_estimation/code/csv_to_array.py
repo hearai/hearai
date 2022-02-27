@@ -111,33 +111,39 @@ def remove_column_prefix(df: pd.DataFrame, prefix: str):
 
 
 def add_polar_coordinates(landmarks_df: pd.DataFrame, connections_from, landmarks_enum=None):
-
+    extended_landmarks_df = pd.DataFrame()
     landmarks_names = get_landmarks_names_from_df(landmarks_df)
     for landmark in landmarks_names:
         connected_landmark = get_connection_name(landmark, connections_from, landmarks_enum)
+        if connected_landmark is not None and connected_landmark != 'None':
+            x = landmarks_df[landmark + '.x']
+            y = landmarks_df[landmark + '.y']
+            z = landmarks_df[landmark + '.z']
+            v = landmarks_df[landmark + '.v']
 
-        x = landmarks_df[landmark + '.x']
-        y = landmarks_df[landmark + '.y']
-        z = landmarks_df[landmark + '.z']
+            x_from = landmarks_df[connected_landmark + '.x']
+            y_from = landmarks_df[connected_landmark + '.y']
+            z_from = landmarks_df[connected_landmark + '.z']
+            unavailability_from = landmarks_df[connected_landmark + '.v']
 
-        x_from = landmarks_df[connected_landmark + '.x']
-        y_from = landmarks_df[connected_landmark + '.y']
-        z_from = landmarks_df[connected_landmark + '.z']
+            delta_x = x - x_from
+            delta_y = y - y_from
+            delta_z = z - z_from
 
-        delta_x = x - np.where(np.isnan(x_from), 0, x_from)
-        delta_y = y - np.where(np.isnan(y_from), 0, y_from)
-        delta_z = z - np.where(np.isnan(z_from), 0, z_from)
+            r = np.sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z)
+            cos_theta = delta_z / r
+            cos_phi = delta_x / (r * np.sqrt(1 - cos_theta * cos_theta))
 
-        r = np.sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z)
-        cos_theta = delta_z / r
-        cos_phi = delta_x / (r * np.sqrt(1 - cos_theta * cos_theta))
+            extended_landmarks_df[landmark + '.x'] = x
+            extended_landmarks_df[landmark + '.y'] = y
+            extended_landmarks_df[landmark + '.z'] = z
+            extended_landmarks_df[landmark + '.v'] = v
+            extended_landmarks_df[landmark + ".spherical"] = unavailability_from
+            extended_landmarks_df[landmark + ".r"] = r
+            extended_landmarks_df[landmark + ".cos_theta"] = cos_theta
+            extended_landmarks_df[landmark + ".cos_phi"] = cos_phi
 
-        landmarks_df[landmark + ".spherical"] = np.where(np.isnan(x_from), 1, 0)
-        landmarks_df[landmark + ".r"] = r
-        landmarks_df[landmark + ".cos_theta"] = cos_theta
-        landmarks_df[landmark + ".cos_phi"] = cos_phi
-
-    return landmarks_df
+    return extended_landmarks_df
 
 
 def process_single_json_file(json_file,
@@ -224,9 +230,9 @@ if __name__ == "__main__":
         subdirectory = fwd.directory[len(root_directory):]
         output_directory = os.path.join(output_root_directory, subdirectory)
 
-        try:
-            process_single_json_file(fwd.file_with_path, output_directory)
-        except Exception as e:
-            print('Processing error for file ' + fwd.file_with_path)
-            print(e)
+        # try:
+        process_single_json_file(fwd.file_with_path, output_directory)
+        # except Exception as e:
+        #     print('Processing error for file ' + fwd.file_with_path)
+        #     print(e)
 
