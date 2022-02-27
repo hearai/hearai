@@ -41,7 +41,7 @@ def generate_connections_list(connections):
 
 POSE_CONNECTIONS = generate_connections_list(mp.solutions.holistic.POSE_CONNECTIONS)
 HAND_CONNECTIONS = generate_connections_list(mp.solutions.holistic.HAND_CONNECTIONS)
-FACE_CONNECTIONS = generate_connections_list(mp.solutions.holistic.FACEMESH_TESSELATION)
+FACE_CONNECTIONS = generate_connections_list(mp.solutions.holistic.FACEMESH_CONTOURS)
 
 
 def get_landmarks_columns_names(landmarks_names, prefix='Landmark'):
@@ -98,10 +98,20 @@ def get_landmarks_names_from_df(df: pd.DataFrame):
 
 def get_connection_name(landmark_name, connections_from, landmarks_enum=None):
     if landmarks_enum is None:
-        return str(connections_from[int(landmark_name)])
+        landmark_index = int(landmark_name)
+        if landmark_index >= len(connections_from):
+            return None
+        connected_from_index = connections_from[landmark_index]
+        if connected_from_index is None:
+            return None
+        return str(connections_from[landmark_index])
 
     landmark_index = landmarks_enum[landmark_name].value
+    if landmark_index >= len(connections_from):
+        return None
     connected_from_index = connections_from[landmark_index]
+    if connected_from_index is None:
+        return None
     return landmarks_enum(connected_from_index).name
 
 
@@ -115,7 +125,7 @@ def add_polar_coordinates(landmarks_df: pd.DataFrame, connections_from, landmark
     landmarks_names = get_landmarks_names_from_df(landmarks_df)
     for landmark in landmarks_names:
         connected_landmark = get_connection_name(landmark, connections_from, landmarks_enum)
-        if connected_landmark is not None and connected_landmark != 'None':
+        if connected_landmark is not None:
             x = landmarks_df[landmark + '.x']
             y = landmarks_df[landmark + '.y']
             z = landmarks_df[landmark + '.z']
