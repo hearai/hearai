@@ -6,9 +6,6 @@ import mediapipe as mp
 
 TESTING_PHASE = True
 
-POSE_LANDMARKS_NAMES = [name.name for name in mp.solutions.holistic.PoseLandmark]
-HAND_LANDMARKS_NAMES = [name.name for name in mp.solutions.holistic.HandLandmark]
-
 
 def generate_connections_list(connections):
     connections_list = []
