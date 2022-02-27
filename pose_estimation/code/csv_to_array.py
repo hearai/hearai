@@ -1,5 +1,6 @@
 import argparse
 import os
+import json
 import numpy as np
 import pandas as pd
 import mediapipe as mp
@@ -130,6 +131,16 @@ def impute_landmark_coordinates(landmarks_df: pd.DataFrame):
     return landmarks_df
 
 
+def back_to_pixels(landmarks_df, width, height):
+    landmarks_names = get_landmarks_names_from_df(landmarks_df)
+    for landmark in landmarks_names:
+        landmarks_df[landmark + '.x'] = width * landmarks_df[landmark + '.x']
+        landmarks_df[landmark + '.y'] = height * landmarks_df[landmark + '.y']
+        landmarks_df[landmark + '.z'] = width * landmarks_df[landmark + '.z']
+
+    return landmarks_df
+
+
 def normalize(landmarks_df, norm_factor, suffixes=['.x', '.y', '.z', '.r']):
     landmarks_names = get_landmarks_names_from_df(landmarks_df)
     for landmark in landmarks_names:
@@ -142,6 +153,9 @@ def normalize(landmarks_df, norm_factor, suffixes=['.x', '.y', '.z', '.r']):
 
 def process_single_json_file(json_file,
                              output_directory):
+
+    with open(json_file, 'r') as f:
+        properties = json.load(f)
 
     file_name = json_file[0:(len(json_file) - 16)]
 
@@ -156,6 +170,12 @@ def process_single_json_file(json_file,
     pose_df = remove_column_prefix(pose_df, 'Pose.')
     left_hand_df = remove_column_prefix(left_hand_df, 'Left_hand.')
     right_hand_df = remove_column_prefix(right_hand_df, 'Right_hand.')
+
+    # In order to preserve angles and original proportions:
+    face_df = back_to_pixels(face_df, properties['Width'], properties['Height'])
+    pose_df = back_to_pixels(pose_df, properties['Width'], properties['Height'])
+    left_hand_df = back_to_pixels(left_hand_df, properties['Width'], properties['Height'])
+    right_hand_df = back_to_pixels(right_hand_df, properties['Width'], properties['Height'])
 
     face_df = impute_landmark_coordinates(face_df)
     pose_df = impute_landmark_coordinates(pose_df)
