@@ -185,6 +185,16 @@ def impute_landmark_coordinates(landmarks_df: pd.DataFrame):
     return landmarks_df
 
 
+def normalize(landmarks_df, norm_factor, suffixes=['.x', '.y', '.z', '.r']):
+    landmarks_names = get_landmarks_names_from_df(landmarks_df)
+    for landmark in landmarks_names:
+        for suffix in suffixes:
+            column_name = landmark + suffix
+            landmarks_df[column_name] = landmarks_df[column_name] * norm_factor
+
+    return landmarks_df
+
+
 def process_single_json_file(json_file,
                              output_directory):
 
@@ -211,6 +221,12 @@ def process_single_json_file(json_file,
     pose_extended = add_polar_coordinates(pose_df, POSE_CONNECTIONS, mp.solutions.holistic.PoseLandmark)
     left_hand_extended = add_polar_coordinates(left_hand_df, HAND_CONNECTIONS, mp.solutions.holistic.HandLandmark)
     right_hand_extended = add_polar_coordinates(right_hand_df, HAND_CONNECTIONS, mp.solutions.holistic.HandLandmark)
+
+    normalizing_factor = 1 / pose_extended[mp.solutions.holistic.PoseLandmark.RIGHT_SHOULDER.name + ".r"]
+    face_extended = normalize(face_extended, normalizing_factor)
+    pose_extended = normalize(pose_extended, normalizing_factor)
+    left_hand_extended = normalize(left_hand_extended, normalizing_factor)
+    right_hand_extended = normalize(right_hand_extended, normalizing_factor)
 
     os.makedirs(output_directory, exist_ok=True)
 
