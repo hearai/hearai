@@ -156,6 +156,17 @@ def add_polar_coordinates(landmarks_df: pd.DataFrame, connections_from, landmark
     return extended_landmarks_df
 
 
+def impute_landmark_coordinates(landmarks_df: pd.DataFrame):
+    landmarks_names = get_landmarks_names_from_df(landmarks_df)
+    for landmark in landmarks_names:
+        x = landmarks_df[landmark + '.x']
+        y = landmarks_df[landmark + '.y']
+        z = landmarks_df[landmark + '.z']
+        landmarks_df[landmark + '.v'] = np.where(x.isna() | y.isna() | z.isna(), 1,  0)
+
+    return landmarks_df
+
+
 def process_single_json_file(json_file,
                              output_directory):
 
@@ -172,6 +183,11 @@ def process_single_json_file(json_file,
     pose_df = remove_column_prefix(pose_df, 'Pose.')
     left_hand_df = remove_column_prefix(left_hand_df, 'Left_hand.')
     right_hand_df = remove_column_prefix(right_hand_df, 'Right_hand.')
+
+    face_df = impute_landmark_coordinates(face_df)
+    pose_df = impute_landmark_coordinates(pose_df)
+    left_hand_df = impute_landmark_coordinates(left_hand_df)
+    right_hand_df = impute_landmark_coordinates(right_hand_df)
 
     face_extended = add_polar_coordinates(face_df, FACE_CONNECTIONS)
     pose_extended = add_polar_coordinates(pose_df, POSE_CONNECTIONS, mp.solutions.holistic.PoseLandmark)
