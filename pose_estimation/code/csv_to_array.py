@@ -1,13 +1,8 @@
 import argparse
-import enum
-import json
-import math
 import os
 import numpy as np
 import pandas as pd
-import cv2 as cv
 import mediapipe as mp
-from tqdm import tqdm
 
 TESTING_PHASE = True
 
@@ -42,53 +37,6 @@ def generate_connections_list(connections):
 POSE_CONNECTIONS = generate_connections_list(mp.solutions.holistic.POSE_CONNECTIONS)
 HAND_CONNECTIONS = generate_connections_list(mp.solutions.holistic.HAND_CONNECTIONS)
 FACE_CONNECTIONS = generate_connections_list(mp.solutions.holistic.FACEMESH_CONTOURS)
-
-
-def get_landmarks_columns_names(landmarks_names, prefix='Landmark'):
-    output = []
-
-    for landmark_name in landmarks_names:
-        x_name = prefix + "." + str(landmark_name) + ".x"
-        y_name = prefix + "." + str(landmark_name) + ".y"
-        z_name = prefix + "." + str(landmark_name) + ".z"
-        v_name = prefix + "." + str(landmark_name) + ".v"
-
-        output.append(x_name)
-        output.append(y_name)
-        output.append(z_name)
-        output.append(v_name)
-
-    return output
-
-
-def get_pose_columns_names():
-    output = get_landmarks_columns_names(POSE_LANDMARKS_NAMES, prefix='Pose')
-    return output
-
-
-def get_left_hand_columns_names():
-    output = get_landmarks_columns_names(HAND_LANDMARKS_NAMES, prefix='Left_hand')
-    return output
-
-
-def get_right_hand_columns_names():
-    output = get_landmarks_columns_names(HAND_LANDMARKS_NAMES, prefix='Right_hand')
-    return output
-
-
-def get_face_columns_names():
-    output = get_landmarks_columns_names(range(468), prefix='Face')
-    return output
-
-
-def get_landmarks_coordinates_row(landmarks):
-    row = []
-    for landmark in landmarks:
-        row.append(landmark.x)
-        row.append(landmark.y)
-        row.append(landmark.z)
-        row.append(landmark.visibility)
-    return row
 
 
 def get_landmarks_names_from_df(df: pd.DataFrame):
@@ -290,9 +238,9 @@ if __name__ == "__main__":
         subdirectory = fwd.directory[len(root_directory):]
         output_directory = os.path.join(output_root_directory, subdirectory)
 
-        # try:
-        process_single_json_file(fwd.file_with_path, output_directory)
-        # except Exception as e:
-        #     print('Processing error for file ' + fwd.file_with_path)
-        #     print(e)
+        try:
+            process_single_json_file(fwd.file_with_path, output_directory)
+        except Exception as e:
+            print('Processing error for file ' + fwd.file_with_path)
+            print(e)
 
