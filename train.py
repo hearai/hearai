@@ -189,7 +189,7 @@ def main(args):
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
-        val_check_interval=args.ratio,
+        val_check_interval=1.0,
         gpus=args.gpu if args.gpu > -1 else None,
         progress_bar_refresh_rate=10,
         accumulate_grad_batches=1,
