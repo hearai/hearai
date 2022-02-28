@@ -89,6 +89,9 @@ def add_polar_coordinates(landmarks_df: pd.DataFrame, connections_from, landmark
             r = np.sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z)
             cos_theta = delta_z / r
             cos_phi = delta_x / (r * np.sqrt(1 - cos_theta * cos_theta))
+            theta = np.arccos(cos_theta)
+            phi = np.arccos(cos_phi)
+            phi = np.where(delta_y >= 0, phi, -phi)
 
             extended_landmarks_df[landmark + '.x'] = x
             extended_landmarks_df[landmark + '.y'] = y
@@ -96,8 +99,8 @@ def add_polar_coordinates(landmarks_df: pd.DataFrame, connections_from, landmark
             extended_landmarks_df[landmark + '.v'] = v
             extended_landmarks_df[landmark + '.spherical'] = unavailability_from
             extended_landmarks_df[landmark + '.r'] = r
-            extended_landmarks_df[landmark + '.theta'] = np.arccos(cos_theta)
-            extended_landmarks_df[landmark + '.phi'] = np.arccos(cos_phi)
+            extended_landmarks_df[landmark + '.theta'] = theta
+            extended_landmarks_df[landmark + '.phi'] = phi
 
     return extended_landmarks_df
 
