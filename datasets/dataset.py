@@ -347,7 +347,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         for value, class_label in zip(self.num_classes_dict.values(), labels):
             x = np.zeros(value)
             x[class_label] = 1
-            target.append(torch.tensor(x, dtype=torch.long))
+            target.append(torch.tensor(x))
 
         if self.transform is not None:
             images = self.transform(images)
