@@ -67,20 +67,20 @@ def remove_column_prefix(df: pd.DataFrame, prefix: str):
 
 
 def add_polar_coordinates(landmarks_df: pd.DataFrame, connections_from, landmarks_enum=None):
-    extended_landmarks_df = pd.DataFrame()
+    columns = {}
     landmarks_names = get_landmarks_names_from_df(landmarks_df)
     for landmark in landmarks_names:
         connected_landmark = get_connection_name(landmark, connections_from, landmarks_enum)
         if connected_landmark is not None:
-            x = landmarks_df[landmark + '.x']
-            y = landmarks_df[landmark + '.y']
-            z = landmarks_df[landmark + '.z']
-            v = landmarks_df[landmark + '.v']
+            x = landmarks_df[landmark + '.x'].values
+            y = landmarks_df[landmark + '.y'].values
+            z = landmarks_df[landmark + '.z'].values
+            v = landmarks_df[landmark + '.v'].values
 
-            x_from = landmarks_df[connected_landmark + '.x']
-            y_from = landmarks_df[connected_landmark + '.y']
-            z_from = landmarks_df[connected_landmark + '.z']
-            unavailability_from = landmarks_df[connected_landmark + '.v']
+            x_from = landmarks_df[connected_landmark + '.x'].values
+            y_from = landmarks_df[connected_landmark + '.y'].values
+            z_from = landmarks_df[connected_landmark + '.z'].values
+            unavailability_from = landmarks_df[connected_landmark + '.v'].values
 
             delta_x = x - x_from
             delta_y = y - y_from
@@ -94,16 +94,16 @@ def add_polar_coordinates(landmarks_df: pd.DataFrame, connections_from, landmark
             phi = np.arccos(cos_phi)
             phi = np.where(delta_y >= 0, phi, -phi)
 
-            extended_landmarks_df[landmark + '.x'] = x
-            extended_landmarks_df[landmark + '.y'] = y
-            extended_landmarks_df[landmark + '.z'] = z
-            extended_landmarks_df[landmark + '.v'] = v
-            extended_landmarks_df[landmark + '.spherical'] = unavailability_from
-            extended_landmarks_df[landmark + '.r'] = r
-            extended_landmarks_df[landmark + '.theta'] = theta
-            extended_landmarks_df[landmark + '.phi'] = phi
+            columns[landmark + '.x'] = x
+            columns[landmark + '.y'] = y
+            columns[landmark + '.z'] = z
+            columns[landmark + '.v'] = v
+            columns[landmark + '.spherical'] = unavailability_from
+            columns[landmark + '.r'] = r
+            columns[landmark + '.theta'] = theta
+            columns[landmark + '.phi'] = phi
 
-    return extended_landmarks_df
+    return pd.DataFrame(columns)
 
 
 def impute_landmark_coordinates(landmarks_df: pd.DataFrame):
