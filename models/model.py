@@ -50,11 +50,10 @@ class GlossTranslationModel(pl.LightningModule):
     ):
         super().__init__()
 
-        if neptune:
-            classification_mode = MODEL_CONFIG["classification_mode"]
-            feature_extractor_name = MODEL_CONFIG["feature_extractor_name"]
-            transformer_name = MODEL_CONFIG["transformer_name"]
-            tags = [classification_mode, feature_extractor_name, transformer_name]
+        if MODEL_CONFIG["neptune"]:
+            tags = [MODEL_CONFIG["classification_mode"],
+            MODEL_CONFIG["feature_extractor_name"],
+            MODEL_CONFIG["transformer_name"]]
             self.run = initialize_neptun(tags)
         else:
             self.run = None
