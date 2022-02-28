@@ -4,7 +4,7 @@ import warnings
 
 import pytorch_lightning as pl
 import torch
-import np
+import numpy as np
 import random
 import torchvision.transforms as T
 import yaml
