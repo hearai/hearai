@@ -6,7 +6,7 @@ import pandas as pd
 import mediapipe as mp
 
 TESTING_PHASE = True
-
+EPSILON = 1e-15
 
 def generate_connections_list(connections):
     connections_list = []
@@ -86,9 +86,10 @@ def add_polar_coordinates(landmarks_df: pd.DataFrame, connections_from, landmark
             delta_y = y - y_from
             delta_z = z - z_from
 
-            r = np.sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z)
+            r = np.sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z) + EPSILON
             cos_theta = delta_z / r
             cos_phi = delta_x / (r * np.sqrt(1 - cos_theta * cos_theta))
+            cos_phi = np.minimum(np.maximum(cos_phi, -1), 1)
             theta = np.arccos(cos_theta)
             phi = np.arccos(cos_phi)
             phi = np.where(delta_y >= 0, phi, -phi)
