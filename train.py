@@ -95,7 +95,6 @@ def get_args_parser():
         default=False,
         help="Launch experiment and log metrics with neptune",
     )
-    parser.add_argument('--seed', default=42, type=int)
     return parser
 
 
