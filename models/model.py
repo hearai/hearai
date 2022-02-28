@@ -46,7 +46,6 @@ class GlossTranslationModel(pl.LightningModule):
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
-        device="cpu",
     ):
         super().__init__()
 
@@ -62,7 +61,7 @@ class GlossTranslationModel(pl.LightningModule):
         self.warmup_steps = warmup_steps
         self.multiply_lr_step = multiply_lr_step
         self.num_classes_dict = create_heads_dict(classification_mode)
-
+        
         # losses
         self.summary_loss = SummaryLoss(nn.CrossEntropyLoss)
 
@@ -71,7 +70,6 @@ class GlossTranslationModel(pl.LightningModule):
         self.feature_extractor = self.model_loader.load_feature_extractor(
             feature_extractor_name,
             representation_size,
-            device=device,
             model_path=feature_extractor_model_path,
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
@@ -86,7 +84,6 @@ class GlossTranslationModel(pl.LightningModule):
                 num_encoder_layers,
                 num_segments,
                 num_attention_heads,
-                device=device
             )
         else:
             self.transformer = self.model_loader.load_transformer(
@@ -99,7 +96,7 @@ class GlossTranslationModel(pl.LightningModule):
 
     def forward(self, input, **kwargs):
         predictions = []
-        x = self.multi_frame_feature_extractor(input)
+        x = self.multi_frame_feature_extractor(input.to(self.device))
         x = self.transformer(x)
         for head in self.cls_head:
             predictions.append(head(x.cpu()))

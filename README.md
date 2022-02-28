@@ -27,9 +27,21 @@ The transformer is a widely-used deep learning model that adopts the mechanism o
 ## 📑 [WiP] Datasets
 In our studies we are using PJM lexicon with annotations provided at our internal server at:
 - directories with frames: `/dih4/dih4_2/hearai/data/frames/pjm/`
-- HamNoSys annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_hamnosys2.txt` - 8 heads only [WiP]
+- HamNoSys annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_hamnosys.txt` - 8 heads only [WiP]
 - glosses annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_gloss2.txt`
 - landmarks directory: `/dih4/dih4_2/hearai/data/#mediapipe_landmarks/korpus/labeled/`
+
+To load multiple datasets simply pass to ```args.parser``` list of datasets (file paths to video separated with spaces). We have possibility to load these datasets:
+- pjm: /dih4/dih4_2/hearai/data/frames/pjm
+- basic_lexicon: /dih4/dih4_2/hearai/data/frames/basic_lexicon
+- galex: /dih4/dih4_2/hearai/data/frames/galex
+- glex: /dih4/dih4_2/hearai/data/frames/glex
+
+```python
+python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1
+```
+
+Attention! The method requires that all ```annotation_files``` have exactly the same annotation filename e.g. ```"test_hamnosys.txt"```! If you need to pass different path you need to do it manually.
 
 Dataloader gives possibility to load data:
 - choosing number of frames by setting `--num_segments` variable (in this option `--time` argument is set to `None` as default)
@@ -40,15 +52,15 @@ Pipeline handle multihead classification. We predefine `classification_heads` fo
 
 Hamburg Sign Language Notation System (HamNoSys) is a gesture transcription alphabetic system that describes the symbols and gestures such as hand shape, hand location, and movement. Read more about HamNoSys [here - Introduction to HamNoSys](https://www.hearai.pl/post/4-hamnosys/) and [here - Introduction to HamNoSys Part 2](https://www.hearai.pl/post/5-hamnosys2/). HamNoSys always have the same number of possible classes.
 
-
 ```
-"hand_shape_base_form": 6,
-"hand_shape_thumb_position": 3,
-"hand_shape_bending": 4,
+"symmetry_operator": 9,
+"hand_shape_base_form": 12,
+"hand_shape_thumb_position": 4,
+"hand_shape_bending": 6,
 "hand_position_finger_direction": 18,
 "hand_position_palm_orientation": 8,
-"hand_location_x": 14,
-"hand_location_y": 5,
+"hand_location_x": 5,
+"hand_location_y": 37,
 ```
 
 Gloss is an annotation system that applies a label (a word) to the sign. Number glosses depend on a language and dataset. It is usually a bigger number as it must define as many words (glosses) as possible.
@@ -67,7 +79,15 @@ When you install a new library, please add it to the list in `requirements.txt` 
 
 # 🏁 Example train.py run
 
+Run with a single dataset:
+
 `python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 16 --gpu 1`
+
+Run with multiple datasets (list datasets paths separated with spaces)
+
+`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1`
+
+
 
 
 # 🎨 Style
