@@ -5,8 +5,9 @@ import numpy as np
 import pandas as pd
 import mediapipe as mp
 
-TESTING_PHASE = True
+TESTING_PHASE = False
 EPSILON = 1e-15
+
 
 def generate_connections_list(connections):
     connections_list = []
@@ -264,4 +265,3 @@ if __name__ == "__main__":
         except Exception as e:
             print('Processing error for file ' + fwd.file_with_path)
             print(e)
-
