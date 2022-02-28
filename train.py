@@ -95,6 +95,7 @@ def get_args_parser():
         default=False,
         help="Launch experiment and log metrics with neptune",
     )
+    parser.add_argument('--seed', default=42, type=int)
     return parser
 
 
@@ -105,8 +106,11 @@ def main(args):
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
-    # set torch seed
-    torch.manual_seed(args.seed)
+    # set the seed for reproducibility
+    seed = args.seed + utils.get_rank()
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
     # load data
     videos_root = args.data
