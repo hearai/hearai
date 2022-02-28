@@ -117,6 +117,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         root_path: str,
         annotationfile_path: str,
         classification_mode: str,
+        pre_training: bool,
         num_segments: int = -1,
         frames_per_segment: int = 1,
         time: Union[float, None] = None,
@@ -136,6 +137,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.landmarks_path = landmarks_path
         self.transform = transform
         self.test_mode = test_mode
+        self.pre_training = pre_training
 
         self._parse_annotationfile()
         self._sanity_check_samples()
@@ -347,7 +349,10 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         for value, class_label in zip(self.num_classes_dict.values(), labels):
             x = np.zeros(value)
             x[class_label] = 1
-            target.append(torch.tensor(x))
+            if self.pre_training:
+                target.append(torch.tensor(x, dtype = torch.long))
+            else:
+                target.append(torch.tensor(x))
 
         if self.transform is not None:
             images = self.transform(images)

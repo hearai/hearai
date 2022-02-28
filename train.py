@@ -135,6 +135,7 @@ def main(args):
         root_path=videos_root,
         annotationfile_path=annotation_file,
         classification_mode=args.classification_mode,
+        pre_training = args.pre_training,
         num_segments=args.num_segments,
         time=args.time,
         landmarks_path=args.landmarks_path,
