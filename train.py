@@ -115,15 +115,7 @@ def main(args):
     np.random.seed(seed)
     random.seed(seed)
 
-    # load data
-    videos_root = args.data
-    if args.classification_mode == "gloss":
-        annotation_file = os.path.join(videos_root, "test_gloss.txt")
-    elif args.classification_mode == "hamnosys":
-        annotation_file = os.path.join(videos_root, "test_hamnosys.txt")
-    
     # trasformations
-
     preprocess = T.Compose(
         [
             ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
