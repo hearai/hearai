@@ -20,6 +20,14 @@ if sys.version[0] == "2":
     reload(sys)
     sys.setdefaultencoding("utf-8")
 
+ALL_HAMNOSYS_HEADS = {"symmetry_operator": 3,
+            "hand_shape_base_form": 4,
+            "hand_shape_thumb_position": 5,
+            "hand_shape_bending": 6,
+            "hand_position_finger_direction": 7,
+            "hand_position_palm_orientation": 8,
+            "hand_location_x": 9,
+            "hand_location_y": 10}
 
 class VideoRecord(object):
     """
@@ -38,9 +46,10 @@ class VideoRecord(object):
              5) any following elements are labels in the case of multi label provided.
     """
 
-    def __init__(self, row, root_datapath, landmarks_path=None):
+    def __init__(self, row, root_datapath, num_classes_dict, landmarks_path=None):
         self._data = row
         self._path = os.path.join(root_datapath, row[0])
+        self.num_classes_dict = num_classes_dict
         try:
             with open(
                 os.path.join(landmarks_path, row[0] + "_properties.json"), "r"
@@ -70,11 +79,14 @@ class VideoRecord(object):
     @property
     def label(self) -> Union[str, List[str]]:
         # just one label as gloss
-        if len(self._data) == 4:
+        if "gloss" in self.num_classes_dict.keys():
             return int(self._data[3])
         # Sample associated with multiple labels - HamNoSys
         else:
-            return [int(label) for label in self._data[3:]]
+            id_list = []
+            for key in self.num_classes_dict.keys():
+                id_list.append(self._data[ALL_HAMNOSYS_HEADS[key]])
+            return [int(label) for label in id_list]
 
 
 class VideoFrameDataset(torch.utils.data.Dataset):
@@ -136,10 +148,11 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.landmarks_path = landmarks_path
         self.transform = transform
         self.test_mode = test_mode
+        self.num_classes_dict = create_heads_dict(classification_mode)
 
         self._parse_annotationfile()
         self._sanity_check_samples()
-        self.num_classes_dict = create_heads_dict(classification_mode)
+        
 
     def _load_image(self, directory: str, idx: int) -> Image.Image:
         return Image.open(
@@ -151,7 +164,8 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
     def _parse_annotationfile(self):
         self.video_list = [
-            VideoRecord(x.strip().split(), self.root_path, self.landmarks_path)
+            VideoRecord(x.strip().split(), self.root_path,
+                        self.num_classes_dict, self.landmarks_path)
             for x in open(self.annotationfile_path)
         ]
 
@@ -164,7 +178,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             )
 
         for id, record in enumerate(self.video_list):
-            if any(not x.isdigit() for x in record._data):
+            if any(not x.isdigit() for x in record._data[1:]):
                 # Found datafile header. Removing it.
                 del self.video_list[id]
                 continue

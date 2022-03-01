@@ -29,7 +29,7 @@ class HubertTransformer(nn.Module):
         """
         super(HubertTransformer, self).__init__()
         configuration = HubertConfig()
-        self.model = HubertModel(configuration)
+        self.model = HubertModel(configuration,)
         self._input_features = input_features
         self._output_features = output_features
 
