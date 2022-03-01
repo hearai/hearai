@@ -4,6 +4,8 @@ import warnings
 
 import pytorch_lightning as pl
 import torch
+import numpy as np
+import random
 import torchvision.transforms as T
 import yaml
 from torch.utils.data import DataLoader, random_split
@@ -106,9 +108,13 @@ def main(args):
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
-    # set torch seed
-    torch.manual_seed(args.seed)
-    
+
+    # set the seed for reproducibility
+    seed = args.seed
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+
     # trasformations
     preprocess = T.Compose(
         [
