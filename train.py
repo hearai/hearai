@@ -4,13 +4,10 @@ import warnings
 
 import pytorch_lightning as pl
 import torch
-import numpy as np
-import random
-import torchvision.transforms as T
-import yaml
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 
-from datasets.dataset import ImglistToTensor, PadCollate, VideoFrameDataset
+from datasets.dataset import PadCollate
+from datasets.dataset_creator import DatasetCreator
 from models.model import GlossTranslationModel
 
 warnings.filterwarnings("ignore")
@@ -108,57 +105,18 @@ def main(args):
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
+    # set torch seed
+    torch.manual_seed(args.seed)
 
-    # set the seed for reproducibility
-    seed = args.seed
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
+    dataset_creator = DatasetCreator(args.data, args.classification_mode, args.num_segments, args.time,
+                                     args.landmarks_path, args.ratio)
 
-    # trasformations
-    preprocess = T.Compose(
-        [
-            ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
-            T.Resize(256),  # image batch, resize smaller edge to 256
-            T.CenterCrop(256),  # image batch, center crop to square 256x256
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ]
-    )
-
-    # load data
-    videos_root = args.data
-    if not isinstance(videos_root, list):
-        videos_root = [videos_root]
-
-    datasets = list()
-    for video_root in videos_root:
-        if args.classification_mode == "gloss":
-            annotation_file = os.path.join(video_root, "test_gloss.txt")
-        elif "hamnosys" in args.classification_mode:
-            annotation_file = os.path.join(video_root, "test_hamnosys.txt")
-
-        dataset = VideoFrameDataset(
-            root_path=video_root,
-            annotationfile_path=annotation_file,
-            classification_mode=args.classification_mode,
-            num_segments=args.num_segments,
-            time=args.time,
-            landmarks_path=args.landmarks_path,
-            transform=preprocess,
-            test_mode=True,
-        )
-        datasets.append(dataset)
-    dataset = torch.utils.data.ConcatDataset(datasets)
-    
-    # split into train/val
-    train_val_ratio = args.ratio
-    train_len = round(len(dataset) * train_val_ratio)
-    val_len = len(dataset) - train_len
-    train, val = random_split(dataset, [train_len, val_len])
+    train_subset = dataset_creator.get_train_subset()
+    val_subset = dataset_creator.get_val_subset()
 
     # prepare dataloaders
     dataloader_train = DataLoader(
-        train,
+        train_subset,
         shuffle=True,
         batch_size=args.batch_size,
         num_workers=args.workers,
@@ -167,7 +125,7 @@ def main(args):
     )
 
     dataloader_val = DataLoader(
-        val,
+        val_subset,
         shuffle=False,
         batch_size=args.batch_size,
         num_workers=args.workers,
@@ -201,7 +159,7 @@ def main(args):
         accumulate_grad_batches=1,
         fast_dev_run=args.fast_dev_run,
     )
-    
+
     # run training
     trainer.fit(
         model, train_dataloader=dataloader_train, val_dataloaders=dataloader_val
