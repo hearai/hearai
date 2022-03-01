@@ -50,62 +50,44 @@ class GlossTranslationModel(pl.LightningModule):
         super().__init__()
 
         if neptune:
-            classification_mode = MODEL_CONFIG["classification_mode"]
-            feature_extractor_name = MODEL_CONFIG["feature_extractor_name"]
-            transformer_name = MODEL_CONFIG["transformer_name"]
             tags = [classification_mode, feature_extractor_name, transformer_name]
             self.run = initialize_neptun(tags)
         else:
             self.run = None
 
         # parameters
-<<<<<<< HEAD
-        self.lr = MODEL_CONFIG["lr"]
-        self.model_save_dir = MODEL_CONFIG["model_save_dir"]
-        self.warmup_steps = MODEL_CONFIG["warmup_steps"]
-        self.multiply_lr_step = MODEL_CONFIG["multiply_lr_step"]
-        self.num_classes_dict = create_heads_dict(MODEL_CONFIG["classification_mode"])
-
-=======
         self.lr = lr
         self.model_save_dir = model_save_dir
         self.warmup_steps = warmup_steps
         self.multiply_lr_step = multiply_lr_step
         self.num_classes_dict = create_heads_dict(classification_mode)
+        self.cls_head = []
+        self.loss_weights = []
+        print(self.num_classes_dict)
+        for value in self.num_classes_dict.values():
+            self.cls_head.append(nn.Linear(transformer_output_size, value[0]))
+            self.loss_weights.append(value[1])
+
         
->>>>>>> 2f187723f7d35ed43615ca0985cfb3f616f5354d
+
         # losses
-        self.summary_loss = SummaryLoss(nn.CrossEntropyLoss)
+        self.summary_loss = SummaryLoss(nn.CrossEntropyLoss, self.loss_weights)
 
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
-<<<<<<< HEAD
-            MODEL_CONFIG["feature_extractor_name"],
-            MODEL_CONFIG["representation_size"],
-            device=MODEL_CONFIG["device"],
-            model_path=MODEL_CONFIG["feature_extractor_model_path"],
-=======
+
             feature_extractor_name,
             representation_size,
             model_path=feature_extractor_model_path,
->>>>>>> 2f187723f7d35ed43615ca0985cfb3f616f5354d
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
-        if MODEL_CONFIG["transformer_name"] == "sign_language_transformer":
+        if transformer_name == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
-<<<<<<< HEAD
-                MODEL_CONFIG["transformer_name"],
-                MODEL_CONFIG["representation_size"],
-                MODEL_CONFIG["transformer_output_size"],
-                MODEL_CONFIG["feedforward_size"],
-                MODEL_CONFIG["num_encoder_layers"],
-                MODEL_CONFIG["num_segments"],
-                MODEL_CONFIG["num_attention_heads"],
-                device=MODEL_CONFIG["device"]
-=======
+
+
                 transformer_name,
                 representation_size,
                 transformer_output_size,
@@ -113,16 +95,11 @@ class GlossTranslationModel(pl.LightningModule):
                 num_encoder_layers,
                 num_segments,
                 num_attention_heads,
->>>>>>> 2f187723f7d35ed43615ca0985cfb3f616f5354d
             )
         else:
             self.transformer = self.model_loader.load_transformer(
-                MODEL_CONFIG["transformer_name"], MODEL_CONFIG["representation_size"], MODEL_CONFIG["transformer_output_size"]
+                transformer_name, representation_size, transformer_output_size
             )
-        self.cls_head = []
-        print(self.num_classes_dict)
-        for value in self.num_classes_dict.values():
-            self.cls_head.append(nn.Linear(MODEL_CONFIG["transformer_output_size"], value))
 
     def forward(self, input, **kwargs):
         predictions = []

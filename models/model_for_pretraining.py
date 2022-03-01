@@ -63,7 +63,12 @@ class PreTrainingModel(pl.LightningModule):
         self.warmup_steps = MODEL_CONFIG["warmup_steps"]
         self.multiply_lr_step = MODEL_CONFIG["multiply_lr_step"]
         self.num_classes_dict = create_heads_dict(MODEL_CONFIG["classification_mode"])
-
+        self.cls_head = []
+        self.loss_weights = []
+        print(self.num_classes_dict)
+        for value in self.num_classes_dict.values():
+            self.cls_head.append(nn.Linear(MODEL_CONFIG["transformer_output_size"], value[0]))
+            self.loss_weights.append(value[1])
         # losses
         self.summary_loss = SummaryLoss(nn.CrossEntropyLoss)
 
@@ -78,10 +83,6 @@ class PreTrainingModel(pl.LightningModule):
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
-        self.cls_head = []
-        print(self.num_classes_dict)
-        for value in self.num_classes_dict.values():
-            self.cls_head.append(nn.Linear(MODEL_CONFIG["representation_size"], value))
 
     def forward(self, input, **kwargs):
         predictions = []
