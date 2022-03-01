@@ -31,22 +31,21 @@ class GlossTranslationModel(pl.LightningModule):
 
     def __init__(
         self,
-        MODEL_CONFIG = {"lr": 1e-5,
-        "multiply_lr_step": 0.7,
-        "warmup_steps": 100.0,
-        "transformer_output_size": 1024,
-        "representation_size": 2048,
-        "feedforward_size": 4096,
-        "num_encoder_layers": 1,
-        "num_segments": 8,
-        "num_attention_heads": 16,
-        "classification_mode": "gloss",
-        "feature_extractor_name": "cnn_extractor",
-        "feature_extractor_model_path": "efficientnet_b1",
-        "transformer_name": "fake_transformer",
-        "model_save_dir": "",
-        "neptune": False,
-        "device": "cpu",}
+        lr=1e-5,
+        multiply_lr_step=0.7,
+        warmup_steps=100.0,
+        transformer_output_size=1024,
+        representation_size=2048,
+        feedforward_size=4096,
+        num_encoder_layers=1,
+        num_segments=8,
+        num_attention_heads=16,
+        classification_mode="gloss",
+        feature_extractor_name="cnn_extractor",
+        feature_extractor_model_path="efficientnet_b1",
+        transformer_name="fake_transformer",
+        model_save_dir="",
+        neptune=False,
     ):
         super().__init__()
 
@@ -60,28 +59,44 @@ class GlossTranslationModel(pl.LightningModule):
             self.run = None
 
         # parameters
+<<<<<<< HEAD
         self.lr = MODEL_CONFIG["lr"]
         self.model_save_dir = MODEL_CONFIG["model_save_dir"]
         self.warmup_steps = MODEL_CONFIG["warmup_steps"]
         self.multiply_lr_step = MODEL_CONFIG["multiply_lr_step"]
         self.num_classes_dict = create_heads_dict(MODEL_CONFIG["classification_mode"])
 
+=======
+        self.lr = lr
+        self.model_save_dir = model_save_dir
+        self.warmup_steps = warmup_steps
+        self.multiply_lr_step = multiply_lr_step
+        self.num_classes_dict = create_heads_dict(classification_mode)
+        
+>>>>>>> 2f187723f7d35ed43615ca0985cfb3f616f5354d
         # losses
         self.summary_loss = SummaryLoss(nn.CrossEntropyLoss)
 
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
+<<<<<<< HEAD
             MODEL_CONFIG["feature_extractor_name"],
             MODEL_CONFIG["representation_size"],
             device=MODEL_CONFIG["device"],
             model_path=MODEL_CONFIG["feature_extractor_model_path"],
+=======
+            feature_extractor_name,
+            representation_size,
+            model_path=feature_extractor_model_path,
+>>>>>>> 2f187723f7d35ed43615ca0985cfb3f616f5354d
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
         if MODEL_CONFIG["transformer_name"] == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
+<<<<<<< HEAD
                 MODEL_CONFIG["transformer_name"],
                 MODEL_CONFIG["representation_size"],
                 MODEL_CONFIG["transformer_output_size"],
@@ -90,6 +105,15 @@ class GlossTranslationModel(pl.LightningModule):
                 MODEL_CONFIG["num_segments"],
                 MODEL_CONFIG["num_attention_heads"],
                 device=MODEL_CONFIG["device"]
+=======
+                transformer_name,
+                representation_size,
+                transformer_output_size,
+                feedforward_size,
+                num_encoder_layers,
+                num_segments,
+                num_attention_heads,
+>>>>>>> 2f187723f7d35ed43615ca0985cfb3f616f5354d
             )
         else:
             self.transformer = self.model_loader.load_transformer(
@@ -102,7 +126,7 @@ class GlossTranslationModel(pl.LightningModule):
 
     def forward(self, input, **kwargs):
         predictions = []
-        x = self.multi_frame_feature_extractor(input)
+        x = self.multi_frame_feature_extractor(input.to(self.device))
         x = self.transformer(x)
         for head in self.cls_head:
             predictions.append(head(x.cpu()))

@@ -6,7 +6,7 @@ class CnnExtractor(nn.Module):
     """Basic timm model"""
 
     def __init__(
-        self, representation_size=128, model_path="efficientnet_b1", device="cpu"
+        self, representation_size=128, model_path="efficientnet_b1"
     ):
         """
         Dummy example of __init__ function of basic timm model. Simply loads a timm model and does nothing else.
@@ -21,9 +21,8 @@ class CnnExtractor(nn.Module):
         self.model = timm.create_model(
             model_path, pretrained=True, num_classes=representation_size
         )
-        self.__device = device
         # this is a dummy example but in practice this will be longer
 
     def forward(self, input, **kwargs):
         # this is a dummy example but in practice this will be longer
-        return self.model(input.to(self.__device))
+        return self.model(input)
