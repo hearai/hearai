@@ -68,10 +68,10 @@ class DatasetCreator:
         tensor_augmentations = [
             T.RandomErasing(),
             T.RandomRotation(degrees=5),
-            T.ColorJitter(brightness=0.5,
-                          contrast=0.5,
-                          saturation=0.5,
-                          hue=0.2)
+            T.ColorJitter(brightness=0.1,
+                          contrast=0.1,
+                          saturation=0.1,
+                          hue=0.05)
         ]
         return self._get_transforms(pil_augmentations, tensor_augmentations)
 
