@@ -181,10 +181,10 @@ def main(args):
         collate_fn=PadCollate(total_length=args.num_segments),
         drop_last=False,
     )
-    
+
     with open(args.model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
-
+            
     # prepare model
     model = GlossTranslationModel(
         lr=args.lr,
@@ -197,7 +197,7 @@ def main(args):
         num_segments=args.num_segments,
         model_save_dir=args.save,
         neptune=args.neptune,
-        # device="cuda:0" if args.gpu >= 0 else "cpu",
+        device="cuda:0" if args.gpu >= 0 else "cpu",
         representation_size=model_config['feature_extractor']["representation_size"],
         feedforward_size=model_config['transformer']["feedforward_size"],
         num_encoder_layers=model_config['transformer']["num_encoder_layers"],
@@ -219,7 +219,6 @@ def main(args):
     trainer.fit(
         model, train_dataloader=dataloader_train, val_dataloaders=dataloader_val
     )
-
 
 if __name__ == "__main__":
     parser = get_args_parser()

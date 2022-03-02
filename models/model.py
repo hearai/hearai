@@ -71,7 +71,8 @@ class GlossTranslationModel(pl.LightningModule):
         self.feature_extractor = self.model_loader.load_feature_extractor(
             feature_extractor_name=feature_extractor_name,
             representation_size = representation_size,
-            model_path=feature_extractor_model_path
+            model_path=feature_extractor_model_path,
+            device=device
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
@@ -85,7 +86,8 @@ class GlossTranslationModel(pl.LightningModule):
                 num_encoder_layers=num_encoder_layers,
                 num_frames=num_segments,
                 num_attention_heads=num_attention_heads,
-                dropout_rate=transformer_dropout_rate
+                dropout_rate=transformer_dropout_rate,
+                device=device
             )
         else:
             self.transformer = self.model_loader.load_transformer(
