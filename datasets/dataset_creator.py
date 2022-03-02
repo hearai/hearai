@@ -21,7 +21,8 @@ class DatasetCreator:
         self.ratio = ratio
 
     def get_train_subset(self) -> torch.utils.data.dataset.Subset:
-        train_transforms = self._get_train_transforms()
+        # train_transforms = self._get_train_transforms()
+        train_transforms = self._get_val_transforms()
         dataset = self._get_video_frame_datasets(train_transforms)
         train_len, val_len = self._get_split_lens(dataset)
         train_subset, _ = torch.utils.data.random_split(dataset, [train_len, val_len])
