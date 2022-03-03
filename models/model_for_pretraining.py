@@ -29,7 +29,8 @@ class PreTrainingModel(pl.LightningModule):
 
     def __init__(
         self,
-        MODEL_CONFIG = {"lr": 1e-5,
+        model_config = {
+        "lr": 1e-5,
         "multiply_lr_step": 0.7,
         "warmup_steps": 100.0,
         "transformer_output_size": 1024,
@@ -48,16 +49,25 @@ class PreTrainingModel(pl.LightningModule):
     ):
         super().__init__()
 
+<<<<<<< HEAD
         if neptune:
             classification_mode = MODEL_CONFIG["classification_mode"]
             feature_extractor_name = MODEL_CONFIG["feature_extractor_name"]
             transformer_name = MODEL_CONFIG["transformer_name"]
             tags = [classification_mode, feature_extractor_name, transformer_name, "pre-training"]
+=======
+        if model_config["neptune"]:
+            tags = [model_config["classification_mode"],
+            model_config["feature_extractor_name"],
+            model_config["transformer_name"],
+            "pre-training"]
+>>>>>>> 6fdea2aa97cf572838e525a390c1e6af9cd8104f
             self.run = initialize_neptun(tags)
         else:
             self.run = None
 
         # parameters
+<<<<<<< HEAD
         self.lr = MODEL_CONFIG["lr"]
         self.model_save_dir = MODEL_CONFIG["model_save_dir"]
         self.warmup_steps = MODEL_CONFIG["warmup_steps"]
@@ -69,20 +79,42 @@ class PreTrainingModel(pl.LightningModule):
         for value in self.num_classes_dict.values():
             self.cls_head.append(nn.Linear(MODEL_CONFIG["transformer_output_size"], value[0]))
             self.loss_weights.append(value[1])
+=======
+        self.lr = model_config["lr"]
+        self.model_save_dir = model_config["model_save_dir"]
+        self.warmup_steps = model_config["warmup_steps"]
+        self.multiply_lr_step = model_config["multiply_lr_step"]
+        self.num_classes_dict = create_heads_dict(model_config["classification_mode"])
+
+>>>>>>> 6fdea2aa97cf572838e525a390c1e6af9cd8104f
         # losses
         self.summary_loss = SummaryLoss(nn.CrossEntropyLoss)
 
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
+<<<<<<< HEAD
             MODEL_CONFIG["feature_extractor_name"],
             MODEL_CONFIG["representation_size"],
             device=MODEL_CONFIG["device"],
             model_path=MODEL_CONFIG["feature_extractor_model_path"],
+=======
+            model_config["feature_extractor_name"],
+            model_config["representation_size"],
+            device=model_config["device"],
+            model_path=model_config["feature_extractor_model_path"],
+>>>>>>> 6fdea2aa97cf572838e525a390c1e6af9cd8104f
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
+<<<<<<< HEAD
+=======
+        self.cls_head = []
+        print(self.num_classes_dict)
+        for value in self.num_classes_dict.values():
+            self.cls_head.append(nn.Linear(model_config["representation_size"], value))
+>>>>>>> 6fdea2aa97cf572838e525a390c1e6af9cd8104f
 
     def forward(self, input, **kwargs):
         predictions = []
