@@ -64,9 +64,11 @@ class GlossTranslationModel(pl.LightningModule):
         self.multiply_lr_step = model_config["multiply_lr_step"]
         self.num_classes_dict = create_heads_dict(model_config["classification_mode"])
         print(self.num_classes_dict)
+        self.cls_head = []
+        self.loss_weights = []
         for value in self.num_classes_dict.values():
-            self.cls_head.append(nn.Linear(model_config["transformer_output_size"], value[0]))
-            self.loss_weights.append(value[1])
+            self.cls_head.append(nn.Linear(model_config["transformer_output_size"], value["num_class"]))
+            self.loss_weights.append(value["loss_weight"])
 
         # losses
         self.summary_loss = SummaryLoss(nn.CrossEntropyLoss, self.loss_weights)
@@ -94,6 +96,7 @@ class GlossTranslationModel(pl.LightningModule):
         else:
             self.transformer = self.model_loader.load_transformer(
                 model_config["transformer_name"], model_config["representation_size"], model_config["transformer_output_size"]
+            )
 
     def forward(self, input, **kwargs):
         predictions = []
