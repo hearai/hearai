@@ -46,8 +46,7 @@ class GlossTranslationModel(pl.LightningModule):
         "feature_extractor_model_path": "efficientnet_b1",
         "transformer_name": "fake_transformer",
         "model_save_dir": "",
-        "neptune": False,
-        "device": "cpu",}
+        "neptune": False,}
     ):
         super().__init__()
 
