@@ -11,6 +11,7 @@ import yaml
 from torch.utils.data import DataLoader, random_split
 
 from datasets.dataset import ImglistToTensor, PadCollate, VideoFrameDataset
+from models.model_for_pretraining import PreTrainingModel
 from models.model import GlossTranslationModel
 
 warnings.filterwarnings("ignore")
@@ -91,6 +92,12 @@ def get_args_parser():
         action="store_true",
         help="Flag for a sanity-check, runs single loop for the training phase",
     )
+    parser.add_argument(
+        "--pre-training",
+        default=False,
+        action="store_true",
+        help="Flag for a pre-training. Enables feature-extractor pre-training.",
+    )
     # Neptune settings
     parser.add_argument(
         "--neptune",
@@ -141,6 +148,7 @@ def main(args):
             root_path=video_root,
             annotationfile_path=annotation_file,
             classification_mode=args.classification_mode,
+            is_pretraining=args.pre_training,
             num_segments=args.num_segments,
             time=args.time,
             landmarks_path=args.landmarks_path,
@@ -149,7 +157,7 @@ def main(args):
         )
         datasets.append(dataset)
     dataset = torch.utils.data.ConcatDataset(datasets)
-    
+
     # split into train/val
     train_val_ratio = args.ratio
     train_len = round(len(dataset) * train_val_ratio)
@@ -176,22 +184,29 @@ def main(args):
     )
 
     # prepare model
-    model = GlossTranslationModel(
-        lr=args.lr,
-        classification_mode=args.classification_mode,
-        feature_extractor_name="cnn_extractor",
-        feature_extractor_model_path="efficientnet_b2",
-        transformer_name="sign_language_transformer",
-        num_attention_heads=4,
-        num_segments=args.num_segments,
-        model_save_dir=args.save,
-        neptune=args.neptune,
-        representation_size=512,
-        feedforward_size=1024,
-        transformer_output_size=784,
-        warmup_steps=20.0,
-        multiply_lr_step=0.95,
-    )
+    model_config = {
+        "lr": args.lr,
+        "multiply_lr_step": 0.95,
+        "warmup_steps": 20.0,
+        "transformer_output_size": 784,
+        "representation_size": 512,
+        "feedforward_size": 1024,
+        "num_encoder_layers": 1,
+        "num_segments": args.num_segments,
+        "num_attention_heads": 4,
+        "classification_mode": args.classification_mode,
+        "feature_extractor_name": "cnn_extractor",
+        "feature_extractor_model_path": "efficientnet_b2",
+        "transformer_name": "sign_language_transformer",
+        "model_save_dir": args.save,
+        "neptune": args.neptune,
+        "device": "cuda:0" if args.gpu > 0 else "cpu",    
+    }
+
+    if args.pre_training:
+        model = PreTrainingModel(model_config=model_config)
+    else:
+        model = GlossTranslationModel(model_config=model_config)
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,

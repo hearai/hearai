@@ -4,7 +4,7 @@ import sys
 def create_heads_dict(classification_mode):
     if classification_mode == "gloss":
         num_classes_dict = {"gloss": 2400}  # number of classes for each head
-    elif classification_mode == "hamnosys":
+    elif classification_mode == "hamnosys":  # dla annotacji toy_hamnosys.txt
         num_classes_dict = {
             "symmetry_operator": 9,
             "hand_shape_base_form": 12,
