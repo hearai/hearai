@@ -67,7 +67,7 @@ class GlossTranslationModel(pl.LightningModule):
         self.loss_weights = []
         print(self.num_classes_dict)
         for value in self.num_classes_dict.values():
-            self.cls_head.append(nn.Linear(transformer_output_size, value[0]))
+            self.cls_head.append(nn.Linear(model_config["transformer_output_size"], value[0]))
             self.loss_weights.append(value[1])
 
         # losses
