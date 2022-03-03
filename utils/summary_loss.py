@@ -16,8 +16,11 @@ class SummaryLoss(torch.nn.Module):
     def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         losses = []
         loss_sum = 0
+        loss_weight_sum = 0
         for prediction, target, loss_weight in zip(predictions, targets, self.loss_weights):
             one_loss = self.loss(prediction.to("cpu"), target.to("cpu"))
             losses.append(one_loss)
             loss_sum = loss_sum + (loss_weight*one_loss)
+            loss_weight_sum = loss_weight_sum + loss_weight
+        loss_sum = loss_sum/loss_weight_sum    
         return loss_sum
