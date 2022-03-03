@@ -56,7 +56,7 @@ class PreTrainingModel(pl.LightningModule):
             self.run = initialize_neptun(tags)
         else:
             self.run = None
-
+ 
         # parameters
         self.lr = model_config["lr"]
         self.model_save_dir = model_config["model_save_dir"]
