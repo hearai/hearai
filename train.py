@@ -4,6 +4,8 @@ import warnings
 
 import pytorch_lightning as pl
 import torch
+import numpy as np
+import random
 import torchvision.transforms as T
 import yaml
 from torch.utils.data import DataLoader, random_split
@@ -19,7 +21,8 @@ def get_args_parser():
     parser = argparse.ArgumentParser()
     # Data parameters and paths
     parser.add_argument(
-        "--data", help="path to data", default="assets/sanity_check_data",
+        "--data", help="path to data", nargs="*",
+        default=["assets/sanity_check_data"],
     )
     parser.add_argument(
         "--landmarks_path",
@@ -30,7 +33,7 @@ def get_args_parser():
     parser.add_argument(
         "--classification-mode",
         default="hamnosys",
-        choices=["gloss", "hamnosys"],
+        choices=["gloss", "hamnosys", "hamnosys-less"],
         help="mode for classification, choose from classification_mode.py",
     )
     parser.add_argument(
@@ -107,21 +110,19 @@ def get_args_parser():
 
 def main(args):
     # set GPU to use
-    if args.gpu > 0:
+    if args.gpu > -1:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
-    # set torch seed
-    torch.manual_seed(args.seed)
 
-    # load data
-    videos_root = args.data
-    if args.classification_mode == "gloss":
-        annotation_file = os.path.join(videos_root, "test_gloss.txt")
-    elif args.classification_mode == "hamnosys":
-        annotation_file = os.path.join(videos_root, "test_hamnosys.txt")
+    # set the seed for reproducibility
+    seed = args.seed
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
+    # trasformations
     preprocess = T.Compose(
         [
             ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
@@ -194,13 +195,13 @@ def main(args):
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
-        val_check_interval=args.ratio,
-        gpus=args.gpu if args.gpu > 0 else None,
+        val_check_interval=1.0,
+        gpus=args.gpu if args.gpu > -1 else None,
         progress_bar_refresh_rate=10,
         accumulate_grad_batches=1,
         fast_dev_run=args.fast_dev_run,
     )
-
+    
     # run training
     trainer.fit(
         model, train_dataloader=dataloader_train, val_dataloaders=dataloader_val

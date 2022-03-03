@@ -99,7 +99,7 @@ class GlossTranslationModel(pl.LightningModule):
 
     def forward(self, input, **kwargs):
         predictions = []
-        x = self.multi_frame_feature_extractor(input)
+        x = self.multi_frame_feature_extractor(input.to(self.device))
         x = self.transformer(x)
         for head in self.cls_head:
             predictions.append(head(x.cpu()))
