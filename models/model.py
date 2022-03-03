@@ -31,7 +31,8 @@ class GlossTranslationModel(pl.LightningModule):
 
     def __init__(
         self,
-        MODEL_CONFIG = {"lr": 1e-5,
+        model_config = {
+        "lr": 1e-5,
         "multiply_lr_step": 0.7,
         "warmup_steps": 100.0,
         "transformer_output_size": 1024,
@@ -50,18 +51,18 @@ class GlossTranslationModel(pl.LightningModule):
     ):
         super().__init__()
 
-        if MODEL_CONFIG["neptune"]:
-            tags = [MODEL_CONFIG["classification_mode"], MODEL_CONFIG["feature_extractor_name"], MODEL_CONFIG["transformer_name"]]
+        if model_config["neptune"]:
+            tags = [model_config["classification_mode"], model_config["feature_extractor_name"], model_config["transformer_name"]]
             self.run = initialize_neptun(tags)
         else:
             self.run = None
 
         # parameters
-        self.lr = MODEL_CONFIG["lr"]
-        self.model_save_dir = MODEL_CONFIG["model_save_dir"]
-        self.warmup_steps = MODEL_CONFIG["warmup_steps"]
-        self.multiply_lr_step = MODEL_CONFIG["multiply_lr_step"]
-        self.num_classes_dict = create_heads_dict(MODEL_CONFIG["classification_mode"])
+        self.lr = model_config["lr"]
+        self.model_save_dir = model_config["model_save_dir"]
+        self.warmup_steps = model_config["warmup_steps"]
+        self.multiply_lr_step = model_config["multiply_lr_step"]
+        self.num_classes_dict = create_heads_dict(model_config["classification_mode"])
 
         # losses
         self.summary_loss = SummaryLoss(nn.CrossEntropyLoss)
@@ -69,33 +70,33 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
-            MODEL_CONFIG["feature_extractor_name"],
-            MODEL_CONFIG["representation_size"],
-            device=MODEL_CONFIG["device"],
-            model_path=MODEL_CONFIG["feature_extractor_model_path"],
+            model_config["feature_extractor_name"],
+            model_config["representation_size"],
+            device=model_config["device"],
+            model_path=model_config["feature_extractor_model_path"],
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
-        if MODEL_CONFIG["transformer_name"] == "sign_language_transformer":
+        if model_config["transformer_name"] == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
-                MODEL_CONFIG["transformer_name"],
-                MODEL_CONFIG["representation_size"],
-                MODEL_CONFIG["transformer_output_size"],
-                MODEL_CONFIG["feedforward_size"],
-                MODEL_CONFIG["num_encoder_layers"],
-                MODEL_CONFIG["num_segments"],
-                MODEL_CONFIG["num_attention_heads"],
-                device=MODEL_CONFIG["device"]
+                model_config["transformer_name"],
+                model_config["representation_size"],
+                model_config["transformer_output_size"],
+                model_config["feedforward_size"],
+                model_config["num_encoder_layers"],
+                model_config["num_segments"],
+                model_config["num_attention_heads"],
+                device=model_config["device"]
             )
         else:
             self.transformer = self.model_loader.load_transformer(
-                MODEL_CONFIG["transformer_name"], MODEL_CONFIG["representation_size"], MODEL_CONFIG["transformer_output_size"]
+                model_config["transformer_name"], model_config["representation_size"], model_config["transformer_output_size"]
             )
         self.cls_head = []
         print(self.num_classes_dict)
         for value in self.num_classes_dict.values():
-            self.cls_head.append(nn.Linear(MODEL_CONFIG["transformer_output_size"], value))
+            self.cls_head.append(nn.Linear(model_config["transformer_output_size"], value))
 
     def forward(self, input, **kwargs):
         predictions = []

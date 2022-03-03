@@ -132,17 +132,31 @@ def main(args):
         ]
     )
 
-    dataset = VideoFrameDataset(
-        root_path=videos_root,
-        annotationfile_path=annotation_file,
-        classification_mode=args.classification_mode,
-        pre_training = args.pre_training,
-        num_segments=args.num_segments,
-        time=args.time,
-        landmarks_path=args.landmarks_path,
-        transform=preprocess,
-        test_mode=False,
-    )
+    # load data
+    videos_root = args.data
+    if not isinstance(videos_root, list):
+        videos_root = [videos_root]
+
+    datasets = list()
+    for video_root in videos_root:
+        if args.classification_mode == "gloss":
+            annotation_file = os.path.join(video_root, "test_gloss.txt")
+        elif "hamnosys" in args.classification_mode:
+            annotation_file = os.path.join(video_root, "test_hamnosys.txt")
+
+        dataset = VideoFrameDataset(
+            root_path=video_root,
+            annotationfile_path=annotation_file,
+            classification_mode=args.classification_mode,
+            is_pretraining=args.pre_training,
+            num_segments=args.num_segments,
+            time=args.time,
+            landmarks_path=args.landmarks_path,
+            transform=preprocess,
+            test_mode=True,
+        )
+        datasets.append(dataset)
+    dataset = torch.utils.data.ConcatDataset(datasets)
 
     # split into train/val
     train_val_ratio = args.ratio
@@ -170,7 +184,8 @@ def main(args):
     )
 
     # prepare model
-    MODEL_CONFIG = {"lr": args.lr,
+    model_config = {
+        "lr": args.lr,
         "multiply_lr_step": 0.95,
         "warmup_steps": 20.0,
         "transformer_output_size": 784,
@@ -189,9 +204,9 @@ def main(args):
     }
 
     if args.pre_training:
-        model = PreTrainingModel(MODEL_CONFIG=MODEL_CONFIG)
+        model = PreTrainingModel(model_config=model_config)
     else:
-        model = GlossTranslationModel(MODEL_CONFIG=MODEL_CONFIG)
+        model = GlossTranslationModel(model_config=model_config)
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
