@@ -48,25 +48,53 @@ Dataloader gives possibility to load data:
 - evenly distribiuted using defined time unit by specifing `--time` argument and `--num_segments` as  number of frames in video sequence (note that in this option `--landmarks_path` has to be set to get basic information about video, eg. `fps` value)
 
 ## 👥 Classification heads
-Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`
+Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`. For each head, a custom loss weight can be provided.
 
 Hamburg Sign Language Notation System (HamNoSys) is a gesture transcription alphabetic system that describes the symbols and gestures such as hand shape, hand location, and movement. Read more about HamNoSys [here - Introduction to HamNoSys](https://www.hearai.pl/post/4-hamnosys/) and [here - Introduction to HamNoSys Part 2](https://www.hearai.pl/post/5-hamnosys2/). HamNoSys always have the same number of possible classes.
 
 ```
-"symmetry_operator": 9,
-"hand_shape_base_form": 12,
-"hand_shape_thumb_position": 4,
-"hand_shape_bending": 6,
-"hand_position_finger_direction": 18,
-"hand_position_palm_orientation": 8,
-"hand_location_x": 5,
-"hand_location_y": 37,
+        "symmetry_operator": {
+            "num_class": 9,
+            "loss_weight": 0,
+        },
+        "hand_shape_base_form": {
+            "num_class": 12,
+            "loss_weight": 1,
+        },
+        "hand_shape_thumb_position": {
+            "num_class": 4,
+            "loss_weight": 0,
+        },
+        "hand_shape_bending": {
+            "num_class": 6,
+            "loss_weight": 0,
+        },
+        "hand_position_finger_direction": {
+            "num_class": 18,
+            "loss_weight": 0,
+        },
+        "hand_position_palm_orientation": {
+            "num_class": 8,
+            "loss_weight": 0,
+        },
+        "hand_location_x": {
+            "num_class": 5,
+            "loss_weight": 0,
+        },
+        "hand_location_y": {
+            "num_class": 37,
+            "loss_weight": 0,
+        },
+
 ```
 
 Gloss is an annotation system that applies a label (a word) to the sign. Number glosses depend on a language and dataset. It is usually a bigger number as it must define as many words (glosses) as possible.
 
 ```
-"gloss": 2400
+"gloss": {
+                "num_class": 2400,
+                "loss_weight": 1
+            }
 ```
 
 # 🛠 Environment setup
