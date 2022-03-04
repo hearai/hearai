@@ -49,25 +49,25 @@ class PreTrainingModel(pl.LightningModule):
     ):
         super().__init__()
 
-        if model_config["neptune"]:
-            tags = [model_config["classification_mode"],
-            model_config["feature_extractor_name"],
-            model_config["transformer_name"],
+        if neptune:
+            tags = [classification_mode,
+            feature_extractor_name,
+            transformer_name,
             "pre-training"]
             self.run = initialize_neptun(tags)
         else:
             self.run = None
  
         # parameters
-        self.lr = model_config["lr"]
-        self.model_save_dir = model_config["model_save_dir"]
-        self.warmup_steps = model_config["warmup_steps"]
-        self.multiply_lr_step = model_config["multiply_lr_step"]
-        self.num_classes_dict = create_heads_dict(model_config["classification_mode"])
+        self.lr = lr
+        self.model_save_dir = model_save_dir
+        self.warmup_steps = warmup_steps
+        self.multiply_lr_step = multiply_lr_step
+        self.num_classes_dict = create_heads_dict(classification_mode)
         self.cls_head = []
         self.loss_weights = []
         for value in self.num_classes_dict.values():
-            self.cls_head.append(nn.Linear(model_config["representation_size"], value["num_class"]))
+            self.cls_head.append(nn.Linear(representation_size, value["num_class"]))
             self.loss_weights.append(value["loss_weight"])
 
         # losses
@@ -76,9 +76,9 @@ class PreTrainingModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
-            model_config["feature_extractor_name"],
-            model_config["representation_size"],
-            model_path=model_config["feature_extractor_model_path"],
+            feature_extractor_name,
+            representation_size,
+            model_path=feature_extractor_model_path,
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor

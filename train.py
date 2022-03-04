@@ -195,41 +195,26 @@ def main(args):
 
     # prepare model
     if args.pre_training:
-        model = PreTrainingModel(lr=args.lr,
-        classification_mode=args.classification_mode,
-        feature_extractor_name="cnn_extractor",
-        feature_extractor_model_path=model_config['feature_extractor']["model_path"],
-        transformer_name="sign_language_transformer",
-        num_attention_heads=model_config['transformer']['num_attention_heads'],
-        transformer_dropout_rate=model_config['transformer']["dropout_rate"],
-        num_segments=args.num_segments,
-        model_save_dir=args.save,
-        neptune=args.neptune,
-        # device="cuda:0" if args.gpu >= 0 else "cpu",
-        representation_size=model_config['feature_extractor']["representation_size"],
-        feedforward_size=model_config['transformer']["feedforward_size"],
-        num_encoder_layers=model_config['transformer']["num_encoder_layers"],
-        transformer_output_size=model_config['transformer']["output_size"],
-        warmup_steps=20.0,
-        multiply_lr_step=0.95,)
+        model_instance = PreTrainingModel
     else:
-        model = GlossTranslationModel(lr=args.lr,
-        classification_mode=args.classification_mode,
-        feature_extractor_name="cnn_extractor",
-        feature_extractor_model_path=hyperparameters["feature_extractor__model_path"],
-        transformer_name="sign_language_transformer",
-        num_attention_heads=hyperparameters['transformer__num_attention_heads'],
-        transformer_dropout_rate=hyperparameters["transformer__dropout_rate"],
-        num_segments=args.num_segments,
-        model_save_dir=args.save,
-        neptune=args.neptune,
-        device="cuda:0" if args.gpu > 0 else "cpu",
-        representation_size=hyperparameters["feature_extractor__representation_size"],
-        feedforward_size=hyperparameters["transformer__feedforward_size"],
-        num_encoder_layers=hyperparameters["transformer__num_encoder_layers"],
-        transformer_output_size=hyperparameters["transformer__output_size"],
-        warmup_steps=20.0,
-        multiply_lr_step=0.95,)
+        model_instance = GlossTranslationModel
+    
+    model = model_instance(lr=args.lr,
+                           classification_mode=args.classification_mode,
+                           feature_extractor_name="cnn_extractor",
+                           feature_extractor_model_path=model_config['feature_extractor']["model_path"],
+                           transformer_name="sign_language_transformer",
+                           num_attention_heads=model_config['transformer']['num_attention_heads'],
+                           transformer_dropout_rate=model_config['transformer']["dropout_rate"],
+                           num_segments=args.num_segments,
+                           model_save_dir=args.save,
+                           neptune=args.neptune,
+                           representation_size=model_config['feature_extractor']["representation_size"],
+                           feedforward_size=model_config['transformer']["feedforward_size"],
+                           num_encoder_layers=model_config['transformer']["num_encoder_layers"],
+                           transformer_output_size=model_config['transformer']["output_size"],
+                           warmup_steps=20.0,
+                           multiply_lr_step=0.95,)
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,

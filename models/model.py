@@ -51,23 +51,38 @@ class GlossTranslationModel(pl.LightningModule):
     ):
         super().__init__()
 
-        if model_config["neptune"]:
-            tags = [model_config["classification_mode"], model_config["feature_extractor_name"], model_config["transformer_name"]]
+        if neptune:
+            tags = [classification_mode, feature_extractor_name, transformer_name]
             self.run = initialize_neptun(tags)
+            self.run["parameters"] = {
+                "lr": lr,
+                "multiply_lr_step": multiply_lr_step,
+                "warmup_steps": warmup_steps,
+                "transformer_output_size": transformer_output_size,
+                "representation_size": representation_size,
+                "feedforward_size": feedforward_size,
+                "num_encoder_layers": num_encoder_layers,
+                "num_segments": num_segments,
+                "num_attention_heads": num_attention_heads,
+                "transformer_dropout_rate": transformer_dropout_rate,
+                "classification_mode": classification_mode,
+                "feature_extractor_name": feature_extractor_name,
+                "feature_extractor_model_path": feature_extractor_model_path,
+                "transformer_name": transformer_name,
+            }
         else:
             self.run = None
 
         # parameters
-
-        self.lr = model_config["lr"]
-        self.model_save_dir = model_config["model_save_dir"]
-        self.warmup_steps = model_config["warmup_steps"]
-        self.multiply_lr_step = model_config["multiply_lr_step"]
-        self.num_classes_dict = create_heads_dict(model_config["classification_mode"])
+        self.lr = lr
+        self.model_save_dir = model_save_dir
+        self.warmup_steps = warmup_steps
+        self.multiply_lr_step = multiply_lr_step
+        self.num_classes_dict = create_heads_dict(classification_mode)
         self.cls_head = []
         self.loss_weights = []
         for value in self.num_classes_dict.values():
-            self.cls_head.append(nn.Linear(model_config["transformer_output_size"], value["num_class"]))
+            self.cls_head.append(nn.Linear(transformer_output_size, value["num_class"]))
             self.loss_weights.append(value["loss_weight"])
 
         # losses
@@ -76,37 +91,17 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
         self.feature_extractor = self.model_loader.load_feature_extractor(
-<<<<<<< HEAD
-<<<<<<< HEAD
-            model_config["feature_extractor_name"],
-            model_config["representation_size"],
-            model_path=model_config["feature_extractor_model_path"],
-=======
             feature_extractor_name=feature_extractor_name,
             representation_size = representation_size,
             model_path=feature_extractor_model_path,
-            device=device
->>>>>>> Added model_hyperparameters.json
-=======
-            feature_extractor_name=feature_extractor_name,
-            representation_size = representation_size,
+            device=device,
             model_path=feature_extractor_model_path
->>>>>>> Added model_hyperparameters.json
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
-        if model_config["transformer_name"] == "sign_language_transformer":
+        if transformer_name == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
-<<<<<<< HEAD
-                model_config["transformer_name"],
-                model_config["representation_size"],
-                model_config["transformer_output_size"],
-                model_config["feedforward_size"],
-                model_config["num_encoder_layers"],
-                model_config["num_segments"],
-                model_config["num_attention_heads"],
-=======
                 transformer_name,
                 input_size=representation_size,
                 output_size=transformer_output_size,
@@ -114,17 +109,11 @@ class GlossTranslationModel(pl.LightningModule):
                 num_encoder_layers=num_encoder_layers,
                 num_frames=num_segments,
                 num_attention_heads=num_attention_heads,
-<<<<<<< HEAD
                 dropout_rate=transformer_dropout_rate,
-                device=device
->>>>>>> Added model_hyperparameters.json
-=======
-                dropout_rate=transformer_dropout_rate
->>>>>>> Added model_hyperparameters.json
             )
         else:
             self.transformer = self.model_loader.load_transformer(
-                model_config["transformer_name"], model_config["representation_size"], model_config["transformer_output_size"]
+                transformer_name, representation_size, transformer_output_size
             )
 
     def forward(self, input, **kwargs):
