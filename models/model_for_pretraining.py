@@ -65,7 +65,6 @@ class PreTrainingModel(pl.LightningModule):
         self.num_classes_dict = create_heads_dict(model_config["classification_mode"])
         self.cls_head = []
         self.loss_weights = []
-        print(self.num_classes_dict)
         for value in self.num_classes_dict.values():
             self.cls_head.append(nn.Linear(model_config["representation_size"], value["num_class"]))
             self.loss_weights.append(value["loss_weight"])
