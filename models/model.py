@@ -93,7 +93,6 @@ class GlossTranslationModel(pl.LightningModule):
             feature_extractor_name=feature_extractor_name,
             representation_size = representation_size,
             model_path=feature_extractor_model_path,
-            model_path=feature_extractor_model_path
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
