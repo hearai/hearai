@@ -47,7 +47,6 @@ class GlossTranslationModel(pl.LightningModule):
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
-        device="cpu",
     ):
         super().__init__()
 
@@ -94,7 +93,6 @@ class GlossTranslationModel(pl.LightningModule):
             feature_extractor_name=feature_extractor_name,
             representation_size = representation_size,
             model_path=feature_extractor_model_path,
-            device=device,
             model_path=feature_extractor_model_path
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(

@@ -45,7 +45,6 @@ class PreTrainingModel(pl.LightningModule):
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
-        device="cpu",
     ):
         super().__init__()
 
