@@ -197,7 +197,6 @@ def main(args):
         num_segments=args.num_segments,
         model_save_dir=args.save,
         neptune=args.neptune,
-        device="cuda:0" if args.gpu >= 0 else "cpu",
         representation_size=model_config['feature_extractor']["representation_size"],
         feedforward_size=model_config['transformer']["feedforward_size"],
         num_encoder_layers=model_config['transformer']["num_encoder_layers"],

@@ -53,6 +53,22 @@ class GlossTranslationModel(pl.LightningModule):
         if neptune:
             tags = [classification_mode, feature_extractor_name, transformer_name]
             self.run = initialize_neptun(tags)
+            self.run["parameters"] = {
+                "lr": lr,
+                "multiply_lr_step": multiply_lr_step,
+                "warmup_steps": warmup_steps,
+                "transformer_output_size": transformer_output_size,
+                "representation_size": representation_size,
+                "feedforward_size": feedforward_size,
+                "num_encoder_layers": num_encoder_layers,
+                "num_segments": num_segments,
+                "num_attention_heads": num_attention_heads,
+                "transformer_dropout_rate": transformer_dropout_rate,
+                "classification_mode": classification_mode,
+                "feature_extractor_name": feature_extractor_name,
+                "feature_extractor_model_path": feature_extractor_model_path,
+                "transformer_name": transformer_name,
+            }
         else:
             self.run = None
 
@@ -71,8 +87,7 @@ class GlossTranslationModel(pl.LightningModule):
         self.feature_extractor = self.model_loader.load_feature_extractor(
             feature_extractor_name=feature_extractor_name,
             representation_size = representation_size,
-            model_path=feature_extractor_model_path,
-            device=device
+            model_path=feature_extractor_model_path
         )
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
@@ -87,7 +102,6 @@ class GlossTranslationModel(pl.LightningModule):
                 num_frames=num_segments,
                 num_attention_heads=num_attention_heads,
                 dropout_rate=transformer_dropout_rate,
-                device=device
             )
         else:
             self.transformer = self.model_loader.load_transformer(
