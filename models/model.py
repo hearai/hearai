@@ -63,7 +63,6 @@ class GlossTranslationModel(pl.LightningModule):
         self.warmup_steps = model_config["warmup_steps"]
         self.multiply_lr_step = model_config["multiply_lr_step"]
         self.num_classes_dict = create_heads_dict(model_config["classification_mode"])
-        print(self.num_classes_dict)
         self.cls_head = []
         self.loss_weights = []
         for value in self.num_classes_dict.values():
