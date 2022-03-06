@@ -1,3 +1,4 @@
+import yaml
 import argparse
 import os
 import warnings
@@ -29,6 +30,12 @@ def get_args_parser():
         type=str,
         default=None,
         help="path to landmarks annotations",
+    )
+    parser.add_argument(
+        "--model_config_path",
+        type=str,
+        default='train_config_default.yml',
+        help="path to .yaml config file specyfing hyperparameters of different model sections."
     )
     parser.add_argument(
         "--classification-mode",
@@ -183,30 +190,31 @@ def main(args):
         drop_last=False,
     )
 
-    # prepare model
-    model_config = {
-        "lr": args.lr,
-        "multiply_lr_step": 0.95,
-        "warmup_steps": 20.0,
-        "transformer_output_size": 784,
-        "representation_size": 512,
-        "feedforward_size": 1024,
-        "num_encoder_layers": 1,
-        "num_segments": args.num_segments,
-        "num_attention_heads": 4,
-        "classification_mode": args.classification_mode,
-        "feature_extractor_name": "cnn_extractor",
-        "feature_extractor_model_path": "efficientnet_b2",
-        "transformer_name": "sign_language_transformer",
-        "model_save_dir": args.save,
-        "neptune": args.neptune,
-        "device": "cuda:0" if args.gpu > 0 else "cpu",    
-    }
+    with open(args.model_config_path) as file:
+        model_config = yaml.load(file, Loader=yaml.FullLoader)
 
+    # prepare model
     if args.pre_training:
-        model = PreTrainingModel(model_config=model_config)
+        model_instance = PreTrainingModel
     else:
-        model = GlossTranslationModel(model_config=model_config)
+        model_instance = GlossTranslationModel
+    
+    model = model_instance(lr=args.lr,
+                           classification_mode=args.classification_mode,
+                           feature_extractor_name="cnn_extractor",
+                           feature_extractor_model_path=model_config["feature_extractor"]["model_path"],
+                           transformer_name="sign_language_transformer",
+                           num_attention_heads=model_config["transformer"]["num_attention_heads"],
+                           transformer_dropout_rate=model_config["transformer"]["dropout_rate"],
+                           num_segments=args.num_segments,
+                           model_save_dir=args.save,
+                           neptune=args.neptune,
+                           representation_size=model_config["feature_extractor"]["representation_size"],
+                           feedforward_size=model_config["transformer"]["feedforward_size"],
+                           num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
+                           transformer_output_size=model_config["transformer"]["output_size"],
+                           warmup_steps=20.0,
+                           multiply_lr_step=0.95,)
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
