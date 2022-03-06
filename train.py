@@ -21,8 +21,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser()
     # Data parameters and paths
     parser.add_argument(
-        "--data", help="path to data", nargs="*",
-        default=["assets/sanity_check_data"],
+        "--data", help="path to data", nargs="*", default=["assets/sanity_check_data"],
     )
     parser.add_argument(
         "--landmarks_path",
@@ -115,7 +114,6 @@ def main(args):
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
-
     # set the seed for reproducibility
     seed = args.seed
     torch.manual_seed(seed)
@@ -200,7 +198,16 @@ def main(args):
         "transformer_name": "sign_language_transformer",
         "model_save_dir": args.save,
         "neptune": args.neptune,
-        "device": "cuda:0" if args.gpu > 0 else "cpu",    
+        "device": "cuda:0" if args.gpu > 0 else "cpu",
+        "freeze_scheduler": {
+            "model_params": {
+                "feature_extractor": [True, False],
+                "transformer": [False, True],
+            },
+            "freeze_pattern_repeats": [5, 3],
+            "freeze_mode": "epoch",
+            "verbose": True,
+        },
     }
 
     if args.pre_training:
@@ -216,7 +223,7 @@ def main(args):
         accumulate_grad_batches=1,
         fast_dev_run=args.fast_dev_run,
     )
-    
+
     # run training
     trainer.fit(
         model, train_dataloader=dataloader_train, val_dataloaders=dataloader_val
