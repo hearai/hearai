@@ -1,0 +1,11 @@
+feature_extractor:
+    model_path: "efficientnet_b1"
+    representation_size: 512
+
+transformer:
+    feedforward_size: 1024
+    transformer_output_size: 784
+    num_attention_heads: 4
+    num_encoder_layers: 2
+    output_size: 1024
+    dropout_rate: 0.1

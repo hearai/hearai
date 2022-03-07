@@ -24,26 +24,77 @@ Feature extractor returns a representation feature vector for every frame.
 ## 🧠 Transformer
 The transformer is a widely-used deep learning model that adopts the mechanism of self-attention, differentially weighting the significance of each part of the input data. It is used primarily in natural language processing (NLP). The Transfomer model will get representation from feature_extractor of size `num_frames,representation_size` for each video in our pipeline.
 
+## 📑 [WiP] Datasets
+In our studies we are using PJM lexicon with annotations provided at our internal server at:
+- directories with frames: `/dih4/dih4_2/hearai/data/frames/pjm/`
+- HamNoSys annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_hamnosys.txt` - 8 heads only [WiP]
+- glosses annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_gloss2.txt`
+- landmarks directory: `/dih4/dih4_2/hearai/data/#mediapipe_landmarks/korpus/labeled/`
+
+To load multiple datasets simply pass to ```args.parser``` list of datasets (file paths to video separated with spaces). We have possibility to load these datasets:
+- pjm: /dih4/dih4_2/hearai/data/frames/pjm
+- basic_lexicon: /dih4/dih4_2/hearai/data/frames/basic_lexicon
+- galex: /dih4/dih4_2/hearai/data/frames/galex
+- glex: /dih4/dih4_2/hearai/data/frames/glex
+
+```python
+python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1
+```
+
+Attention! The method requires that all ```annotation_files``` have exactly the same annotation filename e.g. ```"test_hamnosys.txt"```! If you need to pass different path you need to do it manually.
+
+Dataloader gives possibility to load data:
+- choosing number of frames by setting `--num_segments` variable (in this option `--time` argument is set to `None` as default)
+- evenly distribiuted using defined time unit by specifing `--time` argument and `--num_segments` as  number of frames in video sequence (note that in this option `--landmarks_path` has to be set to get basic information about video, eg. `fps` value)
+
 ## 👥 Classification heads
-Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`
+Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`. For each head, a custom loss weight can be provided.
 
 Hamburg Sign Language Notation System (HamNoSys) is a gesture transcription alphabetic system that describes the symbols and gestures such as hand shape, hand location, and movement. Read more about HamNoSys [here - Introduction to HamNoSys](https://www.hearai.pl/post/4-hamnosys/) and [here - Introduction to HamNoSys Part 2](https://www.hearai.pl/post/5-hamnosys2/). HamNoSys always have the same number of possible classes.
 
-
 ```
-"hand_shape_base_form": 6,
-"hand_shape_thumb_position": 3,
-"hand_shape_bending": 4,
-"hand_position_finger_direction": 18,
-"hand_position_palm_orientation": 8,
-"hand_location_x": 14,
-"hand_location_y": 5,
+        "symmetry_operator": {
+            "num_class": 9,
+            "loss_weight": 0,
+        },
+        "hand_shape_base_form": {
+            "num_class": 12,
+            "loss_weight": 1,
+        },
+        "hand_shape_thumb_position": {
+            "num_class": 4,
+            "loss_weight": 0,
+        },
+        "hand_shape_bending": {
+            "num_class": 6,
+            "loss_weight": 0,
+        },
+        "hand_position_finger_direction": {
+            "num_class": 18,
+            "loss_weight": 0,
+        },
+        "hand_position_palm_orientation": {
+            "num_class": 8,
+            "loss_weight": 0,
+        },
+        "hand_location_x": {
+            "num_class": 5,
+            "loss_weight": 0,
+        },
+        "hand_location_y": {
+            "num_class": 37,
+            "loss_weight": 0,
+        },
+
 ```
 
 Gloss is an annotation system that applies a label (a word) to the sign. Number glosses depend on a language and dataset. It is usually a bigger number as it must define as many words (glosses) as possible.
 
 ```
-"gloss": 2400
+"gloss": {
+                "num_class": 2400,
+                "loss_weight": 1
+            }
 ```
 
 # 🛠 Environment setup
@@ -56,7 +107,15 @@ When you install a new library, please add it to the list in `requirements.txt` 
 
 # 🏁 Example train.py run
 
-`python3 train.py --data /dih4/dih4_2/hearai/data/frames/pjm --gpu 1`
+Run with a single dataset:
+
+`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 16 --gpu 1`
+
+Run with multiple datasets (list datasets paths separated with spaces)
+
+`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1`
+
+
 
 
 # 🎨 Style
