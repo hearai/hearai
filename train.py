@@ -144,6 +144,9 @@ def main(args):
     if not isinstance(videos_root, list):
         videos_root = [videos_root]
 
+    with open(args.model_config_path) as file:
+        model_config = yaml.load(file, Loader=yaml.FullLoader)
+
     datasets = list()
     for video_root in videos_root:
         if args.classification_mode == "gloss":
@@ -155,6 +158,7 @@ def main(args):
             root_path=video_root,
             annotationfile_path=annotation_file,
             classification_mode=args.classification_mode,
+            classification_heads = model_config["heads"][args.classification_mode],
             is_pretraining=args.pre_training,
             num_segments=args.num_segments,
             time=args.time,
@@ -190,8 +194,6 @@ def main(args):
         drop_last=False,
     )
 
-    with open(args.model_config_path) as file:
-        model_config = yaml.load(file, Loader=yaml.FullLoader)
 
     # prepare model
     if args.pre_training:
@@ -201,6 +203,7 @@ def main(args):
     
     model = model_instance(lr=args.lr,
                            classification_mode=args.classification_mode,
+                           classification_heads=model_config["heads"][args.classification_mode],
                            feature_extractor_name="cnn_extractor",
                            feature_extractor_model_path=model_config["feature_extractor"]["model_path"],
                            transformer_name="sign_language_transformer",

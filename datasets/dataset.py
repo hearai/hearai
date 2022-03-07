@@ -10,7 +10,6 @@ from PIL import Image
 from torchvision import transforms
 import torch
 from typing import List, Union, Tuple, Any
-from utils.classification_mode import create_heads_dict
 import warnings
 
 # for non-latin encoding
@@ -46,10 +45,10 @@ class VideoRecord(object):
              5) any following elements are labels in the case of multi label provided.
     """
 
-    def __init__(self, row, root_datapath, num_classes_dict, landmarks_path=None):
+    def __init__(self, row, root_datapath, classification_heads, landmarks_path=None):
         self._data = row
         self._path = os.path.join(root_datapath, row[0])
-        self.num_classes_dict = num_classes_dict
+        self.classification_heads = classification_heads
         try:
             with open(
                 os.path.join(landmarks_path, row[0] + "_properties.json"), "r"
@@ -79,12 +78,12 @@ class VideoRecord(object):
     @property
     def label(self) -> Union[str, List[str]]:
         # just one label as gloss
-        if "gloss" in self.num_classes_dict.keys():
+        if "gloss" in self.classification_heads.keys():
             return int(self._data[3])
         # Sample associated with multiple labels - HamNoSys
         else:
             id_list = []
-            for key in self.num_classes_dict.keys():
+            for key in self.classification_heads.keys():
                 id_list.append(self._data[ALL_HAMNOSYS_HEADS[key]])
             return [int(label) for label in id_list]
 
@@ -130,6 +129,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         annotationfile_path: str,
         classification_mode: str,
         is_pretraining: bool,
+        classification_heads: {},
         num_segments: int = -1,
         frames_per_segment: int = 1,
         time: Union[float, None] = None,
@@ -150,7 +150,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.transform = transform
         self.test_mode = test_mode
         self.is_pretraining = is_pretraining
-        self.num_classes_dict = create_heads_dict(classification_mode)
+        self.classification_heads = classification_heads
 
         self._parse_annotationfile()
         self._sanity_check_samples()
@@ -167,7 +167,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
     def _parse_annotationfile(self):
         self.video_list = [
             VideoRecord(x.strip().split(), self.root_path,
-                        self.num_classes_dict, self.landmarks_path)
+                        self.classification_heads, self.landmarks_path)
             for x in open(self.annotationfile_path)
         ]
 
@@ -360,7 +360,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             labels.append(record.label)
         else:
             labels = record.label
-        for value, class_label in zip(self.num_classes_dict.values(), labels):
+        for value, class_label in zip(self.classification_heads.values(), labels):
             x = np.zeros(value["num_class"])
             x[class_label] = 1
             if self.is_pretraining:
