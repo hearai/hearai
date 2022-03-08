@@ -40,3 +40,11 @@ heads:
         hand_location_y:
             num_class: 37
             loss_weight: 0
+
+freeze_scheduler:
+    model_params:
+        feature_extractor": [True, False]
+        transformer": [False, True]
+    freeze_pattern_repeats: [5, 3]
+    freeze_mode: "epoch"
+    verbose: True
