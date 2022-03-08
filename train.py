@@ -157,7 +157,6 @@ def main(args):
         dataset = VideoFrameDataset(
             root_path=video_root,
             annotationfile_path=annotation_file,
-            classification_mode=args.classification_mode,
             classification_heads = model_config["heads"][args.classification_mode],
             is_pretraining=args.pre_training,
             num_segments=args.num_segments,
