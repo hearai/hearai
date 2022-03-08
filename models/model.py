@@ -255,7 +255,7 @@ class GlossTranslationModel(pl.LightningModule):
                         "Freeze status:",
                         params_to_freeze,
                         "set to",
-                        str(param.requires_grad),
+                        str(current_pattern),
                     )
 
     def freeze_update(self):

@@ -9,3 +9,11 @@ transformer:
     num_encoder_layers: 2
     output_size: 1024
     dropout_rate: 0.1
+
+freeze_scheduler:
+    model_params:
+        feature_extractor": [True, False]
+        transformer": [False, True]
+    freeze_pattern_repeats: [5, 3]
+    freeze_mode: "epoch"
+    verbose: True

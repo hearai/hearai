@@ -213,7 +213,8 @@ def main(args):
                            transformer_output_size=model_config["transformer"]["output_size"],
                            warmup_steps=20.0,
                            multiply_lr_step=0.95,
-                           freeze_scheduler=model_config["freeze_scheduler"])
+                           freeze_scheduler=model_config["freeze_scheduler"]
+                           )
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,

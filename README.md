@@ -117,7 +117,7 @@ Run with multiple datasets (list datasets paths separated with spaces)
 
 # Training tips & tricks
 
-### Schudule model freezing
+### Schedule model freezing
 If you use a pretrained `feature_extractor` but training `transfomer` from sctratch its worth to freeze weights of feature_extractor at first, and train the model with higher learning rate. With `freeze_scheduler` you can quickly prepare your freezing configuration. Freeze pattern can be used with any named model parameter. To use it, first select layers which you want to freeze, and add named parameters to `model_params` in the config file. For instance, it can be used with `feature_extractor` and `transformer`. When the value is set to `True` then the layer will be freezed after first freeze_scheduler execution. 
 
 The `freeze_scheduler` config is explained below:
