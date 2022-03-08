@@ -10,7 +10,6 @@ from PIL import Image
 from torchvision import transforms
 import torch
 from typing import List, Union, Tuple, Any
-from utils.classification_mode import create_heads_dict
 import warnings
 
 # for non-latin encoding
@@ -27,7 +26,8 @@ ALL_HAMNOSYS_HEADS = {"symmetry_operator": 3,
             "hand_position_finger_direction": 7,
             "hand_position_palm_orientation": 8,
             "hand_location_x": 9,
-            "hand_location_y": 10}
+            "hand_location_y": 10,
+            "distance": 11}
 
 class VideoRecord(object):
     """
@@ -46,13 +46,13 @@ class VideoRecord(object):
              5) any following elements are labels in the case of multi label provided.
     """
 
-    def __init__(self, row, root_datapath, num_classes_dict, landmarks_path=None):
+    def __init__(self, row, root_datapath, classification_heads):
         self._data = row
         self._path = os.path.join(root_datapath, row[0])
-        self.num_classes_dict = num_classes_dict
+        self.classification_heads = classification_heads
         try:
             with open(
-                os.path.join(landmarks_path, row[0] + "_properties.json"), "r"
+                os.path.join(self._path, row[0] + "_properties.json"), "r"
             ) as f:
                 data = json.load(f)
             self.fps = int(data["FPS"])
@@ -79,12 +79,12 @@ class VideoRecord(object):
     @property
     def label(self) -> Union[str, List[str]]:
         # just one label as gloss
-        if "gloss" in self.num_classes_dict.keys():
+        if "gloss" in self.classification_heads.keys():
             return int(self._data[3])
         # Sample associated with multiple labels - HamNoSys
         else:
             id_list = []
-            for key in self.num_classes_dict.keys():
+            for key in self.classification_heads.keys():
                 id_list.append(self._data[ALL_HAMNOSYS_HEADS[key]])
             return [int(label) for label in id_list]
 
@@ -108,8 +108,9 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         root_path: The root path in which video folders lie.
         annotationfile_path: The .txt annotation file containing
                              one row per video sample as described above.
-        classification_mode: mode for classification, choose from
-                             classification_mode.py
+        is_pretraining: flag to launch pretrianing block
+        classification_heads: dict with names of classification heads
+                              and number of their classes
         num_segments: The number of segments the video should
                       be divided into to sample frames from.
         frames_per_segment: The number of frames that should
@@ -128,8 +129,8 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self,
         root_path: str,
         annotationfile_path: str,
-        classification_mode: str,
         is_pretraining: bool,
+        classification_heads={},
         num_segments: int = -1,
         frames_per_segment: int = 1,
         time: Union[float, None] = None,
@@ -150,7 +151,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.transform = transform
         self.test_mode = test_mode
         self.is_pretraining = is_pretraining
-        self.num_classes_dict = create_heads_dict(classification_mode)
+        self.classification_heads = classification_heads
 
         self._parse_annotationfile()
         self._sanity_check_samples()
@@ -167,7 +168,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
     def _parse_annotationfile(self):
         self.video_list = [
             VideoRecord(x.strip().split(), self.root_path,
-                        self.num_classes_dict, self.landmarks_path)
+                        self.classification_heads)
             for x in open(self.annotationfile_path)
         ]
 
@@ -360,7 +361,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             labels.append(record.label)
         else:
             labels = record.label
-        for value, class_label in zip(self.num_classes_dict.values(), labels):
+        for value, class_label in zip(self.classification_heads.values(), labels):
             x = np.zeros(value["num_class"])
             x[class_label] = 1
             if self.is_pretraining:

@@ -6,7 +6,6 @@ from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 import neptune.new as neptune
 from torch.optim.lr_scheduler import MultiplicativeLR
 from sklearn.metrics import classification_report
-from utils.classification_mode import create_heads_dict
 from utils.summary_loss import SummaryLoss
 
 from models.feature_extractors.multi_frame_feature_extractor import (
@@ -45,6 +44,10 @@ class PreTrainingModel(pl.LightningModule):
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
+        classification_heads={"gloss": {
+                                "num_class": 2400, 
+                                "loss_weight": 1}
+                            },
     ):
         super().__init__()
 
@@ -54,6 +57,23 @@ class PreTrainingModel(pl.LightningModule):
             transformer_name,
             "pre-training"]
             self.run = initialize_neptun(tags)
+            self.run["parameters"] = {
+                "lr": lr,
+                "multiply_lr_step": multiply_lr_step,
+                "warmup_steps": warmup_steps,
+                "transformer_output_size": transformer_output_size,
+                "representation_size": representation_size,
+                "feedforward_size": feedforward_size,
+                "num_encoder_layers": num_encoder_layers,
+                "num_segments": num_segments,
+                "num_attention_heads": num_attention_heads,
+                "transformer_dropout_rate": transformer_dropout_rate,
+                "classification_mode": classification_mode,
+                "feature_extractor_name": feature_extractor_name,
+                "feature_extractor_model_path": feature_extractor_model_path,
+                "transformer_name": transformer_name,
+                "classification_heads": classification_heads,
+            }
         else:
             self.run = None
  
@@ -62,10 +82,10 @@ class PreTrainingModel(pl.LightningModule):
         self.model_save_dir = model_save_dir
         self.warmup_steps = warmup_steps
         self.multiply_lr_step = multiply_lr_step
-        self.num_classes_dict = create_heads_dict(classification_mode)
+        self.classification_heads = classification_heads
         self.cls_head = []
         self.loss_weights = []
-        for value in self.num_classes_dict.values():
+        for value in self.classification_heads.values():
             self.cls_head.append(nn.Linear(representation_size, value["num_class"]))
             self.loss_weights.append(value["loss_weight"])
 
@@ -109,7 +129,7 @@ class PreTrainingModel(pl.LightningModule):
         return {"loss": loss, "targets": targets, "predictions": predictions}
 
     def validation_epoch_end(self, out):
-        head_names = list(self.num_classes_dict.keys())
+        head_names = list(self.classification_heads.keys())
         # initialize empty list with list per head
         all_targets = [[] for name in head_names]
         all_predictions = [[] for name in head_names]

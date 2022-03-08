@@ -45,7 +45,11 @@ Attention! The method requires that all ```annotation_files``` have exactly the 
 
 Dataloader gives possibility to load data:
 - choosing number of frames by setting `--num_segments` variable (in this option `--time` argument is set to `None` as default)
-- evenly distribiuted using defined time unit by specifing `--time` argument and `--num_segments` as  number of frames in video sequence (note that in this option `--landmarks_path` has to be set to get basic information about video, eg. `fps` value)
+- evenly distribiuted using defined time unit by specifing `--time` argument in seconds and `--num_segments` as number of frames in video sequence (note that in this option in the same directory as frames has to be file with basic information about video, eg. `fps` value, named as `<video_name>_properties.json`)
+
+```python
+python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --time 0.1 --b 4 --workers 0 --gpu 1
+```
 
 ## 👥 Classification heads
 Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`. For each head, a custom loss weight can be provided.
