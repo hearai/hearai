@@ -130,7 +130,6 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         root_path: str,
         annotationfile_path: str,
         is_pretraining: bool,
-        classification_mode: str,
         classification_heads={},
         num_segments: int = -1,
         frames_per_segment: int = 1,
