@@ -115,8 +115,38 @@ Run with multiple datasets (list datasets paths separated with spaces)
 
 `python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1`
 
+# Training tips & tricks
 
+### Schedule model freezing
+If you use a pretrained `feature_extractor` but training `transfomer` from sctratch its worth to freeze weights of feature_extractor at first, and train the model with higher learning rate. With `freeze_scheduler` you can quickly prepare your freezing configuration. Freeze pattern can be used with any named model parameter. To use it, first select layers which you want to freeze, and add named parameters to `model_params` in the config file. For instance, it can be used with `feature_extractor` and `transformer`. When the value is set to `True` then the layer will be freezed after first freeze_scheduler execution. 
 
+The `freeze_scheduler` config is explained below:
+
+```python
+"freeze_scheduler": {
+    "model_params": {
+        # each params list has to be of equal length
+        "feature_extractor":  list(bool) # A list of bools defining freezing patterns for feature_extractor. True => Freeze. False => Train
+        "transformer": list(bool) # A list of bools defining freezing patterns for transformer. True => Freeze. False => Train
+    },
+    "freeze_pattern_repeats": list(int), # A list of integers defines how many times each param in model_params will be repeated.
+    "freeze_mode": str, # the freeze scheduler can be executed either every "epoch" or "step"
+}
+
+```
+
+Example `freeze_scheduler` config is presented below. For this configuration, freeze_scheduler will freeze `feature_extractor` for ten epochs, and then freeze `transformer` for five. After freezeing patterns ends, all params are unfreezed.
+
+```python
+"freeze_scheduler": {
+    "model_params": {
+        "feature_extractor":  [True, False],
+        "transformer": [False, True],
+    },
+    "freeze_pattern_repeats": [10, 5],
+    "freeze_mode": "epoch",
+
+```
 
 # 🎨 Style
 
