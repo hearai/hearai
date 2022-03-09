@@ -113,7 +113,7 @@ class SLRTEncoder(nn.Module):
         self._feedforward_sequential = nn.Sequential(
             nn.LayerNorm(input_size),
             nn.Linear(input_size, feedforward_size),
-            nn.ReLU(),
+            nn.ELU(0.1),
             nn.Dropout(dropout_rate),
             nn.Linear(feedforward_size, input_size),
             nn.Dropout(dropout_rate),
