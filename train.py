@@ -25,10 +25,10 @@ def get_args_parser():
         "--data", help="path to data", nargs="*", default=["assets/sanity_check_data"],
     )
     parser.add_argument(
-        "--landmarks",
-        action="store_true",
-        default=False,
-        help="flag to enable reading landmarks annotations",
+        "--landmarks_path",
+        type=str,
+        default=None,
+        help="path to landmarks annotations",
     )
     parser.add_argument(
         "--model_config_path",
@@ -118,6 +118,7 @@ def main(args):
     # set GPU to use
     if args.gpu > -1:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
     # set the seed for reproducibility
@@ -158,7 +159,7 @@ def main(args):
             is_pretraining=args.pre_training,
             num_segments=args.num_segments,
             time=args.time,
-            landmarks=args.landmarks,
+            landmarks_path=args.landmarks_path,
             transform=preprocess,
             test_mode=True,
         )
@@ -212,8 +213,8 @@ def main(args):
                            feedforward_size=model_config["transformer"]["feedforward_size"],
                            num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
                            transformer_output_size=model_config["transformer"]["output_size"],
-                           warmup_steps=0,
-                           multiply_lr_step=1.02093,
+                           warmup_steps=90.0,
+                           multiply_lr_step=1,
                            freeze_scheduler=model_config["freeze_scheduler"]
                            )
 

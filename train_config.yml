@@ -3,8 +3,8 @@ feature_extractor:
     representation_size: 384
 
 transformer:
-    feedforward_size: 384
-    transformer_output_size: -5
+    feedforward_size: 64
+    transformer_output_size: 64
     num_attention_heads: 6
     num_encoder_layers: 2
     output_size: 384
@@ -18,33 +18,33 @@ heads:
     hamnosys:
         symmetry_operator:
             num_class: 9
-            loss_weight: 1
+            loss_weight: 0
         hand_shape_base_form:
             num_class: 12
-            loss_weight: 1
+            loss_weight: 0.5
         hand_shape_thumb_position:
             num_class: 4
-            loss_weight: 1
+            loss_weight: 0.5
         hand_shape_bending:
             num_class: 6
-            loss_weight: 1
+            loss_weight: 0
         hand_position_finger_direction:
             num_class: 18
-            loss_weight: 1
+            loss_weight: 0
         hand_position_palm_orientation:
             num_class: 8
-            loss_weight: 1
+            loss_weight: 0
         hand_location_x:
             num_class: 5
-            loss_weight: 1
+            loss_weight: 0
         hand_location_y:
             num_class: 37
-            loss_weight: 1
+            loss_weight: 0
 
 freeze_scheduler:
     model_params:
-        feature_extractor: [True, False, True, False, True, False, True, False, True, False]
-        transformer: [False, True, False, True, False, True, False, True, False, True]
-    freeze_pattern_repeats: [10, 10, 20, 20, 30, 30, 40, 40, 50, 50]
-    freeze_mode: "step"
+        feature_extractor": [True, False, True, False, True, False, True, False, True, False]
+        transformer": [False, True, False, True, False, True, False, True, False, True]
+    freeze_pattern_repeats: [5, 1, 5, 1, 5, 1, 5, 1, 5, 1]
+    freeze_mode: "epoch"
     verbose: True
