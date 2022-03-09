@@ -120,6 +120,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                             consecutive frames are loaded.
         imagefile_template: The image filename template that video frame files
                             have inside of their video folders.
+        landmarks: If True, additional landmarks are taken as annotations
         transform: Transform pipeline that receives a list of PIL images/frames.
         test_mode: If True, frames are taken from the center of each
                    segment, instead of a random location in each segment.
@@ -135,7 +136,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         frames_per_segment: int = 1,
         time: Union[float, None] = None,
         imagefile_template: str = "{:s}_{:d}.jpg",
-        landmarks_path: Union[str, None] = None,
+        landmarks: bool = False,
         transform=None,
         test_mode: bool = False,
     ):
@@ -147,7 +148,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.frames_per_segment = frames_per_segment
         self.time = time
         self.imagefile_template = imagefile_template
-        self.landmarks_path = landmarks_path
+        self.landmarks = landmarks
         self.transform = transform
         self.test_mode = test_mode
         self.is_pretraining = is_pretraining
@@ -204,19 +205,19 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self, video_name: str, indices: "np.ndarray[int]", col_name: str = "Unnamed: 0"
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         face = pd.read_csv(
-            os.path.join(self.landmarks_path, video_name + "_face.csv"),
+            os.path.join(self.root_path, video_name, video_name + "_face.csv"),
             index_col=col_name,
         ).loc[indices, :]
         left_hand = pd.read_csv(
-            os.path.join(self.landmarks_path, video_name + "_left_hand.csv"),
+            os.path.join(self.root_path, video_name, video_name + "_left_hand.csv"),
             index_col=col_name,
         ).loc[indices, :]
         right_hand = pd.read_csv(
-            os.path.join(self.landmarks_path, video_name + "_right_hand.csv"),
+            os.path.join(self.root_path, video_name, video_name + "_right_hand.csv"),
             index_col=col_name,
         ).loc[indices, :]
         pose = pd.read_csv(
-            os.path.join(self.landmarks_path, video_name + "_pose.csv"),
+            os.path.join(self.root_path, video_name, video_name + "_pose.csv"),
             index_col=col_name,
         ).loc[indices, :]
         return face, right_hand, left_hand, pose
@@ -331,14 +332,14 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
         frame_start_indices = frame_start_indices + record.start_frame
         images = []
-        if self.landmarks_path is not None:
+        if self.landmarks:
             landmarks = {"face": [], "right_hand": [], "left_hand": [], "pose": []}
 
         # from each start_index, load self.frames_per_segment
         # consecutive frames
         for start_index in frame_start_indices:
             frame_index = int(start_index)
-            if self.landmarks_path is not None:
+            if self.landmarks:
                 face, right_hand, left_hand, pose = self._get_landmarks(
                     record._data[0], frame_start_indices
                 )
@@ -372,7 +373,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         if self.transform is not None:
             images = self.transform(images)
 
-        if self.landmarks_path is None:
+        if not self.landmarks:
             landmarks = None
 
         return images, {"target": target, "landmark": landmarks}

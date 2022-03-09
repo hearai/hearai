@@ -29,7 +29,6 @@ In our studies we are using PJM lexicon with annotations provided at our interna
 - directories with frames: `/dih4/dih4_2/hearai/data/frames/pjm/`
 - HamNoSys annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_hamnosys.txt` - 8 heads only [WiP]
 - glosses annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_gloss2.txt`
-- landmarks directory: `/dih4/dih4_2/hearai/data/#mediapipe_landmarks/korpus/labeled/`
 
 To load multiple datasets simply pass to ```args.parser``` list of datasets (file paths to video separated with spaces). We have possibility to load these datasets:
 - pjm: /dih4/dih4_2/hearai/data/frames/pjm
@@ -55,6 +54,14 @@ Dataloader gives possibility to load data:
 ```python
 python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --time 0.1 --b 4 --workers 0 --gpu 1
 ```
+
+Parametr ```landmarks``` gives additional possibility to read all coordinates for:
+- right hand: <video name>\_right_hand.csv
+- left hand: <video name>\_left_hand.csv
+- face: <video name>\_face.csv
+- pose: <video name>\_pose.csv
+
+Landmarks are provided for each video in the same folder as frames.
 
 ## 👥 Classification heads
 Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`. For each head, a custom loss weight can be provided.
