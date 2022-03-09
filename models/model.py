@@ -134,11 +134,11 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = []
         x = self.multi_frame_feature_extractor(input.to(self.device))
         x = self.transformer(x)
-        for i in range(len(self.cls_head_final_layer)):
+        for i in len(self.cls_head_final_layer):
             internal_layers = self.cls_head_internal_layers[i]
             final_layer = self.cls_head_final_layer[i]
-            y = internal_layers(x.cpu())
-            predictions.append(final_layer(y))
+            y = internal_layers(x)
+            predictions.append(final_layer(y.cpu()))
         return predictions
 
     def training_step(self, batch, batch_idx):
