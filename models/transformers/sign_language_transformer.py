@@ -133,12 +133,12 @@ class SLRTEncoder(nn.Module):
         attention_output = self._attention_dropout(attention_output)
 
         # Self Attention (Multi-Head Attention) End
-        feedforward_x = self._feedforward_sequential(attention_output)
-        x = feedforward_x + attention_output
+        x = input + attention_output
+        feedforward_x = self._feedforward_sequential(x)
         # Feedforward End
 
         # SLRT End
-        return x
+        return feedforward_x
 
 
 class MultiHeadedAttention(nn.Module):
