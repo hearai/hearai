@@ -3,8 +3,8 @@ feature_extractor:
     representation_size: 384
 
 transformer:
-    feedforward_size: 64
-    transformer_output_size: 64
+    feedforward_size: 384
+    transformer_output_size: -5
     num_attention_heads: 6
     num_encoder_layers: 2
     output_size: 384
@@ -45,6 +45,6 @@ freeze_scheduler:
     model_params:
         feature_extractor: [True, False, True, False, True, False, True, False, True, False]
         transformer: [False, True, False, True, False, True, False, True, False, True]
-    freeze_pattern_repeats: [1, 1, 2, 1, 3, 1, 4, 1, 5, 1]
-    freeze_mode: "epoch"
+    freeze_pattern_repeats: [10, 10, 20, 20, 30, 30, 40, 40, 50, 50]
+    freeze_mode: "step"
     verbose: True
