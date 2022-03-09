@@ -33,6 +33,7 @@ class GlossTranslationModel(pl.LightningModule):
         lr=1e-5,
         multiply_lr_step=0.7,
         warmup_steps=100.0,
+        warmup_start_lr=1e-6,
         transformer_output_size=1024,
         representation_size=2048,
         feedforward_size=4096,
@@ -61,6 +62,7 @@ class GlossTranslationModel(pl.LightningModule):
                 "lr": lr,
                 "multiply_lr_step": multiply_lr_step,
                 "warmup_steps": warmup_steps,
+                "warmup_start_lr": warmup_start_lr,
                 "transformer_output_size": transformer_output_size,
                 "representation_size": representation_size,
                 "feedforward_size": feedforward_size,
@@ -81,6 +83,7 @@ class GlossTranslationModel(pl.LightningModule):
         self.lr = lr
         self.model_save_dir = model_save_dir
         self.warmup_steps = warmup_steps
+        self.warmup_start_lr = warmup_start_lr
         self.multiply_lr_step = multiply_lr_step
         self.classification_heads = classification_heads
         self.cls_head_internal_layers = []
@@ -218,9 +221,11 @@ class GlossTranslationModel(pl.LightningModule):
     ):
         # set warm-up
         if self.trainer.global_step < self.warmup_steps:
-            lr_scale = min(1.0, float(self.trainer.global_step + 1) / self.warmup_steps)
+            new_lr = min(self.lr,
+                         self.warmup_start_lr +
+                         (self.lr - self.warmup_start_lr) * float(self.trainer.global_step) / self.warmup_steps)
             for pg in optimizer.param_groups:
-                pg["lr"] = lr_scale * self.lr
+                pg["lr"] = new_lr
 
         optimizer.step(closure=optimizer_closure)
         if self.run:
