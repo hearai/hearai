@@ -83,10 +83,19 @@ class GlossTranslationModel(pl.LightningModule):
         self.warmup_steps = warmup_steps
         self.multiply_lr_step = multiply_lr_step
         self.classification_heads = classification_heads
-        self.cls_head = []
+        self.cls_head_internal_layers = []
+        self.cls_head_final_layer = []
         self.loss_weights = []
         for value in self.classification_heads.values():
-            self.cls_head.append(nn.Linear(transformer_output_size, value["num_class"]))
+            self.cls_head_internal_layers.append(nn.Sequential(
+                nn.Linear(transformer_output_size, transformer_output_size),
+                nn.ELU(0.1),
+                nn.Dropout(transformer_dropout_rate),
+                nn.Linear(transformer_output_size, transformer_output_size),
+                nn.ELU(0.1),
+                nn.Dropout(transformer_dropout_rate),
+            ))
+            self.cls_head_final_layer.append(nn.Linear(transformer_output_size, value["num_class"]))
             self.loss_weights.append(value["loss_weight"])
 
         # losses
@@ -125,8 +134,11 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = []
         x = self.multi_frame_feature_extractor(input.to(self.device))
         x = self.transformer(x)
-        for head in self.cls_head:
-            predictions.append(head(x.cpu()))
+        for i in len(self.cls_head_final_layer):
+            internal_layers = self.cls_head_internal_layers[i]
+            final_layer = self.cls_head_final_layer[i]
+            y = internal_layers(x)
+            predictions.append(final_layer(y.cpu()))
         return predictions
 
     def training_step(self, batch, batch_idx):
