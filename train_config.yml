@@ -1,3 +1,23 @@
+general_parameters:
+    data_path: "assets/sanity_check_data"
+    ratio_train_test: 0.8
+    workers: 0
+    gpu: -1
+    path_to_save: "saved_model.pth"
+    seed: 1234
+    neptune: False
+
+train_parameters:
+    classification_mode: "hamnosys"
+    epochs: 10
+    batch_size: 4
+    lr: 0.001
+    num_segments: 8
+    fast_dev_run: False
+    pre_training: False
+    landmarks: False
+    time: null
+
 feature_extractor:
     model_path: "efficientnet_b1"
     representation_size: 512
