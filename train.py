@@ -25,10 +25,10 @@ def get_args_parser():
         "--data", help="path to data", nargs="*", default=["assets/sanity_check_data"],
     )
     parser.add_argument(
-        "--landmarks_path",
-        type=str,
-        default=None,
-        help="path to landmarks annotations",
+        "--landmarks",
+        action="store_true",
+        default=False,
+        help="flag to enable reading landmarks annotations",
     )
     parser.add_argument(
         "--model_config_path",
@@ -159,7 +159,7 @@ def main(args):
             is_pretraining=args.pre_training,
             num_segments=args.num_segments,
             time=args.time,
-            landmarks_path=args.landmarks_path,
+            landmarks=args.landmarks,
             transform=preprocess,
             test_mode=True,
         )
