@@ -1,14 +1,14 @@
 feature_extractor:
     model_path: "efficientnet_b1"
-    representation_size: 512
+    representation_size: 384
 
 transformer:
-    feedforward_size: 1024
-    transformer_output_size: 784
-    num_attention_heads: 4
+    feedforward_size: 64
+    transformer_output_size: 64
+    num_attention_heads: 6
     num_encoder_layers: 2
-    output_size: 1024
-    dropout_rate: 0.1
+    output_size: 384
+    dropout_rate: 0.2
 
 heads:
     gloss:
@@ -43,8 +43,8 @@ heads:
 
 freeze_scheduler:
     model_params:
-        feature_extractor": [True, False]
-        transformer": [False, True]
-    freeze_pattern_repeats: [5, 3]
+        feature_extractor": [True, False, True, False, True, False, True, False, True, False]
+        transformer": [False, True, False, True, False, True, False, True, False, True]
+    freeze_pattern_repeats: [5, 1, 5, 1, 5, 1, 5, 1, 5, 1]
     freeze_mode: "epoch"
     verbose: True
