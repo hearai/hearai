@@ -116,6 +116,7 @@ class SLRTEncoder(nn.Module):
             nn.ELU(0.1),
             nn.Dropout(dropout_rate),
             nn.Linear(feedforward_size, input_size),
+            nn.ELU(0.1),
             nn.Dropout(dropout_rate),
         )
 
