@@ -244,7 +244,7 @@ class GlossTranslationModel(pl.LightningModule):
                 if self.freeze_scheduler["current_pattern"] >= len(
                     self.freeze_scheduler["model_params"][params_to_freeze]
                 ):
-                    current_pattern = False
+                    current_pattern = True
                 else:
                     current_pattern = self.freeze_scheduler["model_params"][
                         params_to_freeze
@@ -253,7 +253,7 @@ class GlossTranslationModel(pl.LightningModule):
                 for name, child in self.named_children():
                     if params_to_freeze in name:
                         for param in child.parameters():
-                            param.requires_grad = current_pattern
+                            param.requires_grad = not current_pattern
                 if self.freeze_scheduler["verbose"]:
                     print(
                         "Freeze status:",
