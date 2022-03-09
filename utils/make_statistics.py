@@ -30,6 +30,8 @@ def main(file_path: str, output_directory: str, separator: str):
         plt.bar(column_stats.index, column_stats.values)
         plt.title(column_name)
         plt.xticks(column_stats.index)
+        plt.xlabel("Sign code")
+        plt.ylabel("Count")
         plt.savefig(file_path)
 
         # Clear figures
