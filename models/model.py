@@ -102,7 +102,9 @@ class GlossTranslationModel(pl.LightningModule):
             self.loss_weights.append(value["loss_weight"])
 
         # losses
-        self.summary_loss = SummaryLoss(nn.CrossEntropyLoss, self.loss_weights)
+        def custom_loss(*args, **kwargs):
+            return nn.CrossEntropyLoss(reduction="sum", *args, **kwargs)
+        self.summary_loss = SummaryLoss(custom_loss, self.loss_weights)
 
         # models-parts
         self.model_loader = ModelLoader()
