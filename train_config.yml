@@ -1,13 +1,13 @@
 feature_extractor:
     model_path: "efficientnet_b1"
-    representation_size: 384
+    representation_size: 256
 
 transformer:
-    feedforward_size: 384
+    feedforward_size: 256
     transformer_output_size: -5
-    num_attention_heads: 1
+    num_attention_heads: 8
     num_encoder_layers: 1
-    output_size: 384
+    output_size: 256
     dropout_rate: 0.2
 
 heads:
