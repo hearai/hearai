@@ -118,6 +118,7 @@ def main(args):
     # set GPU to use
     if args.gpu > -1:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
     # set the seed for reproducibility
