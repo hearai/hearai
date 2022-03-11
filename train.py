@@ -212,8 +212,8 @@ def main(args):
                            feedforward_size=model_config["transformer"]["feedforward_size"],
                            num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
                            transformer_output_size=model_config["transformer"]["output_size"],
-                           warmup_steps=2000,
-                           warmup_start_lr=5.0e-6,
+                           warmup_steps=20000,
+                           warmup_start_lr=3.0e-5,
                            multiply_lr_step=1,
                            freeze_scheduler=None  # model_config["freeze_scheduler"]
                            )
