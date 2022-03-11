@@ -159,7 +159,7 @@ def main(args):
             is_pretraining=args.pre_training,
             num_segments=args.num_segments,
             time=args.time,
-            landmarks_path=args.landmarks_path,
+            landmarks=False,
             transform=preprocess,
             test_mode=True,
         )
