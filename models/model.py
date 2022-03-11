@@ -94,13 +94,12 @@ class GlossTranslationModel(pl.LightningModule):
 
         # models-parts
         self.model_loader = ModelLoader()
-        self.feature_extractor = self.model_loader.load_feature_extractor(
+        self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
+            self.model_loader.load_feature_extractor(
             feature_extractor_name=feature_extractor_name,
             representation_size = representation_size,
             model_path=feature_extractor_model_path,
         )
-        self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
-            self.feature_extractor
         )
         if transformer_name == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
