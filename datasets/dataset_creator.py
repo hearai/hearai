@@ -11,9 +11,10 @@ class DatasetCreator:
     DatasetCreator creates a video frames dataset and split it into train and val subsets.
     """
 
-    def __init__(self, data_paths: list, classification_heads: dict, num_segments: int, time: float, landmarks: str,
+    def __init__(self, data_paths: list, classification_mode: dict, classification_heads, num_segments: int, time: float, landmarks: bool,
                  ratio: float, pre_training: bool):
         self.videos_root = data_paths
+        self.classification_mode = classification_mode
         self.classification_heads = classification_heads
         self.num_segments = num_segments
         self.time = time
@@ -22,11 +23,11 @@ class DatasetCreator:
         self.pre_training = pre_training
 
     def get_train_subset(self) -> torch.utils.data.dataset.Subset:
-        # train_transforms = self._get_train_transforms()
-        train_transforms = self._get_val_transforms()
+        train_transforms = self._get_train_transforms()
         dataset = self._get_video_frame_datasets(train_transforms)
         train_len, val_len = self._get_split_lens(dataset)
         train_subset, _ = torch.utils.data.random_split(dataset, [train_len, val_len])
+
         return train_subset
 
     def get_val_subset(self) -> torch.utils.data.dataset.Subset:
@@ -62,7 +63,7 @@ class DatasetCreator:
         return train_len, val_len
 
     def _get_annotations_path(self, video_root: str) -> str:
-        return os.path.join(video_root, f'test_{list(self.classification_heads.keys())[0]}.txt')
+        return os.path.join(video_root, f'test_{self.classification_mode}.txt')
 
     def _get_train_transforms(self) -> T.Compose:
         pil_augmentations = [

@@ -128,8 +128,9 @@ def main(args):
     with open(args.model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
-    dataset_creator = DatasetCreator(args.data, model_config["heads"][args.classification_mode], args.num_segments,
-                                     args.time, args.landmarks, args.ratio, args.pre_training)
+    dataset_creator = DatasetCreator(args.data, args.classification_mode,
+                                     model_config["heads"][args.classification_mode], args.num_segments, args.time,
+                                     args.landmarks, args.ratio, args.pre_training)
 
     train_subset = dataset_creator.get_train_subset()
     val_subset = dataset_creator.get_val_subset()
