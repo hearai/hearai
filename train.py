@@ -25,10 +25,10 @@ def get_args_parser():
         "--data", help="path to data", nargs="*", default=["assets/sanity_check_data"],
     )
     parser.add_argument(
-        "--landmarks_path",
-        type=str,
-        default=None,
-        help="path to landmarks annotations",
+        "--landmarks",
+        action="store_true",
+        default=False,
+        help="flag to enable reading landmarks annotations",
     )
     parser.add_argument(
         "--model_config_path",
@@ -118,7 +118,6 @@ def main(args):
     # set GPU to use
     if args.gpu > -1:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
     # set the seed for reproducibility
