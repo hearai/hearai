@@ -1,3 +1,5 @@
+from typing import Dict
+
 import neptune.new as neptune
 import numpy as np
 import pytorch_lightning as pl
@@ -30,63 +32,78 @@ class GlossTranslationModel(pl.LightningModule):
 
     def __init__(
         self,
-        lr=1e-5,
-        multiply_lr_step=0.7,
-        warmup_steps=100.0,
-        transformer_output_size=1024,
-        representation_size=2048,
-        feedforward_size=4096,
-        num_encoder_layers=1,
-        num_segments=8,
-        num_attention_heads=16,
-        transformer_dropout_rate=0.1,
-        classification_mode="gloss",
-        feature_extractor_name="cnn_extractor",
-        feature_extractor_model_path="efficientnet_b1",
-        transformer_name="fake_transformer",
-        model_save_dir="",
-        neptune=False,
-        classification_heads={"gloss": {
-                                "num_class": 2400, 
-                                "loss_weight": 1}
-                            },
-        freeze_scheduler=None,
+        general_parameters: Dict = None,
+        train_parameters: Dict = None,
+        feature_extractor_parameters: Dict = None,
+        transformer_parameters: Dict = None,
+        heads: Dict = None,
+        freeze_scheduler: Dict = None,
+        # lr=1e-5,
+        # multiply_lr_step=0.7,
+        # warmup_steps=100.0,
+        # transformer_output_size=1024,
+        # representation_size=2048,
+        # feedforward_size=4096,
+        # num_encoder_layers=1,
+        # num_segments=8,
+        # num_attention_heads=16,
+        # transformer_dropout_rate=0.1,
+        # classification_mode="gloss",
+        # feature_extractor_name="cnn_extractor",
+        # feature_extractor_model_path="efficientnet_b1",
+        # transformer_name="fake_transformer",
+        # model_save_dir="",
+        # neptune=False,
+        # classification_heads={"gloss": {
+        #                         "num_class": 2400, 
+        #                         "loss_weight": 1}
+        #                     },
+        # freeze_scheduler=None,
     ):
         super().__init__()
 
         if neptune:
-            tags = [classification_mode, feature_extractor_name, transformer_name]
+            tags = [train_parameters["classification_mode"], feature_extractor_parameters["name"], transformer_parameters["name"]]
             self.run = initialize_neptun(tags)
             self.run["parameters"] = {
-                "lr": lr,
-                "multiply_lr_step": multiply_lr_step,
-                "warmup_steps": warmup_steps,
-                "transformer_output_size": transformer_output_size,
-                "representation_size": representation_size,
-                "feedforward_size": feedforward_size,
-                "num_encoder_layers": num_encoder_layers,
-                "num_segments": num_segments,
-                "num_attention_heads": num_attention_heads,
-                "transformer_dropout_rate": transformer_dropout_rate,
-                "classification_mode": classification_mode,
-                "feature_extractor_name": feature_extractor_name,
-                "feature_extractor_model_path": feature_extractor_model_path,
-                "transformer_name": transformer_name,
-                "classification_heads": classification_heads,
+                "general_parameters": general_parameters,
+                "train_parameters": general_parameters,
+                "feature_extractor_parameters": feature_extractor_parameters,
+                "transformer_parameters": transformer_parameters,
+                "heads": heads,
+                "freeze_scheduler": freeze_scheduler
             }
+
+            # self.run["parameters"] = {
+            #     "lr": lr,
+            #     "multiply_lr_step": multiply_lr_step,
+            #     "warmup_steps": warmup_steps,
+            #     "transformer_output_size": transformer_output_size,
+            #     "representation_size": representation_size,
+            #     "feedforward_size": feedforward_size,
+            #     "num_encoder_layers": num_encoder_layers,
+            #     "num_segments": num_segments,
+            #     "num_attention_heads": num_attention_heads,
+            #     "transformer_dropout_rate": transformer_dropout_rate,
+            #     "classification_mode": classification_mode,
+            #     "feature_extractor_name": feature_extractor_name,
+            #     "feature_extractor_model_path": feature_extractor_model_path,
+            #     "transformer_name": transformer_name,
+            #     "classification_heads": classification_heads,
+            # }
         else:
             self.run = None
 
         # parameters
-        self.lr = lr
-        self.model_save_dir = model_save_dir
-        self.warmup_steps = warmup_steps
-        self.multiply_lr_step = multiply_lr_step
-        self.classification_heads = classification_heads
+        self.lr = train_parameters["lr"]
+        self.model_save_dir = general_parameters["path_to_save"]
+        self.warmup_steps = train_parameters["warmup_steps"]
+        self.multiply_lr_step = train_parameters["multiply_lr_step"]
+        self.classification_heads = heads[train_parameters['classification_mode']]
         self.cls_head = []
         self.loss_weights = []
         for value in self.classification_heads.values():
-            self.cls_head.append(nn.Linear(transformer_output_size, value["num_class"]))
+            self.cls_head.append(nn.Linear(transformer_parameters["output_size"], value["num_class"]))
             self.loss_weights.append(value["loss_weight"])
 
         # losses
@@ -96,26 +113,37 @@ class GlossTranslationModel(pl.LightningModule):
         self.model_loader = ModelLoader()
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.model_loader.load_feature_extractor(
-            feature_extractor_name=feature_extractor_name,
-            representation_size = representation_size,
-            model_path=feature_extractor_model_path,
-        )
-        )
-        if transformer_name == "sign_language_transformer":
-            self.transformer = self.model_loader.load_transformer(
-                transformer_name,
-                input_size=representation_size,
-                output_size=transformer_output_size,
-                feedforward_size=feedforward_size,
-                num_encoder_layers=num_encoder_layers,
-                num_frames=num_segments,
-                num_attention_heads=num_attention_heads,
-                dropout_rate=transformer_dropout_rate,
+                feature_extractor_name=feature_extractor_parameters["name"],
+                representation_size = feature_extractor_parameters["representation_size"],
+                model_path=feature_extractor_parameters["model_path"],
             )
-        else:
-            self.transformer = self.model_loader.load_transformer(
-                transformer_name, representation_size, transformer_output_size
+        )
+        self.transformer = self.model_loader.load_transformer(
+                transformer_name=transformer_parameters["name"],
+                feature_extractor_parameters=feature_extractor_parameters,
+                transformer_parameters=transformer_parameters,
+                train_parameters=train_parameters
             )
+
+        # if transformer_parameters["name"] == "sign_language_transformer":
+        #     self.transformer = self.model_loader.load_transformer(
+        #         transformer_name=transformer_parameters["name"],
+        #         input_size=feature_extractor_parameters["representation_size"],
+        #         output_size=transformer_parameters["output_size"],
+        #         feedforward_size=transformer_parameters["feedforward_size"],
+        #         num_encoder_layers=transformer_parameters["num_encoder_layers"],
+        #         num_frames=train_parameters["num_segments"],
+        #         num_attention_heads=transformer_parameters["num_attention_heads"],
+        #         dropout_rate=transformer_parameters["dropout_rate"],
+        #     )
+        # else:
+        #     self.transformer = self.model_loader.load_transformer(
+        #         transformer_name=transformer_parameters["name"],
+        #         input_features=feature_extractor_parameters["representation_size"],
+        #         output_features=transformer_parameters["output_size"],
+        #         num_segments=train_parameters["num_segments"]
+        #     )
+
         if freeze_scheduler != None:
             self.freeze_scheduler = freeze_scheduler
             self.configure_freeze_scheduler()

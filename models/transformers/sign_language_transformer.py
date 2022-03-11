@@ -1,4 +1,5 @@
 import math
+from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -14,15 +15,19 @@ class SignLanguageTransformer(nn.Module):
 
     def __init__(
         self,
-        input_size: int = 512,
-        output_size: int = 1024,
-        feedforward_size: int = 1024,
-        num_encoder_layers: int = 1,
-        num_frames: int = 8,
-        num_attention_heads: int = 8,
-        dropout_rate: float = 0.1,
+        feature_extractor_parameters: Dict = None,
+        transformer_parameters: Dict = None,
+        train_parameters: Dict = None
+        # input_size: int = 512,
+        # output_size: int = 1024,
+        # feedforward_size: int = 1024,
+        # num_encoder_layers: int = 1,
+        # num_frames: int = 8,
+        # num_attention_heads: int = 8,
+        # dropout_rate: float = 0.1,
     ):
         """
+        TODO: update docstring
         Args:
             input_size (int): Number of input features.
             output_size (int): Number of output features.
@@ -33,22 +38,22 @@ class SignLanguageTransformer(nn.Module):
             dropout_rate (float): Dropout rate.
         """
         super(SignLanguageTransformer, self).__init__()
-        self._input_size = input_size
+        self._input_size = feature_extractor_parameters["representation_size"]
 
         self._slrt_layers = nn.ModuleList(
             [
                 SLRTEncoder(
-                    input_size=input_size,
-                    feedforward_size=feedforward_size,
-                    num_attention_heads=num_attention_heads,
-                    dropout_rate=dropout_rate,
+                    input_size=self._input_size,
+                    feedforward_size=transformer_parameters["feedforward_size"],
+                    num_attention_heads=transformer_parameters["num_attention_heads"],
+                    dropout_rate=transformer_parameters["dropout_rate"],
                 )
-                for _ in range(num_encoder_layers)
+                for _ in range(transformer_parameters["num_encoder_layers"])
             ]
         )
-        self._dropout_positional_encoding = nn.Dropout(dropout_rate)
-        self._last_norm = nn.LayerNorm(input_size)
-        self._last_linear = nn.Linear(num_frames * input_size, output_size)
+        self._dropout_positional_encoding = nn.Dropout(transformer_parameters["dropout_rate"])
+        self._last_norm = nn.LayerNorm(self._input_size)
+        self._last_linear = nn.Linear(train_parameters["num_segments"] * self._input_size, transformer_parameters["output_size"])
 
         self._position_encoding = self.__get_position_encoding()
 

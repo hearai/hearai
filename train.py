@@ -112,26 +112,34 @@ def main(args):
         model_instance = PreTrainingModel
     else:
         model_instance = GlossTranslationModel
-    
-    model = model_instance(lr=model_config['train_parameters']['lr'],
-                           classification_mode=model_config['train_parameters']['classification_mode'],
-                           classification_heads=model_config["heads"][model_config['train_parameters']['classification_mode']],
-                           feature_extractor_name="cnn_extractor",
-                           feature_extractor_model_path=model_config["feature_extractor"]["model_path"],
-                           transformer_name="sign_language_transformer",
-                           num_attention_heads=model_config["transformer"]["num_attention_heads"],
-                           transformer_dropout_rate=model_config["transformer"]["dropout_rate"],
-                           num_segments=model_config['train_parameters']['num_segments'],
-                           model_save_dir=model_config['general_parameters']['path_to_save'],
-                           neptune=model_config['general_parameters']['neptune'],
-                           representation_size=model_config["feature_extractor"]["representation_size"],
-                           feedforward_size=model_config["transformer"]["feedforward_size"],
-                           num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
-                           transformer_output_size=model_config["transformer"]["output_size"],
-                           warmup_steps=20.0,
-                           multiply_lr_step=0.95,
-                           freeze_scheduler=model_config["freeze_scheduler"]
-                           )
+
+    model = model_instance(
+        general_parameters=model_config["general_parameters"],
+        train_parameters=model_config["train_parameters"],
+        feature_extractor_parameters=model_config["feature_extractor"],
+        transformer_parameters=model_config["transformer"],
+        heads=model_config["heads"],
+        freeze_scheduler=model_config["freeze_scheduler"])
+
+    # model = model_instance(lr=model_config['train_parameters']['lr'],
+    #                        classification_mode=model_config['train_parameters']['classification_mode'],
+    #                        classification_heads=model_config["heads"][model_config['train_parameters']['classification_mode']],
+    #                        feature_extractor_name=model_config["feature_extractor"]["name"],
+    #                        feature_extractor_model_path=model_config["feature_extractor"]["model_path"],
+    #                        transformer_name=model_config["transformer"]["name"],
+    #                        num_attention_heads=model_config["transformer"]["num_attention_heads"],
+    #                        transformer_dropout_rate=model_config["transformer"]["dropout_rate"],
+    #                        num_segments=model_config['train_parameters']['num_segments'],
+    #                        model_save_dir=model_config['general_parameters']['path_to_save'],
+    #                        neptune=model_config['general_parameters']['neptune'],
+    #                        representation_size=model_config["feature_extractor"]["representation_size"],
+    #                        feedforward_size=model_config["transformer"]["feedforward_size"],
+    #                        num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
+    #                        transformer_output_size=model_config["transformer"]["output_size"],
+    #                        warmup_steps=model_config['train_parameters']['warmup_steps'],
+    #                        multiply_lr_step=model_config['train_parameters']['multiply_lr_step'],
+    #                        freeze_scheduler=model_config["freeze_scheduler"]
+    #                        )
 
     trainer = pl.Trainer(
         max_epochs=model_config['train_parameters']['epochs'],

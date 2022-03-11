@@ -48,6 +48,7 @@ class PreTrainingModel(pl.LightningModule):
                                 "num_class": 2400, 
                                 "loss_weight": 1}
                             },
+        freeze_Scheduler=None
     ):
         super().__init__()
 
