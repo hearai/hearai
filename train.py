@@ -25,10 +25,10 @@ def get_args_parser():
         "--data", help="path to data", nargs="*", default=["assets/sanity_check_data"],
     )
     parser.add_argument(
-        "--landmarks_path",
-        type=str,
-        default=None,
-        help="path to landmarks annotations",
+        "--landmarks",
+        action="store_true",
+        default=False,
+        help="flag to enable reading landmarks annotations",
     )
     parser.add_argument(
         "--model_config_path",
@@ -118,7 +118,6 @@ def main(args):
     # set GPU to use
     if args.gpu > -1:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
         os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
     # set the seed for reproducibility
@@ -142,6 +141,9 @@ def main(args):
     if not isinstance(videos_root, list):
         videos_root = [videos_root]
 
+    with open(args.model_config_path) as file:
+        model_config = yaml.load(file, Loader=yaml.FullLoader)
+
     datasets = list()
     for video_root in videos_root:
         if args.classification_mode == "gloss":
@@ -152,11 +154,11 @@ def main(args):
         dataset = VideoFrameDataset(
             root_path=video_root,
             annotationfile_path=annotation_file,
-            classification_mode=args.classification_mode,
+            classification_heads = model_config["heads"][args.classification_mode],
             is_pretraining=args.pre_training,
             num_segments=args.num_segments,
             time=args.time,
-            landmarks_path=args.landmarks_path,
+            landmarks=args.landmarks,
             transform=preprocess,
             test_mode=True,
         )
@@ -188,8 +190,6 @@ def main(args):
         drop_last=False,
     )
 
-    with open(args.model_config_path) as file:
-        model_config = yaml.load(file, Loader=yaml.FullLoader)
 
     # prepare model
     if args.pre_training:
@@ -199,6 +199,7 @@ def main(args):
     
     model = model_instance(lr=args.lr,
                            classification_mode=args.classification_mode,
+                           classification_heads=model_config["heads"][args.classification_mode],
                            feature_extractor_name="cnn_extractor",
                            feature_extractor_model_path=model_config["feature_extractor"]["model_path"],
                            transformer_name="sign_language_transformer",
