@@ -6,7 +6,6 @@ import torch.nn as nn
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report
 from torch.optim.lr_scheduler import MultiplicativeLR
-from utils.classification_mode import create_heads_dict
 from utils.summary_loss import SummaryLoss
 
 from models.feature_extractors.multi_frame_feature_extractor import (
@@ -47,6 +46,10 @@ class GlossTranslationModel(pl.LightningModule):
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
+        classification_heads={"gloss": {
+                                "num_class": 2400, 
+                                "loss_weight": 1}
+                            },
         freeze_scheduler=None,
     ):
         super().__init__()
@@ -69,6 +72,7 @@ class GlossTranslationModel(pl.LightningModule):
                 "feature_extractor_name": feature_extractor_name,
                 "feature_extractor_model_path": feature_extractor_model_path,
                 "transformer_name": transformer_name,
+                "classification_heads": classification_heads,
             }
         else:
             self.run = None
@@ -78,10 +82,10 @@ class GlossTranslationModel(pl.LightningModule):
         self.model_save_dir = model_save_dir
         self.warmup_steps = warmup_steps
         self.multiply_lr_step = multiply_lr_step
-        self.num_classes_dict = create_heads_dict(classification_mode)
+        self.classification_heads = classification_heads
         self.cls_head = []
         self.loss_weights = []
-        for value in self.num_classes_dict.values():
+        for value in self.classification_heads.values():
             self.cls_head.append(nn.Linear(transformer_output_size, value["num_class"]))
             self.loss_weights.append(value["loss_weight"])
 
@@ -90,13 +94,12 @@ class GlossTranslationModel(pl.LightningModule):
 
         # models-parts
         self.model_loader = ModelLoader()
-        self.feature_extractor = self.model_loader.load_feature_extractor(
+        self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
+            self.model_loader.load_feature_extractor(
             feature_extractor_name=feature_extractor_name,
             representation_size = representation_size,
             model_path=feature_extractor_model_path,
         )
-        self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
-            self.feature_extractor
         )
         if transformer_name == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
@@ -146,7 +149,7 @@ class GlossTranslationModel(pl.LightningModule):
         return {"val_loss": loss, "targets": targets, "predictions": predictions}
 
     def validation_epoch_end(self, out):
-        head_names = list(self.num_classes_dict.keys())
+        head_names = list(self.classification_heads.keys())
         # initialize empty list with list per head
         all_targets = [[] for name in head_names]
         all_predictions = [[] for name in head_names]
@@ -240,7 +243,7 @@ class GlossTranslationModel(pl.LightningModule):
                 if self.freeze_scheduler["current_pattern"] >= len(
                     self.freeze_scheduler["model_params"][params_to_freeze]
                 ):
-                    current_pattern = False
+                    current_pattern = True
                 else:
                     current_pattern = self.freeze_scheduler["model_params"][
                         params_to_freeze
@@ -249,7 +252,7 @@ class GlossTranslationModel(pl.LightningModule):
                 for name, child in self.named_children():
                     if params_to_freeze in name:
                         for param in child.parameters():
-                            param.requires_grad = current_pattern
+                            param.requires_grad = not current_pattern
                 if self.freeze_scheduler["verbose"]:
                     print(
                         "Freeze status:",
