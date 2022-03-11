@@ -158,12 +158,8 @@ class GlossTranslationModel(pl.LightningModule):
             targets, predictions = single_batch["targets"], single_batch["predictions"]
             # append predictions and targets for every head
             for nr_head, head_targets in enumerate(targets):
-                all_targets[nr_head].append(
-                    torch.argmax(targets[nr_head]).cpu().detach().numpy()
-                )
-                all_predictions[nr_head].append(
-                    torch.argmax(predictions[nr_head]).cpu().detach().numpy()
-                )
+                all_targets[nr_head] += list(torch.argmax(targets[nr_head], dim=1).cpu().detach().numpy())
+                all_predictions[nr_head] += list(torch.argmax(predictions[nr_head], dim=1).cpu().detach().numpy())
 
         for nr_head, head_targets in enumerate(all_targets):
             head_report = "\n".join(
