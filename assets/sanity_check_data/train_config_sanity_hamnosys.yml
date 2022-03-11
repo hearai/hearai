@@ -17,12 +17,16 @@ train_parameters:
     pre_training: False
     landmarks: False
     time: null
+    warmup_steps: 20.0
+    multiply_lr_step: 0.95
 
 feature_extractor:
+    name: "cnn_extractor"
     model_path: "efficientnet_b1"
     representation_size: 512
 
 transformer:
+    name: "sign_language_transformer"
     feedforward_size: 1024
     transformer_output_size: 784
     num_attention_heads: 4
