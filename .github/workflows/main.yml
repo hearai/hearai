@@ -30,10 +30,10 @@ jobs:
         run: |
           source .venv/bin/activate
           echo "Running sanity check for the gloss classification-mode..."
-          python3 train.py --fast-dev-run --classification-mode gloss
+          python3 train.py --model_config_path .github/workflows/train_config_sanity_gloss.yml
 
           echo "Running sanity check for the hamnosys classification-mode..."
-          python3 train.py --fast-dev-run --classification-mode hamnosys
+          python3 train.py --model_config_path .github/workflows/train_config_sanity_hamnosys.yml
 
       - name: Clean
         run: |
