@@ -23,6 +23,9 @@ class CnnExtractor(nn.Module):
         )
         # this is a dummy example but in practice this will be longer
 
+        for i, param in enumerate(self.model.parameters()):
+            param.requires_grad = (i >= 295)
+
     def forward(self, input, **kwargs):
         # this is a dummy example but in practice this will be longer
         return self.model(input)

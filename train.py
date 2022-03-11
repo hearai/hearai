@@ -215,7 +215,7 @@ def main(args):
                            warmup_steps=2000,
                            warmup_start_lr=5.0e-6,
                            multiply_lr_step=1,
-                           freeze_scheduler=model_config["freeze_scheduler"]
+                           freeze_scheduler=None  # model_config["freeze_scheduler"]
                            )
 
     trainer = pl.Trainer(

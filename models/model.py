@@ -131,8 +131,9 @@ class GlossTranslationModel(pl.LightningModule):
             self.transformer = self.model_loader.load_transformer(
                 transformer_name, representation_size, transformer_output_size
             )
-        if freeze_scheduler != None:
-            self.freeze_scheduler = freeze_scheduler
+
+        self.freeze_scheduler = freeze_scheduler
+        if self.freeze_scheduler is not None:
             self.configure_freeze_scheduler()
 
     def forward(self, input, **kwargs):
@@ -151,7 +152,7 @@ class GlossTranslationModel(pl.LightningModule):
         targets = target["target"]
         predictions = self(input)
         loss = self.summary_loss(predictions, targets)
-        if self.freeze_scheduler["freeze_mode"] == "step":
+        if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "step":
             self.freeze_step()
         if self.run:
             self.run["metrics/batch/training_loss"].log(loss)
@@ -180,16 +181,17 @@ class GlossTranslationModel(pl.LightningModule):
 
         for nr_head, head_targets in enumerate(all_targets):
             head_name = head_names[nr_head]
+            report = classification_report(all_targets[nr_head],
+                                           all_predictions[nr_head],
+                                           zero_division=0)
             head_report = "\n".join(
                 [
                     head_name,
-                    classification_report(
-                        all_targets[nr_head], all_predictions[nr_head], zero_division=0
-                    ),
+                    report,
                 ]
             )
             f1 = f1_score(all_targets[nr_head], all_predictions[nr_head],
-                          average='micro', zero_division=0)
+                          average='macro', zero_division=0)
             print(head_report)
             if self.run:
                 log_path = "/".join(["metrics/epoch/", head_name])
@@ -200,7 +202,7 @@ class GlossTranslationModel(pl.LightningModule):
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
             self.scheduler.step()
-            if self.freeze_scheduler["freeze_mode"] == "epoch":
+            if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "epoch":
                 self.freeze_step()
 
     def configure_optimizers(self):
@@ -257,7 +259,7 @@ class GlossTranslationModel(pl.LightningModule):
         #         "transformer": [False, True,False, True, False, True],
         #     }
         # ```
-        if self.freeze_scheduler != None:
+        if self.freeze_scheduler is not None:
             self.freeze_update()
             for params_to_freeze in list(self.freeze_scheduler["model_params"].keys()):
                 if self.freeze_scheduler["current_pattern"] >= len(
