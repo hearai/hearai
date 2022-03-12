@@ -11,7 +11,8 @@ class DatasetCreator:
     DatasetCreator creates a video frames dataset and split it into train and val subsets.
     """
 
-    def __init__(self, data_paths: list, classification_mode: dict, classification_heads, num_segments: int, time: float, landmarks: bool,
+    def __init__(self, data_paths: list, classification_mode: dict, classification_heads, num_segments: int,
+                 time: float, landmarks: bool,
                  ratio: float, pre_training: bool):
         self.videos_root = data_paths
         self.classification_mode = classification_mode
@@ -22,20 +23,22 @@ class DatasetCreator:
         self.ratio = ratio
         self.pre_training = pre_training
 
-    def get_train_subset(self) -> torch.utils.data.dataset.Subset:
+    def get_train_and_val_subsets(self) -> (torch.utils.data.dataset.Subset, torch.utils.data.dataset.Subset):
         train_transforms = self._get_train_transforms()
-        dataset = self._get_video_frame_datasets(train_transforms)
-        train_len, val_len = self._get_split_lens(dataset)
-        train_subset, _ = torch.utils.data.random_split(dataset, [train_len, val_len])
+        train_dataset = self._get_video_frame_datasets(train_transforms)
 
-        return train_subset
-
-    def get_val_subset(self) -> torch.utils.data.dataset.Subset:
         val_transforms = self._get_val_transforms()
-        dataset = self._get_video_frame_datasets(val_transforms)
-        train_len, val_len = self._get_split_lens(dataset)
-        _, val_subset = torch.utils.data.random_split(dataset, [train_len, val_len])
-        return val_subset
+        val_dataset = self._get_video_frame_datasets(val_transforms)
+
+        train_len, val_len = self._get_split_lens(train_dataset)
+
+        _, train_subset = torch.utils.data.random_split(train_dataset, [train_len, val_len],
+                                                        generator=torch.Generator().manual_seed(0))
+
+        val_subset, _ = torch.utils.data.random_split(val_dataset, [train_len, val_len],
+                                                      generator=torch.Generator().manual_seed(0))
+
+        return train_subset, val_subset
 
     def _get_video_frame_datasets(self, transform: T.Compose) -> torch.utils.data.ConcatDataset:
         datasets = []

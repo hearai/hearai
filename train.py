@@ -132,8 +132,7 @@ def main(args):
                                      model_config["heads"][args.classification_mode], args.num_segments, args.time,
                                      args.landmarks, args.ratio, args.pre_training)
 
-    train_subset = dataset_creator.get_train_subset()
-    val_subset = dataset_creator.get_val_subset()
+    train_subset, val_subset = dataset_creator.get_train_and_val_subsets()
 
     # prepare dataloaders
     dataloader_train = DataLoader(
