@@ -47,7 +47,7 @@ class SignLanguageTransformer(nn.Module):
             ]
         )
         self._dropout_positional_encoding = nn.Dropout(dropout_rate)
-        self._last_norm = nn.LayerNorm(input_size)
+        # self._last_norm = nn.LayerNorm(input_size)
         self._last_linear = nn.Linear(num_frames * input_size, output_size)
 
         self._position_encoding = self.__get_position_encoding()
@@ -62,7 +62,7 @@ class SignLanguageTransformer(nn.Module):
         for slrt_layer in self._slrt_layers:
             x = slrt_layer(x)
 
-        x = self._last_norm(x)
+        # x = self._last_norm(x)
         x = torch.reshape(x, (x.shape[0], -1))
         x = self._last_linear(x)
         return x
@@ -102,7 +102,7 @@ class SLRTEncoder(nn.Module):
         """
         super(SLRTEncoder, self).__init__()
 
-        self._positional_encoding_norm = nn.LayerNorm(input_size)
+        # self._positional_encoding_norm = nn.LayerNorm(input_size)
         self._attention_dropout = nn.Dropout(dropout_rate)
 
         self._multi_headed_attention = MultiHeadedAttention(
@@ -111,8 +111,7 @@ class SLRTEncoder(nn.Module):
             dropout_rate=dropout_rate,
         )
         self._feedforward_sequential = nn.Sequential(
-            nn.LayerNorm(input_size),
-            nn.Linear(input_size, feedforward_size),
+            nn.Linear(2 * input_size, feedforward_size),
             nn.ELU(0.1),
             nn.Dropout(dropout_rate),
             nn.Linear(feedforward_size, input_size),
@@ -124,7 +123,7 @@ class SLRTEncoder(nn.Module):
 
     def forward(self, input: torch.Tensor):
 
-        positional_encoding_normalized = self._positional_encoding_norm(input)
+        positional_encoding_normalized = input  # self._positional_encoding_norm(input)
         # Self Attention (Multi-Head Attention) Start
         values = positional_encoding_normalized
         keys = positional_encoding_normalized
@@ -134,7 +133,7 @@ class SLRTEncoder(nn.Module):
         attention_output = self._attention_dropout(attention_output)
 
         # Self Attention (Multi-Head Attention) End
-        x = input + attention_output
+        x = torch.concat([input, attention_output], dim=-1)
         feedforward_x = self._feedforward_sequential(x)
         # Feedforward End
 
@@ -169,6 +168,8 @@ class MultiHeadedAttention(nn.Module):
         self.v_layer = nn.Linear(size, num_heads * head_size)
         self.q_layer = nn.Linear(size, num_heads * head_size)
 
+        self.attention = nn.MultiheadAttention(num_heads * head_size, num_heads)
+
         self.output_layer = nn.Linear(size, size)
         self.softmax = nn.Softmax(dim=-1)
 
@@ -187,33 +188,36 @@ class MultiHeadedAttention(nn.Module):
         v = self.v_layer(v)
         q = self.q_layer(q)
 
-        # reshape q, k, v for our computation to [batch_size, num_heads, ..]
-        k = k.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
-        v = v.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
-        q = q.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
+        # # reshape q, k, v for our computation to [batch_size, num_heads, ..]
+        # k = k.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
+        # v = v.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
+        # q = q.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
+        #
+        # # compute scores
+        # q = q / math.sqrt(self.head_size)
+        #
+        # # batch x num_heads x query_len x key_len
+        # scores = torch.matmul(q, k.transpose(2, 3))
+        #
+        # # apply the mask (if we have one)
+        # if mask is not None:
+        #     scores = scores.masked_fill(~mask.unsqueeze(1), float("-inf"))
+        #
+        # # apply attention dropout and compute context vectors.
+        # attention = self.softmax(scores)
+        #
+        # # get context vector (select values with attention) and reshape
+        # # back to [number of items in a batch, number of segments * number of frames per segment, number of features]
+        # context = torch.matmul(attention, v)
+        # context = (
+        #     context.transpose(1, 2)
+        #     .contiguous()
+        #     .view(batch_size, -1, num_heads * self.head_size)
+        # )
 
-        # compute scores
-        q = q / math.sqrt(self.head_size)
+        # output = self.output_layer(context)
 
-        # batch x num_heads x query_len x key_len
-        scores = torch.matmul(q, k.transpose(2, 3))
-
-        # apply the mask (if we have one)
-        if mask is not None:
-            scores = scores.masked_fill(~mask.unsqueeze(1), float("-inf"))
-
-        # apply attention dropout and compute context vectors.
-        attention = self.softmax(scores)
-
-        # get context vector (select values with attention) and reshape
-        # back to [number of items in a batch, number of segments * number of frames per segment, number of features]
-        context = torch.matmul(attention, v)
-        context = (
-            context.transpose(1, 2)
-            .contiguous()
-            .view(batch_size, -1, num_heads * self.head_size)
-        )
-
-        output = self.output_layer(context)
+        a, _ = self.attention(q, k, v)
+        output = self.output_layer(a)
 
         return output
