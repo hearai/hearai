@@ -3,7 +3,8 @@ import os
 import torch
 import torchvision.transforms as T
 
-from datasets.dataset import ImglistToTensor, VideoFrameDataset
+from datasets.dataset import VideoFrameDataset
+from datasets.transforms_creator import TransformsCreator
 
 
 class DatasetCreator:
@@ -12,8 +13,7 @@ class DatasetCreator:
     """
 
     def __init__(self, data_paths: list, classification_mode: dict, classification_heads, num_segments: int,
-                 time: float, landmarks: bool,
-                 ratio: float, pre_training: bool):
+                 time: float, landmarks: bool, ratio: float, pre_training: bool, transforms_creator: TransformsCreator):
         self.videos_root = data_paths
         self.classification_mode = classification_mode
         self.classification_heads = classification_heads
@@ -22,12 +22,13 @@ class DatasetCreator:
         self.landmarks = landmarks
         self.ratio = ratio
         self.pre_training = pre_training
+        self.transforms_creator = transforms_creator
 
     def get_train_and_val_subsets(self) -> (torch.utils.data.dataset.Subset, torch.utils.data.dataset.Subset):
-        train_transforms = self._get_train_transforms()
+        train_transforms = self.transforms_creator.get_train_transforms()
         train_dataset = self._get_video_frame_datasets(train_transforms)
 
-        val_transforms = self._get_val_transforms()
+        val_transforms = self.transforms_creator.get_val_transforms()
         val_dataset = self._get_video_frame_datasets(val_transforms)
 
         train_len, val_len = self._get_split_lens(train_dataset)
@@ -67,35 +68,3 @@ class DatasetCreator:
 
     def _get_annotations_path(self, video_root: str) -> str:
         return os.path.join(video_root, f'test_{self.classification_mode}.txt')
-
-    def _get_train_transforms(self) -> T.Compose:
-        pil_augmentations = [
-
-        ]
-        tensor_augmentations = [
-            T.RandomErasing(),
-            T.RandomRotation(degrees=5),
-            T.ColorJitter(brightness=0.1,
-                          contrast=0.1,
-                          saturation=0.1,
-                          hue=0.05)
-        ]
-        return self._get_transforms(pil_augmentations, tensor_augmentations)
-
-    def _get_val_transforms(self) -> T.Compose:
-        pil_augmentations = []
-        tensor_augmentations = []
-        return self._get_transforms(pil_augmentations, tensor_augmentations)
-
-    @staticmethod
-    def _get_transforms(pil_augmentations: list, tensor_augmentations: list) -> T.Compose:
-        return T.Compose(
-            [
-                *pil_augmentations,
-                ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
-                *tensor_augmentations,
-                T.Resize(256),  # image batch, resize smaller edge to 256
-                T.CenterCrop(256),  # image batch, center crop to square 256x256
-                T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ]
-        )

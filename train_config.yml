@@ -1,3 +1,19 @@
+augmentations:
+    apply_resize: True,
+    apply_center_crop: True,
+    apply_random_erasing: True,
+    apply_random_rotation: True,
+    apply_color_jitter: True,
+
+    resize_size: 256,
+    center_crop_size: 256,
+    random_erasing_probability: 0.5,
+    random_rotation_degree: 5,
+    color_jitter_brightness: 0.1,
+    color_jitter_contrast: 0.1,
+    color_jitter_saturation: 0.1,
+    color_jitter_hue: 0.05
+
 feature_extractor:
     model_path: "efficientnet_b1"
     representation_size: 512

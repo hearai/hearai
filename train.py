@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 
 from datasets.dataset import PadCollate
 from datasets.dataset_creator import DatasetCreator
+from datasets.transforms_creator import TransformsCreator
 from models.model import GlossTranslationModel
 from models.model_for_pretraining import PreTrainingModel
 
@@ -129,9 +130,10 @@ def main(args):
     with open(args.model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
+    transforms_creator = TransformsCreator()
     dataset_creator = DatasetCreator(args.data, args.classification_mode,
                                      model_config["heads"][args.classification_mode], args.num_segments, args.time,
-                                     args.landmarks, args.ratio, args.pre_training)
+                                     args.landmarks, args.ratio, args.pre_training, transforms_creator)
 
     train_subset, val_subset = dataset_creator.get_train_and_val_subsets()
 
