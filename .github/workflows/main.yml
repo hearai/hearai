@@ -4,7 +4,7 @@ name: CI-pipeline
 on:
   # Triggers the workflow on pull request events for specified branches
   pull_request:
-    branches: [ pipeline/* ]
+    branches: [ pipeline/*, main ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:

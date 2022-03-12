@@ -1,8 +1,11 @@
-pytorch-lightning~=1.5.8
+pytorch-lightning~=1.5.10
 setuptools==59.5.0
 torch~=1.10.1
 torch-optimizer~=0.3.0
+torchvision==0.11.2
 timm~=0.4.12
 scikit-learn~=0.24.2
-neptune-client==0.14.1
+neptune-client==0.14.2
 transformers==4.15.0
+pandas~=1.1.5
+matplotlib==3.3.4

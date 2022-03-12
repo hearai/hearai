@@ -17,6 +17,7 @@ class HubertTransformer(nn.Module):
         input_features: int = 2048,
         output_features: int = 512,
         num_segments: int = 10,
+        device="cpu",
         *args,
         **kwargs
     ):
@@ -28,7 +29,7 @@ class HubertTransformer(nn.Module):
         """
         super(HubertTransformer, self).__init__()
         configuration = HubertConfig()
-        self.model = HubertModel(configuration)
+        self.model = HubertModel(configuration,)
         self._input_features = input_features
         self._output_features = output_features
 
