@@ -5,7 +5,7 @@ feature_extractor:
 transformer:
     feedforward_size: 128
     transformer_output_size: 128
-    num_attention_heads: 4
+    num_attention_heads: 1
     num_encoder_layers: 1
     output_size: 128
     dropout_rate: 0.3
@@ -18,7 +18,7 @@ heads:
     hamnosys:
         symmetry_operator:
             num_class: 9
-            loss_weight: 1
+            loss_weight: 0
         hand_shape_base_form:
             num_class: 12
             loss_weight: 1
@@ -30,7 +30,7 @@ heads:
             loss_weight: 1
         hand_position_finger_direction:
             num_class: 18
-            loss_weight: 1
+            loss_weight: 0
         hand_position_palm_orientation:
             num_class: 8
             loss_weight: 1
@@ -39,7 +39,7 @@ heads:
             loss_weight: 1
         hand_location_y:
             num_class: 37
-            loss_weight: 1
+            loss_weight: 0
 
 freeze_scheduler:
     model_params:
