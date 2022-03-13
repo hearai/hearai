@@ -49,7 +49,7 @@ class PreTrainingModel(pl.LightningModule):
                     - "model_path" (str)
                     - "representation_size" (int)
             transformer_parameters (Dict): Dict containing parameters regarding currently used transformer.
-                [Warning] Must containt fields:
+                [Warning] Must contain fields:
                     - "name" (str)
                     - "output_size" (int)
                     - "feedforward_size" (int)
@@ -57,14 +57,14 @@ class PreTrainingModel(pl.LightningModule):
                     - "num_attention_heads" (int)
                     - "dropout_rate" (float)
             train_parameters (Dict): Dict containing parameters parameterizing the training process.
-                [Warning] Must containt fields:
+                [Warning] Must contain fields:
                     - "num_segments" (int)
                     - "lr" (float)
                     - "multiply_lr_step" (float)
                     - "warmup_steps" (float)
                     - "classification_mode" (str)
             heads (Dict): Dict containg information describing structure of output heads for specific tasks (gloss/hamnosys).
-            freeze_scheduler (Dict): Dict containing information describing feature_extractor & transformer freezingz/unfreezing process.
+            freeze_scheduler (Dict): Dict containing information describing feature_extractor & transformer freezing/unfreezing process.
         """
         super().__init__()
 
