@@ -1,34 +1,37 @@
 general_parameters:
-    data_path: "assets/sanity_check_data"
+    data_path: "/dih4/dih4_2/hearai/data/frames/pjm/"
     ratio_train_test: 0.8
-    workers: 0
-    gpu: -1
-    path_to_save: "saved_model.pth"
+    workers: 2
+    gpu: 1
+    path_to_save: "/dih4/dih4_2/hearai/wfilipiuk/models/20220312_234400_model.pth"
     seed: 1234
-    neptune: False
+    neptune: True
 
 train_parameters:
     classification_mode: "hamnosys"
-    epochs: 10
-    batch_size: 4
-    lr: 0.001
-    num_segments: 8
+    epochs: 100
+    batch_size: 2
+    lr: 0.0003
+    num_segments: 20
     fast_dev_run: False
     pre_training: False
     landmarks: False
     time: null
+    warmup_steps: 20.0
+    multiply_lr_step: 0.95
 
 feature_extractor:
-    model_path: "efficientnet_b1"
-    representation_size: 512
+    name: "cnn_extractor"
+    model_path: "efficientnet_b3_pruned"
+    representation_size: 64
 
 transformer:
-    feedforward_size: 1024
-    transformer_output_size: 784
+    name: "sign_language_transformer"
+    feedforward_size: 64
     num_attention_heads: 4
-    num_encoder_layers: 2
-    output_size: 1024
-    dropout_rate: 0.1
+    num_encoder_layers: 3
+    output_size: 254
+    dropout_rate: 0.2
 
 heads:
     gloss:
@@ -38,28 +41,28 @@ heads:
     hamnosys:
         symmetry_operator:
             num_class: 9
-            loss_weight: 0
+            loss_weight: 0.1
         hand_shape_base_form:
             num_class: 12
             loss_weight: 0.5
         hand_shape_thumb_position:
             num_class: 4
-            loss_weight: 0.5
+            loss_weight: 0.3
         hand_shape_bending:
             num_class: 6
-            loss_weight: 0
+            loss_weight: 0.1
         hand_position_finger_direction:
             num_class: 18
-            loss_weight: 0
+            loss_weight: 0.1
         hand_position_palm_orientation:
             num_class: 8
-            loss_weight: 0
+            loss_weight: 0.1
         hand_location_x:
             num_class: 5
-            loss_weight: 0
+            loss_weight: 0.1
         hand_location_y:
             num_class: 37
-            loss_weight: 0
+            loss_weight: 0.1
 
 freeze_scheduler:
     model_params:
