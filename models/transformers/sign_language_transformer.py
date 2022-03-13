@@ -18,24 +18,22 @@ class SignLanguageTransformer(nn.Module):
         feature_extractor_parameters: Dict = None,
         transformer_parameters: Dict = None,
         train_parameters: Dict = None
-        # input_size: int = 512,
-        # output_size: int = 1024,
-        # feedforward_size: int = 1024,
-        # num_encoder_layers: int = 1,
-        # num_frames: int = 8,
-        # num_attention_heads: int = 8,
-        # dropout_rate: float = 0.1,
     ):
         """
-        TODO: update docstring
         Args:
-            input_size (int): Number of input features.
-            output_size (int): Number of output features.
-            feedforward_size (int): Number of features in intermediate feedforward "layer".
-            num_encoder_layers (int): Number of encoder layers.
-            num_frames (int): Number of frames in a video.
-            num_attention_heads (int): Number of attention layer's heads.
-            dropout_rate (float): Dropout rate.
+            feature_extractor_parameters (Dict): Dict containing parameters regarding currently used feature extractor.
+                [Warning] Must contain fields: 
+                    - "representation_size" (int)
+            transformer_parameters (Dict): Dict containing parameters regarding currently used transformer.
+                [Warning] Must containt fields:
+                    - "output_size" (int)
+                    - "feedforward_size" (int)
+                    - "num_encoder_layers" (int)
+                    - "num_attention_heads" (int)
+                    - "dropout_rate" (float)
+            train_parameters (Dict): Dict containing parameters of the training process.
+                [Warning] Must containt fields:
+                    - "num_segments" (int)
         """
         super(SignLanguageTransformer, self).__init__()
         self._input_size = feature_extractor_parameters["representation_size"]

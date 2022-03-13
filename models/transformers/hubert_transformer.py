@@ -17,18 +17,20 @@ class HubertTransformer(nn.Module):
         feature_extractor_parameters: Dict = None,
         transformer_parameters: Dict = None,
         train_parameters: Dict = None,
-        # input_features: int = 2048,
-        # output_features: int = 512,
-        # num_segments: int = 10,
         *args,
         **kwargs
     ):
         """
-        TODO: update docstring
         Args:
-            input_features (int): Argument to keep name convention consistency.
-            output_features (int): Expected number of output features from the model.
-            num_segments (int): Number of frames associated with single sign.
+            feature_extractor_parameters (Dict): Dict containing parameters regarding currently used feature extractor.
+                [Warning] Must contain fields: 
+                    - "representation_size" (int)
+            transformer_parameters (Dict): Dict containing parameters regarding currently used transformer.
+                [Warning] Must containt fields:
+                    - "output_size" (int)
+            train_parameters (Dict): Dict containing parameters of the training process.
+                [Warning] Must containt fields:
+                    - "num_segments" (int)
         """
         super(HubertTransformer, self).__init__()
         configuration = HubertConfig()

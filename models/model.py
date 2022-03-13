@@ -38,28 +38,36 @@ class GlossTranslationModel(pl.LightningModule):
         transformer_parameters: Dict = None,
         heads: Dict = None,
         freeze_scheduler: Dict = None,
-        # lr=1e-5,
-        # multiply_lr_step=0.7,
-        # warmup_steps=100.0,
-        # transformer_output_size=1024,
-        # representation_size=2048,
-        # feedforward_size=4096,
-        # num_encoder_layers=1,
-        # num_segments=8,
-        # num_attention_heads=16,
-        # transformer_dropout_rate=0.1,
-        # classification_mode="gloss",
-        # feature_extractor_name="cnn_extractor",
-        # feature_extractor_model_path="efficientnet_b1",
-        # transformer_name="fake_transformer",
-        # model_save_dir="",
-        # neptune=False,
-        # classification_heads={"gloss": {
-        #                         "num_class": 2400, 
-        #                         "loss_weight": 1}
-        #                     },
-        # freeze_scheduler=None,
     ):
+        """
+        Args:
+            general_parameters (Dict): Dict containing general parameters not parameterizing training process.
+                [Warning] Must contain fields:
+                    - path_to_save (str)
+                    - neptune (bool)
+            feature_extractor_parameters (Dict): Dict containing parameters regarding currently used feature extractor.
+                [Warning] Must contain fields:
+                    - "name" (str)
+                    - "model_path" (str)
+                    - "representation_size" (int)
+            transformer_parameters (Dict): Dict containing parameters regarding currently used transformer.
+                [Warning] Must containt fields:
+                    - "name" (str)
+                    - "output_size" (int)
+                    - "feedforward_size" (int)
+                    - "num_encoder_layers" (int)
+                    - "num_attention_heads" (int)
+                    - "dropout_rate" (float)
+            train_parameters (Dict): Dict containing parameters parameterizing the training process.
+                [Warning] Must containt fields:
+                    - "num_segments" (int)
+                    - "lr" (float)
+                    - "multiply_lr_step" (float)
+                    - "warmup_steps" (float)
+                    - "classification_mode" (str)
+            heads (Dict): Dict containg information describing structure of output heads for specific tasks (gloss/hamnosys).
+            freeze_scheduler (Dict): Dict containing information describing feature_extractor & transformer freezingz/unfreezing process.
+        """
         super().__init__()
 
         if general_parameters["neptune"]:
@@ -73,24 +81,6 @@ class GlossTranslationModel(pl.LightningModule):
                 "heads": heads,
                 "freeze_scheduler": freeze_scheduler
             }
-
-            # self.run["parameters"] = {
-            #     "lr": lr,
-            #     "multiply_lr_step": multiply_lr_step,
-            #     "warmup_steps": warmup_steps,
-            #     "transformer_output_size": transformer_output_size,
-            #     "representation_size": representation_size,
-            #     "feedforward_size": feedforward_size,
-            #     "num_encoder_layers": num_encoder_layers,
-            #     "num_segments": num_segments,
-            #     "num_attention_heads": num_attention_heads,
-            #     "transformer_dropout_rate": transformer_dropout_rate,
-            #     "classification_mode": classification_mode,
-            #     "feature_extractor_name": feature_extractor_name,
-            #     "feature_extractor_model_path": feature_extractor_model_path,
-            #     "transformer_name": transformer_name,
-            #     "classification_heads": classification_heads,
-            # }
         else:
             self.run = None
 
@@ -114,7 +104,7 @@ class GlossTranslationModel(pl.LightningModule):
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.model_loader.load_feature_extractor(
                 feature_extractor_name=feature_extractor_parameters["name"],
-                representation_size = feature_extractor_parameters["representation_size"],
+                representation_size=feature_extractor_parameters["representation_size"],
                 model_path=feature_extractor_parameters["model_path"],
             )
         )
@@ -124,25 +114,6 @@ class GlossTranslationModel(pl.LightningModule):
                 transformer_parameters=transformer_parameters,
                 train_parameters=train_parameters
             )
-
-        # if transformer_parameters["name"] == "sign_language_transformer":
-        #     self.transformer = self.model_loader.load_transformer(
-        #         transformer_name=transformer_parameters["name"],
-        #         input_size=feature_extractor_parameters["representation_size"],
-        #         output_size=transformer_parameters["output_size"],
-        #         feedforward_size=transformer_parameters["feedforward_size"],
-        #         num_encoder_layers=transformer_parameters["num_encoder_layers"],
-        #         num_frames=train_parameters["num_segments"],
-        #         num_attention_heads=transformer_parameters["num_attention_heads"],
-        #         dropout_rate=transformer_parameters["dropout_rate"],
-        #     )
-        # else:
-        #     self.transformer = self.model_loader.load_transformer(
-        #         transformer_name=transformer_parameters["name"],
-        #         input_features=feature_extractor_parameters["representation_size"],
-        #         output_features=transformer_parameters["output_size"],
-        #         num_segments=train_parameters["num_segments"]
-        #     )
 
         if freeze_scheduler != None:
             self.freeze_scheduler = freeze_scheduler
