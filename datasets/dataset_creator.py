@@ -1,3 +1,4 @@
+from typing import Tuple
 import os
 
 import torch
@@ -12,8 +13,16 @@ class DatasetCreator:
     DatasetCreator creates a video frames dataset and split it into train and val subsets.
     """
 
-    def __init__(self, data_paths: list, classification_mode: dict, classification_heads, num_segments: int,
-                 time: float, landmarks: bool, ratio: float, pre_training: bool, transforms_creator: TransformsCreator):
+    def __init__(self,
+                 data_paths: list,
+                 classification_mode: dict,
+                 classification_heads: int , 
+                 num_segments: int,
+                 time: float, 
+                 landmarks: bool, 
+                 ratio: float, 
+                 pre_training: bool, 
+                 transforms_creator: TransformsCreator):
         self.videos_root = data_paths
         self.classification_mode = classification_mode
         self.classification_heads = classification_heads
@@ -24,7 +33,7 @@ class DatasetCreator:
         self.pre_training = pre_training
         self.transforms_creator = transforms_creator
 
-    def get_train_and_val_subsets(self) -> (torch.utils.data.dataset.Subset, torch.utils.data.dataset.Subset):
+    def get_train_and_val_subsets(self) -> Tuple[torch.utils.data.dataset.Subset, torch.utils.data.dataset.Subset]:
         train_transforms = self.transforms_creator.get_train_transforms()
         train_dataset = self._get_video_frame_datasets(train_transforms)
 
@@ -60,7 +69,7 @@ class DatasetCreator:
 
         return torch.utils.data.ConcatDataset(datasets)
 
-    def _get_split_lens(self, dataset: torch.utils.data.ConcatDataset) -> (int, int):
+    def _get_split_lens(self, dataset: torch.utils.data.ConcatDataset) -> Tuple[int, int]:
         train_val_ratio = self.ratio
         train_len = round(len(dataset) * train_val_ratio)
         val_len = len(dataset) - train_len

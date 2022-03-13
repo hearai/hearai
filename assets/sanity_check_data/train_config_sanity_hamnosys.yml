@@ -13,14 +13,37 @@ augmentations:
     color_jitter_contrast: 0.1
     color_jitter_saturation: 0.1
     color_jitter_hue: 0.05
+    
+general_parameters:
+    data_path: "assets/sanity_check_data"
+    ratio_train_test: 0.8
+    workers: 0
+    gpu: -1
+    path_to_save: "saved_model.pth"
+    seed: 1234
+    neptune: False
+
+train_parameters:
+    classification_mode: "hamnosys"
+    epochs: 10
+    batch_size: 4
+    lr: 0.001
+    num_segments: 8
+    fast_dev_run: True
+    pre_training: False
+    landmarks: False
+    time: null
+    warmup_steps: 20.0
+    multiply_lr_step: 0.95
 
 feature_extractor:
+    name: "cnn_extractor"
     model_path: "efficientnet_b1"
     representation_size: 512
 
 transformer:
+    name: "sign_language_transformer"
     feedforward_size: 1024
-    transformer_output_size: 784
     num_attention_heads: 4
     num_encoder_layers: 2
     output_size: 1024

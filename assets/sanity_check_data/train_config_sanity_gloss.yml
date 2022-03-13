@@ -24,12 +24,12 @@ general_parameters:
     neptune: False
 
 train_parameters:
-    classification_mode: "hamnosys"
+    classification_mode: "gloss"
     epochs: 10
-    batch_size: 2
-    lr: 0.0003
-    num_segments: 20
-    fast_dev_run: False
+    batch_size: 4
+    lr: 0.001
+    num_segments: 8
+    fast_dev_run: True
     pre_training: False
     landmarks: False
     time: null
@@ -57,28 +57,28 @@ heads:
     hamnosys:
         symmetry_operator:
             num_class: 9
-            loss_weight: 0.1
+            loss_weight: 0
         hand_shape_base_form:
             num_class: 12
             loss_weight: 0.5
         hand_shape_thumb_position:
             num_class: 4
-            loss_weight: 0.3
+            loss_weight: 0.5
         hand_shape_bending:
             num_class: 6
-            loss_weight: 0.1
+            loss_weight: 0
         hand_position_finger_direction:
             num_class: 18
-            loss_weight: 0.1
+            loss_weight: 0
         hand_position_palm_orientation:
             num_class: 8
-            loss_weight: 0.1
+            loss_weight: 0
         hand_location_x:
             num_class: 5
-            loss_weight: 0.1
+            loss_weight: 0
         hand_location_y:
             num_class: 37
-            loss_weight: 0.1
+            loss_weight: 0
 
 freeze_scheduler:
     model_params:
