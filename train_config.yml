@@ -18,7 +18,7 @@ heads:
     hamnosys:
         symmetry_operator:
             num_class: 9
-            loss_weight: 0
+            loss_weight: 1
         hand_shape_base_form:
             num_class: 12
             loss_weight: 1
@@ -30,7 +30,7 @@ heads:
             loss_weight: 1
         hand_position_finger_direction:
             num_class: 18
-            loss_weight: 0
+            loss_weight: 1
         hand_position_palm_orientation:
             num_class: 8
             loss_weight: 1
@@ -39,7 +39,7 @@ heads:
             loss_weight: 1
         hand_location_y:
             num_class: 37
-            loss_weight: 0
+            loss_weight: 1
 
 freeze_scheduler:
     model_params:
