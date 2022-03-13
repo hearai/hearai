@@ -1,19 +1,19 @@
-import yaml
 import argparse
 import os
+import random
 import warnings
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
-import numpy as np
-import random
-import torchvision.transforms as T
 import yaml
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 
-from datasets.dataset import ImglistToTensor, PadCollate, VideoFrameDataset
-from models.model_for_pretraining import PreTrainingModel
+from datasets.dataset import PadCollate
+from datasets.dataset_creator import DatasetCreator
+from datasets.transforms_creator import TransformsCreator
 from models.model import GlossTranslationModel
+from models.model_for_pretraining import PreTrainingModel
 
 warnings.filterwarnings("ignore")
 
@@ -127,54 +127,32 @@ def main(args):
     np.random.seed(seed)
     random.seed(seed)
 
-    # trasformations
-    preprocess = T.Compose(
-        [
-            ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
-            T.Resize(256),  # image batch, resize smaller edge to 256
-            T.CenterCrop(256),  # image batch, center crop to square 256x256
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ]
-    )
-
-    # load data
-    videos_root = args.data
-    if not isinstance(videos_root, list):
-        videos_root = [videos_root]
-
     with open(args.model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
-    datasets = list()
-    for video_root in videos_root:
-        if args.classification_mode == "gloss":
-            annotation_file = os.path.join(video_root, "test_gloss.txt")
-        elif "hamnosys" in args.classification_mode:
-            annotation_file = os.path.join(video_root, "test_hamnosys.txt")
+    transforms_creator = TransformsCreator(bool(model_config["augmentations"]["apply_resize"]),
+                                           bool(model_config["augmentations"]["apply_center_crop"]),
+                                           bool(model_config["augmentations"]["apply_random_erasing"]),
+                                           bool(model_config["augmentations"]["apply_random_rotation"]),
+                                           bool(model_config["augmentations"]["apply_color_jitter"]),
+                                           int(model_config["augmentations"]["resize_size"]),
+                                           int(model_config["augmentations"]["center_crop_size"]),
+                                           float(model_config["augmentations"]["random_erasing_probability"]),
+                                           int(model_config["augmentations"]["random_rotation_degree"]),
+                                           float(model_config["augmentations"]["color_jitter_brightness"]),
+                                           float(model_config["augmentations"]["color_jitter_contrast"]),
+                                           float(model_config["augmentations"]["color_jitter_saturation"]),
+                                           float(model_config["augmentations"]["color_jitter_hue"]))
 
-        dataset = VideoFrameDataset(
-            root_path=video_root,
-            annotationfile_path=annotation_file,
-            classification_heads = model_config["heads"][args.classification_mode],
-            is_pretraining=args.pre_training,
-            num_segments=args.num_segments,
-            time=args.time,
-            landmarks=args.landmarks,
-            transform=preprocess,
-            test_mode=True,
-        )
-        datasets.append(dataset)
-    dataset = torch.utils.data.ConcatDataset(datasets)
+    dataset_creator = DatasetCreator(args.data, args.classification_mode,
+                                     model_config["heads"][args.classification_mode], args.num_segments, args.time,
+                                     args.landmarks, args.ratio, args.pre_training, transforms_creator)
 
-    # split into train/val
-    train_val_ratio = args.ratio
-    train_len = round(len(dataset) * train_val_ratio)
-    val_len = len(dataset) - train_len
-    train, val = random_split(dataset, [train_len, val_len])
+    train_subset, val_subset = dataset_creator.get_train_and_val_subsets()
 
     # prepare dataloaders
     dataloader_train = DataLoader(
-        train,
+        train_subset,
         shuffle=True,
         batch_size=args.batch_size,
         num_workers=args.workers,
@@ -183,7 +161,7 @@ def main(args):
     )
 
     dataloader_val = DataLoader(
-        val,
+        val_subset,
         shuffle=False,
         batch_size=args.batch_size,
         num_workers=args.workers,
@@ -191,13 +169,12 @@ def main(args):
         drop_last=False,
     )
 
-
     # prepare model
     if args.pre_training:
         model_instance = PreTrainingModel
     else:
         model_instance = GlossTranslationModel
-    
+
     model = model_instance(lr=args.lr,
                            classification_mode=args.classification_mode,
                            classification_heads=model_config["heads"][args.classification_mode],
