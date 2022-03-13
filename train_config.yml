@@ -1,5 +1,5 @@
 feature_extractor:
-    model_path: "efficientnet_b1"
+    model_path: "efficientnet_b6"
     representation_size: 128
 
 transformer:
