@@ -1,9 +1,9 @@
 general_parameters:
-    data_path: "/dih4/dih4_2/hearai/data/frames/pjm/"
+    data_path: "assets/sanity_check_data"
     ratio_train_test: 0.8
     workers: 2
     gpu: 1
-    path_to_save: "/dih4/dih4_2/hearai/wfilipiuk/models/20220312_234400_model.pth"
+    path_to_save: "saved_model.pth"
     seed: 1234
     neptune: True
 
@@ -22,7 +22,7 @@ train_parameters:
 
 feature_extractor:
     name: "cnn_extractor"
-    model_path: "efficientnet_b3_pruned"
+    model_path: "efficientnet_b1"
     representation_size: 64
 
 transformer:
