@@ -130,8 +130,8 @@ def main(args):
     preprocess = T.Compose(
         [
             ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
-            T.Resize(528),  # image batch, resize smaller edge to 256
-            T.CenterCrop(528),  # image batch, center crop to square 256x256
+            T.Resize(380),  # image batch, resize smaller edge to 256
+            T.CenterCrop(380),  # image batch, center crop to square 256x256
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )

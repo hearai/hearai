@@ -103,7 +103,7 @@ class GlossTranslationModel(pl.LightningModule):
 
         # losses
         def custom_loss(*args, **kwargs):
-            return nn.BCEWithLogitsLoss(reduction="sum", *args, **kwargs)
+            return nn.BCEWithLogitsLoss(reduction="mean", *args, **kwargs)
         self.summary_loss = SummaryLoss(custom_loss, self.loss_weights)
 
         # models-parts
