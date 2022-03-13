@@ -1,17 +1,15 @@
 import neptune.new as neptune
-import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report
-from torch.optim.lr_scheduler import MultiplicativeLR
-from utils.summary_loss import SummaryLoss
 
+from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
+from utils.summary_loss import SummaryLoss
 
 
 # initialize neptune logging
@@ -29,28 +27,29 @@ class GlossTranslationModel(pl.LightningModule):
     """Awesome model for Gloss Translation"""
 
     def __init__(
-        self,
-        lr=1e-5,
-        multiply_lr_step=0.7,
-        warmup_steps=100.0,
-        transformer_output_size=1024,
-        representation_size=2048,
-        feedforward_size=4096,
-        num_encoder_layers=1,
-        num_segments=8,
-        num_attention_heads=16,
-        transformer_dropout_rate=0.1,
-        classification_mode="gloss",
-        feature_extractor_name="cnn_extractor",
-        feature_extractor_model_path="efficientnet_b1",
-        transformer_name="fake_transformer",
-        model_save_dir="",
-        neptune=False,
-        classification_heads={"gloss": {
-                                "num_class": 2400, 
-                                "loss_weight": 1}
-                            },
-        freeze_scheduler=None,
+            self,
+            lr=1e-5,
+            multiply_lr_step=0.7,
+            warmup_steps=100.0,
+            transformer_output_size=1024,
+            representation_size=2048,
+            feedforward_size=4096,
+            num_encoder_layers=1,
+            num_segments=8,
+            num_attention_heads=16,
+            transformer_dropout_rate=0.1,
+            classification_mode="gloss",
+            feature_extractor_name="cnn_extractor",
+            feature_extractor_model_path="efficientnet_b1",
+            transformer_name="fake_transformer",
+            model_save_dir="",
+            neptune=False,
+            classification_heads={"gloss": {
+                "num_class": 2400,
+                "loss_weight": 1}
+            },
+            freeze_scheduler=None,
+            steps_per_epoch=1000
     ):
         super().__init__()
 
@@ -96,10 +95,10 @@ class GlossTranslationModel(pl.LightningModule):
         self.model_loader = ModelLoader()
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.model_loader.load_feature_extractor(
-            feature_extractor_name=feature_extractor_name,
-            representation_size = representation_size,
-            model_path=feature_extractor_model_path,
-        )
+                feature_extractor_name=feature_extractor_name,
+                representation_size=representation_size,
+                model_path=feature_extractor_model_path,
+            )
         )
         if transformer_name == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
@@ -116,6 +115,9 @@ class GlossTranslationModel(pl.LightningModule):
             self.transformer = self.model_loader.load_transformer(
                 transformer_name, representation_size, transformer_output_size
             )
+
+        self.steps_per_epoch = steps_per_epoch
+
         if freeze_scheduler != None:
             self.freeze_scheduler = freeze_scheduler
             self.configure_freeze_scheduler()
@@ -182,33 +184,24 @@ class GlossTranslationModel(pl.LightningModule):
                 self.freeze_step()
 
     def configure_optimizers(self):
-        # set optimizer
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
 
-        # set scheduler: multiply lr every epoch
-        def lambd(epoch):
-            return self.multiply_lr_step
-
-        self.scheduler = MultiplicativeLR(optimizer, lr_lambda=lambd)
+        steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr, epochs=self.trainer.max_epochs,
+                                                             steps_per_epoch=steps_per_epoch)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(
-        self,
-        epoch,
-        batch_idx,
-        optimizer,
-        optimizer_idx,
-        optimizer_closure,
-        on_tpu=False,
-        using_native_amp=False,
-        using_lbfgs=False,
+            self,
+            epoch,
+            batch_idx,
+            optimizer,
+            optimizer_idx,
+            optimizer_closure,
+            on_tpu=False,
+            using_native_amp=False,
+            using_lbfgs=False,
     ):
-        # set warm-up
-        if self.trainer.global_step < self.warmup_steps:
-            lr_scale = min(1.0, float(self.trainer.global_step + 1) / self.warmup_steps)
-            for pg in optimizer.param_groups:
-                pg["lr"] = lr_scale * self.lr
-
         optimizer.step(closure=optimizer_closure)
         if self.run:
             self.run["params/lr"].log(optimizer.param_groups[0]["lr"])
@@ -237,7 +230,7 @@ class GlossTranslationModel(pl.LightningModule):
             self.freeze_update()
             for params_to_freeze in list(self.freeze_scheduler["model_params"].keys()):
                 if self.freeze_scheduler["current_pattern"] >= len(
-                    self.freeze_scheduler["model_params"][params_to_freeze]
+                        self.freeze_scheduler["model_params"][params_to_freeze]
                 ):
                     current_pattern = True
                 else:
@@ -259,16 +252,16 @@ class GlossTranslationModel(pl.LightningModule):
 
     def freeze_update(self):
         if self.freeze_scheduler["current_pattern"] >= len(
-            self.freeze_scheduler["model_params"][
-                list(self.freeze_scheduler["model_params"].keys())[0]
-            ]
+                self.freeze_scheduler["model_params"][
+                    list(self.freeze_scheduler["model_params"].keys())[0]
+                ]
         ):
             return
         if (
-            self.freeze_scheduler["current_counter"]
-            >= self.freeze_scheduler["freeze_pattern_repeats"][
-                self.freeze_scheduler["current_pattern"]
-            ]
+                self.freeze_scheduler["current_counter"]
+                >= self.freeze_scheduler["freeze_pattern_repeats"][
+            self.freeze_scheduler["current_pattern"]
+        ]
         ):
             self.freeze_scheduler["current_pattern"] += 1
             self.freeze_scheduler["current_counter"] = 0
