@@ -24,7 +24,7 @@ def get_args_parser():
         "--model_config_path",
         type=str,
         default='train_config.yml',
-        help="path to .yaml config file specyfing hyperparameters of different model sections."
+        help="path to .yaml config file specifying hyperparameters of different model sections."
     )
     return parser
 
