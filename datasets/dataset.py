@@ -238,11 +238,17 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             if record.fps is None:
                 sys.exit("Number of frames per second not provided")
 
+            def roundnonzero(value):
+                if int(value) == 0:
+                    return int(value) + 1
+                else:
+                    return int(value)
+
             start_indices = np.array(
                 [
                     int(x)
                     for x in range(record.num_frames)
-                    if x % int(record.fps * self.time) == 0
+                    if x % roundnonzero(record.fps * self.time) == 0
                 ]
             )
             if len(start_indices) > self.num_segments:
