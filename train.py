@@ -130,7 +130,20 @@ def main(args):
     with open(args.model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
-    transforms_creator = TransformsCreator()
+    transforms_creator = TransformsCreator(bool(model_config["augmentations"]["apply_resize"]),
+                                           bool(model_config["augmentations"]["apply_center_crop"]),
+                                           bool(model_config["augmentations"]["apply_random_erasing"]),
+                                           bool(model_config["augmentations"]["apply_random_rotation"]),
+                                           bool(model_config["augmentations"]["apply_color_jitter"]),
+                                           int(model_config["augmentations"]["resize_size"]),
+                                           int(model_config["augmentations"]["center_crop_size"]),
+                                           float(model_config["augmentations"]["random_erasing_probability"]),
+                                           int(model_config["augmentations"]["random_rotation_degree"]),
+                                           float(model_config["augmentations"]["color_jitter_brightness"]),
+                                           float(model_config["augmentations"]["color_jitter_contrast"]),
+                                           float(model_config["augmentations"]["color_jitter_saturation"]),
+                                           float(model_config["augmentations"]["color_jitter_hue"]))
+
     dataset_creator = DatasetCreator(args.data, args.classification_mode,
                                      model_config["heads"][args.classification_mode], args.num_segments, args.time,
                                      args.landmarks, args.ratio, args.pre_training, transforms_creator)
