@@ -169,8 +169,10 @@ class PreTrainingModel(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
 
         steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
-        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr, epochs=self.trainer.max_epochs,
-                                                             steps_per_epoch=steps_per_epoch)
+        # self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr, epochs=self.trainer.max_epochs,
+        #                                                      steps_per_epoch=steps_per_epoch)
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=steps_per_epoch // 10,
+                                                                    eta_min=self.lr / 100)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(
