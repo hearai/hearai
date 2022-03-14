@@ -5,8 +5,8 @@ feature_extractor:
 transformer:
     feedforward_size: 128
     transformer_output_size: 128
-    num_attention_heads: 1
-    num_encoder_layers: 1
+    num_attention_heads: 8
+    num_encoder_layers: 8
     output_size: 128
     dropout_rate: 0.3
 
