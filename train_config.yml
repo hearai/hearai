@@ -1,4 +1,13 @@
-augmentations:
+general_parameters:
+    data_path: "assets/sanity_check_data"
+    ratio_train_test: 0.8
+    workers: 0
+    gpu: -1
+    path_to_save: "saved_model.pth"
+    seed: 1234
+    neptune: False
+
+augmentations_parameters:
     apply_resize: True
     apply_center_crop: True
     apply_random_erasing: True
@@ -13,15 +22,6 @@ augmentations:
     color_jitter_contrast: 0.1
     color_jitter_saturation: 0.1
     color_jitter_hue: 0.05
-
-general_parameters:
-    data_path: "assets/sanity_check_data"
-    ratio_train_test: 0.8
-    workers: 0
-    gpu: -1
-    path_to_save: "saved_model.pth"
-    seed: 1234
-    neptune: False
 
 train_parameters:
     classification_mode: "hamnosys"

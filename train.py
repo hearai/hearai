@@ -48,19 +48,7 @@ def main(args):
     with open(args.model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
-    transforms_creator = TransformsCreator(bool(model_config["augmentations"]["apply_resize"]),
-                                           bool(model_config["augmentations"]["apply_center_crop"]),
-                                           bool(model_config["augmentations"]["apply_random_erasing"]),
-                                           bool(model_config["augmentations"]["apply_random_rotation"]),
-                                           bool(model_config["augmentations"]["apply_color_jitter"]),
-                                           int(model_config["augmentations"]["resize_size"]),
-                                           int(model_config["augmentations"]["center_crop_size"]),
-                                           float(model_config["augmentations"]["random_erasing_probability"]),
-                                           int(model_config["augmentations"]["random_rotation_degree"]),
-                                           float(model_config["augmentations"]["color_jitter_brightness"]),
-                                           float(model_config["augmentations"]["color_jitter_contrast"]),
-                                           float(model_config["augmentations"]["color_jitter_saturation"]),
-                                           float(model_config["augmentations"]["color_jitter_hue"]))
+    transforms_creator = TransformsCreator(model_config["augmentations_parameters"])
 
     dataset_creator = DatasetCreator(
         data_paths=model_config["general_parameters"]["data_path"],
@@ -72,6 +60,7 @@ def main(args):
         ratio=model_config["general_parameters"]["ratio_train_test"],
         pre_training=model_config["train_parameters"]["pre_training"],
         transforms_creator=transforms_creator)
+
     train_subset, val_subset = dataset_creator.get_train_and_val_subsets()
 # =======
 #     # trasformations
