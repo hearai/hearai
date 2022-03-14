@@ -4,7 +4,7 @@ general_parameters:
     workers: 0
     gpu: -1
     path_to_save: "saved_model.pth"
-    seed: 1234
+    seed: 2021
     neptune: False
 
 augmentations_parameters:
