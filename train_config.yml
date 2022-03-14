@@ -15,13 +15,13 @@ augmentations:
     color_jitter_hue: 0.05
 
 general_parameters:
-    data_path: "assets/sanity_check_data"
+    data_path: "/dih4/dih4_2/hearai/data/frames/pjm/"
     ratio_train_test: 0.8
-    workers: 0
-    gpu: -1
-    path_to_save: "saved_model.pth"
+    workers: 2
+    gpu: 1
+    path_to_save: "/dih4/dih4_2/hearai/wfilipiuk/models/20220312_234400_model.pth"
     seed: 1234
-    neptune: False
+    neptune: True
 
 train_parameters:
     classification_mode: "hamnosys"
@@ -38,16 +38,16 @@ train_parameters:
 
 feature_extractor:
     name: "cnn_extractor"
-    model_path: "efficientnet_b1"
-    representation_size: 512
+    model_path: "adv_inception_v3"
+    representation_size: 64
 
 transformer:
     name: "sign_language_transformer"
-    feedforward_size: 1024
+    feedforward_size: 64
     num_attention_heads: 4
-    num_encoder_layers: 2
-    output_size: 1024
-    dropout_rate: 0.1
+    num_encoder_layers: 3
+    output_size: 254
+    dropout_rate: 0.2
 
 heads:
     gloss:
