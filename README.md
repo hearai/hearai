@@ -35,6 +35,7 @@ To load multiple datasets simply pass to ```args.parser``` list of datasets (fil
 - basic_lexicon: /dih4/dih4_2/hearai/data/frames/basic_lexicon
 - galex: /dih4/dih4_2/hearai/data/frames/galex
 - glex: /dih4/dih4_2/hearai/data/frames/glex
+- gsll: /dih4/dih4_2/hearai/data/frames/gsll_done
 
 ```python
 python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1
