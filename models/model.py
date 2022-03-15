@@ -27,29 +27,30 @@ class GlossTranslationModel(pl.LightningModule):
     """Awesome model for Gloss Translation"""
 
     def __init__(
-            self,
-            lr=1e-5,
-            multiply_lr_step=0.7,
-            warmup_steps=100.0,
-            transformer_output_size=1024,
-            representation_size=2048,
-            feedforward_size=4096,
-            num_encoder_layers=1,
-            num_segments=8,
-            num_attention_heads=16,
-            transformer_dropout_rate=0.1,
-            classification_mode="gloss",
-            feature_extractor_name="cnn_extractor",
-            feature_extractor_model_path="efficientnet_b1",
-            transformer_name="fake_transformer",
-            model_save_dir="",
-            neptune=False,
-            classification_heads={"gloss": {
-                "num_class": 2400,
-                "loss_weight": 1}
-            },
-            freeze_scheduler=None,
-            steps_per_epoch=1000
+        self,
+        lr=1e-5,
+        multiply_lr_step=0.7,
+        warmup_steps=100.0,
+        transformer_output_size=1024,
+        representation_size=2048,
+        feedforward_size=4096,
+        num_encoder_layers=1,
+        num_segments=8,
+        num_attention_heads=16,
+        transformer_dropout_rate=0.1,
+        classification_mode="gloss",
+        feature_extractor_name="cnn_extractor",
+        feature_extractor_model_path="efficientnet_b1",
+        transformer_name="fake_transformer",
+        model_save_dir="",
+        neptune=False,
+        classification_heads={"gloss": {
+                                "num_class": 2400, 
+                                "loss_weight": 1}
+                            },
+        freeze_scheduler=None,
+        loss_function=nn.BCEWithLogitsLoss,
+        steps_per_epoch=1000
     ):
         super().__init__()
 
@@ -89,7 +90,7 @@ class GlossTranslationModel(pl.LightningModule):
             self.loss_weights.append(value["loss_weight"])
 
         # losses
-        self.summary_loss = SummaryLoss(nn.CrossEntropyLoss, self.loss_weights)
+        self.summary_loss = SummaryLoss(loss_function, self.loss_weights)
 
         # models-parts
         self.model_loader = ModelLoader()
