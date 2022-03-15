@@ -62,49 +62,6 @@ def main(args):
         transforms_creator=transforms_creator)
 
     train_subset, val_subset = dataset_creator.get_train_and_val_subsets()
-# =======
-#     # trasformations
-#     preprocess = T.Compose(
-#         [
-#             ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
-#             T.Resize(256),  # image batch, resize smaller edge to 256
-#             T.CenterCrop(256),  # image batch, center crop to square 256x256
-#             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-#         ]
-#     )
-
-#     # load data
-#     videos_root = model_config['general_parameters']['data_path']
-#     if not isinstance(videos_root, list):
-#         videos_root = [videos_root]
-
-#     datasets = list()
-#     for video_root in videos_root:
-#         if model_config['train_parameters']['classification_mode'] == "gloss":
-#             annotation_file = os.path.join(video_root, "test_gloss.txt")
-#         elif "hamnosys" in model_config['train_parameters']['classification_mode']:
-#             annotation_file = os.path.join(video_root, "test_hamnosys.txt")
-
-#         dataset = VideoFrameDataset(
-#             root_path=video_root,
-#             annotationfile_path=annotation_file,
-#             classification_heads = model_config["heads"][model_config['train_parameters']['classification_mode']],
-#             is_pretraining=model_config['train_parameters']['pre_training'],
-#             num_segments=model_config['train_parameters']['num_segments'],
-#             time=model_config['train_parameters']['time'],
-#             landmarks=model_config['train_parameters']['landmarks'],
-#             transform=preprocess,
-#             test_mode=True,
-#         )
-#         datasets.append(dataset)
-#     dataset = torch.utils.data.ConcatDataset(datasets)
-
-#     # split into train/val
-#     train_val_ratio = model_config['general_parameters']['ratio_train_test']
-#     train_len = round(len(dataset) * train_val_ratio)
-#     val_len = len(dataset) - train_len
-#     train, val = random_split(dataset, [train_len, val_len])
-# >>>>>>> Added yaml file config
 
     # prepare dataloaders
     dataloader_train = DataLoader(
@@ -131,27 +88,6 @@ def main(args):
     else:
         model_instance = GlossTranslationModel
 
-# <<<<<<< HEAD
-#     model = model_instance(lr=args.lr,
-#                            classification_mode=args.classification_mode,
-#                            classification_heads=model_config["heads"][args.classification_mode],
-#                            feature_extractor_name="cnn_extractor",
-#                            feature_extractor_model_path=model_config["feature_extractor"]["model_path"],
-#                            transformer_name="sign_language_transformer",
-#                            num_attention_heads=model_config["transformer"]["num_attention_heads"],
-#                            transformer_dropout_rate=model_config["transformer"]["dropout_rate"],
-#                            num_segments=args.num_segments,
-#                            model_save_dir=args.save,
-#                            neptune=args.neptune,
-#                            representation_size=model_config["feature_extractor"]["representation_size"],
-#                            feedforward_size=model_config["transformer"]["feedforward_size"],
-#                            num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
-#                            transformer_output_size=model_config["transformer"]["output_size"],
-#                            warmup_steps=20.0,
-#                            multiply_lr_step=0.95,
-#                            freeze_scheduler=model_config["freeze_scheduler"]
-#                            )
-# =======
     model = model_instance(
         general_parameters=model_config["general_parameters"],
         train_parameters=model_config["train_parameters"],
@@ -179,3 +115,4 @@ if __name__ == "__main__":
     parser = get_args_parser()
     args = parser.parse_args()
     main(args)
+    
