@@ -184,7 +184,7 @@ class GlossTranslationModel(pl.LightningModule):
                 self.freeze_step()
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.RAdam(self.parameters(), lr=self.lr)
 
         steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr, epochs=self.trainer.max_epochs,
