@@ -212,7 +212,7 @@ def main(args):
                            feedforward_size=model_config["transformer"]["feedforward_size"],
                            num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
                            transformer_output_size=model_config["transformer"]["output_size"],
-                           warmup_steps=500000,
+                           warmup_steps=150,
                            warmup_start_lr=1.0e-6,
                            multiply_lr_step=1,
                            freeze_scheduler=None  # model_config["freeze_scheduler"]
@@ -220,11 +220,13 @@ def main(args):
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
-        val_check_interval=1.0,
+        # val_check_interval=0.25,
+        num_sanity_val_steps=411,
         gpus=[args.gpu] if args.gpu > -1 else None,
         progress_bar_refresh_rate=10,
-        accumulate_grad_batches=1,
+        accumulate_grad_batches=128,
         fast_dev_run=args.fast_dev_run,
+        terminate_on_nan=True,
     )
 
     # run training
