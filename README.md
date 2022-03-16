@@ -30,15 +30,11 @@ In our studies we are using PJM lexicon with annotations provided at our interna
 - HamNoSys annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_hamnosys.txt` - 8 heads only [WiP]
 - glosses annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_gloss2.txt`
 
-To load multiple datasets simply pass to ```args.parser``` list of datasets (file paths to video separated with spaces). We have possibility to load these datasets:
+We have possibility to load these datasets:
 - pjm: /dih4/dih4_2/hearai/data/frames/pjm
 - basic_lexicon: /dih4/dih4_2/hearai/data/frames/basic_lexicon
 - galex: /dih4/dih4_2/hearai/data/frames/galex
 - glex: /dih4/dih4_2/hearai/data/frames/glex
-
-```python
-python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1
-```
 
 Attention! The method requires that all ```annotation_files``` have exactly the same annotation filename e.g. ```"test_hamnosys.txt"```! If you need to pass different path you need to do it manually.
 
@@ -46,22 +42,6 @@ For this file, you can create basic charts with statistics. Every chart contains
 As input arguments, you must pass a path to the file with annotations, and an output directory for generated charts.
 Optionally, you can also pass a separator, which is used in the annotation file.
 This script is named ```make_statistics``` and is in the ```utils``` directory.
-
-Dataloader gives possibility to load data:
-- choosing number of frames by setting `--num_segments` variable (in this option `--time` argument is set to `None` as default)
-- evenly distribiuted using defined time unit by specifing `--time` argument in seconds and `--num_segments` as number of frames in video sequence (note that in this option in the same directory as frames has to be file with basic information about video, eg. `fps` value, named as `<video_name>_properties.json`)
-
-```python
-python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --time 0.1 --b 4 --workers 0 --gpu 1
-```
-
-Parametr ```landmarks``` gives additional possibility to read all coordinates for:
-- right hand: <video name>\_right_hand.csv
-- left hand: <video name>\_left_hand.csv
-- face: <video name>\_face.csv
-- pose: <video name>\_pose.csv
-
-Landmarks are provided for each video in the same folder as frames.
 
 ## 👥 Classification heads
 Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`. For each head, a custom loss weight can be provided.
@@ -125,11 +105,7 @@ When you install a new library, please add it to the list in `requirements.txt` 
 
 Run with a single dataset:
 
-`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 16 --gpu 1`
-
-Run with multiple datasets (list datasets paths separated with spaces)
-
-`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1`
+`python3 train.py --model_config_path train_config.yml`
 
 # Training tips & tricks
 
