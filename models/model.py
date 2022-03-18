@@ -161,9 +161,8 @@ class GlossTranslationModel(pl.LightningModule):
                 all_targets[nr_head] += list(torch.argmax(targets[nr_head], dim=1).cpu().detach().numpy())
                 all_predictions[nr_head] += list(torch.argmax(predictions[nr_head], dim=1).cpu().detach().numpy())
 
-        for nr_head, head_targets in enumerate(all_targets):
+        for nr_head, targets_for_head in enumerate(all_targets):
             head_name = head_names[nr_head]
-            targets_for_head = all_targets[nr_head]
             predictions_for_head = all_predictions[nr_head]
             head_report = "\n".join(
                 [
