@@ -149,6 +149,11 @@ class GlossTranslationModel(pl.LightningModule):
         loss = self.summary_loss(predictions, targets)
         if self.run:
             self.run["metrics/batch/validation_loss"].log(loss)
+
+        self.scheduler.step()
+        if self.freeze_scheduler["freeze_mode"] == "epoch":
+            self.freeze_step()
+
         return {"val_loss": loss, "targets": targets, "predictions": predictions}
 
     def validation_epoch_end(self, out):
@@ -180,9 +185,9 @@ class GlossTranslationModel(pl.LightningModule):
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
-            self.scheduler.step()
-            if self.freeze_scheduler["freeze_mode"] == "epoch":
-                self.freeze_step()
+            # self.scheduler.step()
+            # if self.freeze_scheduler["freeze_mode"] == "epoch":
+            #     self.freeze_step()
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
