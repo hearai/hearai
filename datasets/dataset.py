@@ -203,14 +203,13 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                     f"error when trying to load this video.\n"
                 )
 
-    def _get_landmarks(
-        self, video_name: str, indices: "np.ndarray[int]", col_name: str = "Unnamed: 0"
-    ) -> Tuple["np.ndarray[float]", "np.ndarray[float]", "np.ndarray[float]", "np.ndarray[float]"]:
+    def _get_landmarks(self, video_name: str
+                       ) -> Tuple["np.ndarray[float]", "np.ndarray[float]", "np.ndarray[float]", "np.ndarray[float]"]:
         landmarks = np.load(os.path.join(self.root_path, video_name, video_name + ".npz"))
-        face = landmarks['face'][indices, :]
-        left_hand = landmarks['left_hand'][indices, :]
-        right_hand = landmarks['right_hand'][indices, :]
-        pose = landmarks['pose'][indices, :]
+        face = landmarks['face']
+        left_hand = landmarks['left_hand']
+        right_hand = landmarks['right_hand']
+        pose = landmarks['pose']
         return face, right_hand, left_hand, pose
 
     def _get_start_indices(self, record: VideoRecord) -> "np.ndarray[int]":
@@ -323,22 +322,21 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
         frame_start_indices = frame_start_indices + record.start_frame
         images = []
+        landmarks = None
         if self.landmarks:
             landmarks = {"face": [], "right_hand": [], "left_hand": [], "pose": []}
+            face, right_hand, left_hand, pose = self._get_landmarks(record._data[0])
 
         # from each start_index, load self.frames_per_segment
         # consecutive frames
         for start_index in frame_start_indices:
             frame_index = int(start_index)
             if self.landmarks:
-                face, right_hand, left_hand, pose = self._get_landmarks(
-                    record._data[0], frame_start_indices
-                )
-                landmarks["pose"].append(pose)
-                landmarks["right_hand"].append(right_hand)
-                landmarks["left_hand"].append(left_hand)
+                landmarks["pose"].append(pose[frame_index, :])
+                landmarks["right_hand"].append(right_hand[frame_index, :])
+                landmarks["left_hand"].append(left_hand[frame_index, :])
                 if self.use_face_landmarks:
-                    landmarks["face"].append(face)
+                    landmarks["face"].append(face[frame_index, :])
 
             # load self.frames_per_segment consecutive frames
             for _ in range(self.frames_per_segment):
@@ -358,15 +356,12 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             x = np.zeros(value["num_class"])
             x[class_label] = 1
             if self.is_pretraining:
-                target.append(torch.tensor(x, dtype = torch.long))
+                target.append(torch.tensor(x, dtype=torch.long))
             else:
                 target.append(torch.tensor(x))
 
         if self.transform is not None:
             images = self.transform(images)
-
-        if not self.landmarks:
-            landmarks = None
 
         return images, {"target": target, "landmarks": landmarks}
 
