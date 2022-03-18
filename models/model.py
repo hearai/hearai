@@ -123,7 +123,8 @@ class GlossTranslationModel(pl.LightningModule):
 
     def forward(self, input, **kwargs):
         predictions = []
-        x = self.multi_frame_feature_extractor(input.to(self.device))
+        frames, landmarks = input
+        x = self.multi_frame_feature_extractor(frames.to(self.device))
         x = self.transformer(x)
         for head in self.cls_head:
             predictions.append(head(x.cpu()))
@@ -144,9 +145,10 @@ class GlossTranslationModel(pl.LightningModule):
         return {"val_loss": losses, "targets": targets, "predictions": predictions}
 
     def _process_batch(self, batch):
-        input, targets_and_landmarks = batch
+        frames, targets_and_landmarks = batch
         targets = targets_and_landmarks["target"]
-        predictions = self(input)
+        landmarks = targets_and_landmarks["landmarks"]
+        predictions = self((frames, landmarks))
         losses = self.summary_loss(predictions, targets)
         return targets, predictions, losses
 
