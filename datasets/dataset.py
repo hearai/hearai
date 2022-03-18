@@ -445,7 +445,7 @@ class PadCollate:
                     torch.stack([item["target"][i] for item in targs], 0)
                     for i in range(len(targs[0]["target"]))
                 ],
-                "landmark": [i["landmark"] for i in targs],
+                "landmarks": [i["landmarks"] for i in targs],
             },
         )
 
