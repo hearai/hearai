@@ -1,5 +1,5 @@
 general_parameters:
-    data_path: "assets/sanity_check_data"
+    data_paths: ["assets/sanity_check_data"]
     ratio_train_test: 0.8
     workers: 0
     gpu: -1

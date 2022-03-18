@@ -51,7 +51,7 @@ def main(args):
     transforms_creator = TransformsCreator(model_config["augmentations_parameters"])
 
     dataset_creator = DatasetCreator(
-        data_paths=model_config["general_parameters"]["data_path"],
+        data_paths=model_config["general_parameters"]["data_paths"],
         classification_mode=model_config["train_parameters"]["classification_mode"],
         classification_heads=model_config["heads"][model_config["train_parameters"]["classification_mode"]],
         num_segments=model_config["train_parameters"]["num_segments"],

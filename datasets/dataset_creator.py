@@ -1,5 +1,5 @@
 import os
-from typing import Tuple, Union
+from typing import Tuple, List
 
 import torch
 import torchvision.transforms as T
@@ -14,7 +14,7 @@ class DatasetCreator:
     """
 
     def __init__(self,
-                 data_paths: Union[list, str],
+                 data_paths: List[str],
                  classification_mode: dict,
                  classification_heads: int,
                  num_segments: int,
@@ -23,7 +23,7 @@ class DatasetCreator:
                  ratio: float,
                  pre_training: bool,
                  transforms_creator: TransformsCreator):
-        self.videos_root = self._get_videos_root(data_paths)
+        self.videos_root = data_paths
         self.classification_mode = classification_mode
         self.classification_heads = classification_heads
         self.num_segments = num_segments
@@ -77,11 +77,3 @@ class DatasetCreator:
 
     def _get_annotations_path(self, video_root: str) -> str:
         return os.path.join(video_root, f'test_{self.classification_mode}.txt')
-
-    @staticmethod
-    def _get_videos_root(data_paths: Union[list, str]) -> list:
-        if isinstance(data_paths, list):
-            return data_paths
-
-        if isinstance(data_paths, str):
-            return [data_paths]
