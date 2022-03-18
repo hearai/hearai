@@ -27,30 +27,30 @@ class GlossTranslationModel(pl.LightningModule):
     """Awesome model for Gloss Translation"""
 
     def __init__(
-        self,
-        lr=1e-5,
-        multiply_lr_step=0.7,
-        warmup_steps=100.0,
-        transformer_output_size=1024,
-        representation_size=2048,
-        feedforward_size=4096,
-        num_encoder_layers=1,
-        num_segments=8,
-        num_attention_heads=16,
-        transformer_dropout_rate=0.1,
-        classification_mode="gloss",
-        feature_extractor_name="cnn_extractor",
-        feature_extractor_model_path="efficientnet_b1",
-        transformer_name="fake_transformer",
-        model_save_dir="",
-        neptune=False,
-        classification_heads={"gloss": {
-                                "num_class": 2400, 
-                                "loss_weight": 1}
-                            },
-        freeze_scheduler=None,
-        loss_function=nn.BCEWithLogitsLoss,
-        steps_per_epoch=1000
+            self,
+            lr=1e-5,
+            multiply_lr_step=0.7,
+            warmup_steps=100.0,
+            transformer_output_size=1024,
+            representation_size=2048,
+            feedforward_size=4096,
+            num_encoder_layers=1,
+            num_segments=8,
+            num_attention_heads=16,
+            transformer_dropout_rate=0.1,
+            classification_mode="gloss",
+            feature_extractor_name="cnn_extractor",
+            feature_extractor_model_path="efficientnet_b1",
+            transformer_name="fake_transformer",
+            model_save_dir="",
+            neptune=False,
+            classification_heads={"gloss": {
+                "num_class": 2400,
+                "loss_weight": 1}
+            },
+            freeze_scheduler=None,
+            loss_function=nn.BCEWithLogitsLoss,
+            steps_per_epoch=1000
     ):
         super().__init__()
 
@@ -137,7 +137,7 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = self(input)
         loss = self.summary_loss(predictions, targets)
 
-        # self.scheduler.step()
+        self.scheduler.step()
 
         if self.freeze_scheduler["freeze_mode"] == "step":
             self.freeze_step()
@@ -192,8 +192,8 @@ class GlossTranslationModel(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
 
         steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
-        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr, epochs=self.trainer.max_epochs,
-                                                             steps_per_epoch=steps_per_epoch)
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr,
+                                                             total_steps=self.trainer.max_epochs * steps_per_epoch + 2)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(
