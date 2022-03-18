@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, f1_score
 from torch.optim.lr_scheduler import MultiplicativeLR
 from utils.summary_loss import SummaryLoss
 
@@ -162,18 +162,24 @@ class GlossTranslationModel(pl.LightningModule):
                 all_predictions[nr_head] += list(torch.argmax(predictions[nr_head], dim=1).cpu().detach().numpy())
 
         for nr_head, head_targets in enumerate(all_targets):
+            head_name = head_names[nr_head]
+            targets_for_head = all_targets[nr_head]
+            predictions_for_head = all_predictions[nr_head]
             head_report = "\n".join(
                 [
-                    head_names[nr_head],
+                    head_name,
                     classification_report(
-                        all_targets[nr_head], all_predictions[nr_head], zero_division=0
+                        targets_for_head, predictions_for_head, zero_division=0
                     ),
                 ]
             )
             print(head_report)
+            f1 = f1_score(targets_for_head, predictions_for_head,
+                          average='macro', zero_division=0)
             if self.run:
-                log_path = "/".join(["metrics/epoch/", head_names[nr_head]])
+                log_path = "/".join(["metrics/epoch/", head_name])
                 self.run[log_path].log(head_report)
+                self.run[f'/metrics/epoch/f1/{head_name}'].log(f1)
 
         if self.trainer.global_step > 0:
             print("Saving model...")
