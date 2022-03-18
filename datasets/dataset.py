@@ -137,6 +137,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         time: Union[float, None] = None,
         imagefile_template: str = "{:s}_{:d}.jpg",
         landmarks: bool = False,
+        use_face_landmarks: bool = False,
         transform=None,
         test_mode: bool = False,
     ):
@@ -149,6 +150,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.time = time
         self.imagefile_template = imagefile_template
         self.landmarks = landmarks
+        self.use_face_landmarks = use_face_landmarks
         self.transform = transform
         self.test_mode = test_mode
         self.is_pretraining = is_pretraining
@@ -332,10 +334,11 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                 face, right_hand, left_hand, pose = self._get_landmarks(
                     record._data[0], frame_start_indices
                 )
-                landmarks["face"].append(face)
+                landmarks["pose"].append(pose)
                 landmarks["right_hand"].append(right_hand)
                 landmarks["left_hand"].append(left_hand)
-                landmarks["pose"].append(pose)
+                if self.use_face_landmarks:
+                    landmarks["face"].append(face)
 
             # load self.frames_per_segment consecutive frames
             for _ in range(self.frames_per_segment):
