@@ -130,24 +130,25 @@ class GlossTranslationModel(pl.LightningModule):
         return predictions
 
     def training_step(self, batch, batch_idx):
-        input, target = batch
-        targets = target["target"]
-        predictions = self(input)
-        loss = self.summary_loss(predictions, targets)
+        targets, predictions, losses = self._process_batch(batch)
         if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "step":
             self.freeze_step()
         if self.run:
-            self.run["metrics/batch/training_loss"].log(loss)
-        return {"loss": loss}
+            self.run["metrics/batch/training_loss"].log(losses)
+        return {"loss": losses}
 
     def validation_step(self, batch, batch_idx):
-        input, target = batch
-        targets = target["target"]
-        predictions = self(input)
-        loss = self.summary_loss(predictions, targets)
+        targets, predictions, losses = self._process_batch(batch)
         if self.run:
-            self.run["metrics/batch/validation_loss"].log(loss)
-        return {"val_loss": loss, "targets": targets, "predictions": predictions}
+            self.run["metrics/batch/validation_loss"].log(losses)
+        return {"val_loss": losses, "targets": targets, "predictions": predictions}
+
+    def _process_batch(self, batch):
+        input, targets_and_landmarks = batch
+        targets = targets_and_landmarks["target"]
+        predictions = self(input)
+        losses = self.summary_loss(predictions, targets)
+        return targets, predictions, losses
 
     def validation_epoch_end(self, out):
         head_names = list(self.classification_heads.keys())
