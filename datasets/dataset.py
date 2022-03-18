@@ -203,23 +203,12 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
     def _get_landmarks(
         self, video_name: str, indices: "np.ndarray[int]", col_name: str = "Unnamed: 0"
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        face = pd.read_csv(
-            os.path.join(self.root_path, video_name, video_name + "_face.csv"),
-            index_col=col_name,
-        ).loc[indices, :]
-        left_hand = pd.read_csv(
-            os.path.join(self.root_path, video_name, video_name + "_left_hand.csv"),
-            index_col=col_name,
-        ).loc[indices, :]
-        right_hand = pd.read_csv(
-            os.path.join(self.root_path, video_name, video_name + "_right_hand.csv"),
-            index_col=col_name,
-        ).loc[indices, :]
-        pose = pd.read_csv(
-            os.path.join(self.root_path, video_name, video_name + "_pose.csv"),
-            index_col=col_name,
-        ).loc[indices, :]
+    ) -> Tuple["np.ndarray[float]", "np.ndarray[float]", "np.ndarray[float]", "np.ndarray[float]"]:
+        landmarks = np.load(os.path.join(self.root_path, video_name, video_name + ".npz"))
+        face = landmarks['face'][indices, :]
+        left_hand = landmarks['left_hand'][indices, :]
+        right_hand = landmarks['right_hand'][indices, :]
+        pose = landmarks['pose'][indices, :]
         return face, right_hand, left_hand, pose
 
     def _get_start_indices(self, record: VideoRecord) -> "np.ndarray[int]":
@@ -376,7 +365,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         if not self.landmarks:
             landmarks = None
 
-        return images, {"target": target, "landmark": landmarks}
+        return images, {"target": target, "landmarks": landmarks}
 
     def __len__(self):
         return len(self.video_list)
