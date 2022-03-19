@@ -458,7 +458,7 @@ class PadCollate:
                         )
                     else:
                         padded_landmarks.append(concatenated_landmarks[:self.total_length, ...])
-                stacked_landmarks[landmark_name] = np.stack(padded_landmarks, axis=0)
+                stacked_landmarks[landmark_name] = np.nan_to_num(np.stack(padded_landmarks, axis=0), nan=-1+10)
 
         return (
             new_batch,
