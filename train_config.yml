@@ -16,15 +16,15 @@ augmentations:
 
 feature_extractor:
     model_path: "efficientnet_b1"
-    representation_size: 1112
+    representation_size: 600
 
 transformer:
-    feedforward_size: 1112
-    transformer_output_size: 512
+    feedforward_size: 600
+    transformer_output_size: 600
     num_attention_heads: 4
     num_encoder_layers: 2
-    output_size: 1112
-    dropout_rate: 0.1
+    output_size: 600
+    dropout_rate: 0.2
 
 heads:
     gloss:
@@ -37,7 +37,7 @@ heads:
             loss_weight: 1
         hand_shape_base_form:
             num_class: 12
-            loss_weight: 0.5
+            loss_weight: 1
         hand_shape_thumb_position:
             num_class: 4
             loss_weight: 1
@@ -61,6 +61,6 @@ freeze_scheduler:
     model_params:
         feature_extractor: [True, False]
         transformer: [False, True]
-    freeze_pattern_repeats: [5, 3]
-    freeze_mode: "epoch"
-    verbose: True
+    freeze_pattern_repeats: [1000, 1000]
+    freeze_mode: "step"
+    verbose: False
