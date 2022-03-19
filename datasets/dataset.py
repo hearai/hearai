@@ -462,13 +462,11 @@ class PadCollate:
 
         return (
             new_batch,
-            {
-                "target": [
-                    torch.stack([target[i] for target in targets], 0)
-                    for i in range(len(targets[0]))
-                ],
-                "landmarks": stacked_landmarks,
-            },
+            stacked_landmarks,
+            [
+                torch.stack([target[i] for target in targets], 0)
+                for i in range(len(targets[0]))
+            ]
         )
 
     def __call__(self, batch):
