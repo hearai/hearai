@@ -124,11 +124,27 @@ class GlossTranslationModel(pl.LightningModule):
     def forward(self, input, **kwargs):
         predictions = []
         frames, landmarks = input
-        x = self.multi_frame_feature_extractor(frames.to(self.device))
+
+        x_landmarks = self._prepare_landmarks_tensor(landmarks)
+
+        x_frames = self.multi_frame_feature_extractor(frames.to(self.device))
+
+        x = torch.concat([x_frames, x_landmarks], dim=-1)
+
         x = self.transformer(x)
+
         for head in self.cls_head:
             predictions.append(head(x.cpu()))
         return predictions
+
+    def _prepare_landmarks_tensor(self, landmarks):
+        concatenated_landmarks = np.concatenate(
+            [landmarks[landmarks_name] for landmarks_name in landmarks.keys()],
+            axis=-1
+        )
+        return torch.as_tensor(concatenated_landmarks, dtype=torch.float32, device=self.device)
+
+
 
     def training_step(self, batch, batch_idx):
         targets, predictions, losses = self._process_batch(batch)
