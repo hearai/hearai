@@ -1,0 +1,25 @@
+import torch.nn as nn
+
+
+class LandmarksSequentialModel(nn.Module):
+    """ Basic sequential model for processing landmarks """
+
+    def __init__(self, representation_size=1024, dropout_rate=0.2):
+        super().__init__()
+
+        self.representation_size = representation_size
+        self.dropout_rate = dropout_rate
+        self.model = nn.Sequential(
+            nn.LazyLinear(representation_size),
+            nn.ELU(0.1),
+            nn.Dropout(dropout_rate),
+            nn.Linear(representation_size, representation_size),
+            nn.ELU(0.1),
+            nn.Dropout(dropout_rate),
+            nn.Linear(representation_size, representation_size),
+            nn.ELU(0.1),
+            nn.Dropout(dropout_rate)
+        )
+
+    def forward(self, x, **kwargs):
+        return self.model(x)

@@ -12,6 +12,7 @@ from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
+from lanmdarks_sequential_model import LandmarksSequentialModel
 
 
 # initialize neptune logging
@@ -103,17 +104,7 @@ class GlossTranslationModel(pl.LightningModule):
             )
         )
 
-        self.landmarks_model = nn.Sequential(
-            nn.LazyLinear(representation_size),
-            nn.ELU(0.1),
-            nn.Dropout(transformer_dropout_rate),
-            nn.Linear(representation_size, representation_size),
-            nn.ELU(0.1),
-            nn.Dropout(transformer_dropout_rate),
-            nn.Linear(representation_size, representation_size),
-            nn.ELU(0.1),
-            nn.Dropout(transformer_dropout_rate)
-        )
+        self.landmarks_model = LandmarksSequentialModel(representation_size, transformer_dropout_rate)
 
         self.pretransformer_model = nn.Sequential(
             nn.Linear(representation_size + representation_size, representation_size),
