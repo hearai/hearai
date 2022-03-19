@@ -33,10 +33,10 @@ class DatasetCreator:
 
         train_len, val_len = self._get_split_lens(train_dataset)
 
-        _, train_subset = torch.utils.data.random_split(train_dataset, [train_len, val_len],
+        train_subset, _ = torch.utils.data.random_split(train_dataset, [train_len, val_len],
                                                         generator=torch.Generator().manual_seed(0))
 
-        val_subset, _ = torch.utils.data.random_split(val_dataset, [train_len, val_len],
+        _, val_subset = torch.utils.data.random_split(val_dataset, [train_len, val_len],
                                                       generator=torch.Generator().manual_seed(0))
 
         return train_subset, val_subset
