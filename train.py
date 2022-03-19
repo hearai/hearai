@@ -7,9 +7,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import yaml
-from torch.utils.data import DataLoader
 
-from datasets.dataset import PadCollate
 from datasets.dataset_creator import DatasetCreator
 from datasets.transforms_creator import TransformsCreator
 from models.model import GlossTranslationModel
@@ -41,6 +39,12 @@ def get_args_parser():
         default="hamnosys",
         choices=["gloss", "hamnosys", "hamnosys-less"],
         help="mode for classification, choose from classification_mode.py",
+    )
+    parser.add_argument(
+        "--mode",
+        default="random",
+        choices=["stratify", "random"],
+        help="method to split data into subsets",
     )
     parser.add_argument(
         "--ratio", type=float, default=0.8, help="train/test ratio (default: 0.8)"
@@ -148,26 +152,8 @@ def main(args):
                                      model_config["heads"][args.classification_mode], args.num_segments, args.time,
                                      args.landmarks, args.ratio, args.pre_training, transforms_creator)
 
-    train_subset, val_subset = dataset_creator.get_train_and_val_subsets()
-
-    # prepare dataloaders
-    dataloader_train = DataLoader(
-        train_subset,
-        shuffle=True,
-        batch_size=args.batch_size,
-        num_workers=args.workers,
-        collate_fn=PadCollate(total_length=args.num_segments),
-        drop_last=False,
-    )
-
-    dataloader_val = DataLoader(
-        val_subset,
-        shuffle=False,
-        batch_size=args.batch_size,
-        num_workers=args.workers,
-        collate_fn=PadCollate(total_length=args.num_segments),
-        drop_last=False,
-    )
+    dataloader_train, dataloader_val = dataset_creator.get_train_and_val_dataloaders(args.batch_size, args.workers,
+                                                                                     args.num_segments, args.mode)
 
     # prepare model
     if args.pre_training:
