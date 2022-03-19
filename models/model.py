@@ -102,9 +102,21 @@ class GlossTranslationModel(pl.LightningModule):
                 model_path=feature_extractor_model_path,
             )
         )
-        self.landmarks_length = 600
+
+        self.landmarks_model = nn.Sequential(
+            nn.LazyLinear(representation_size),
+            nn.ELU(0.1),
+            nn.Dropout(transformer_dropout_rate),
+            nn.Linear(representation_size, representation_size),
+            nn.ELU(0.1),
+            nn.Dropout(transformer_dropout_rate),
+            nn.Linear(representation_size, representation_size),
+            nn.ELU(0.1),
+            nn.Dropout(transformer_dropout_rate)
+        )
+
         self.pretransformer_model = nn.Sequential(
-            nn.Linear(representation_size + self.landmarks_length, representation_size),
+            nn.Linear(representation_size + representation_size),
             nn.ELU(0.1),
             nn.Dropout(transformer_dropout_rate)
         )
@@ -136,6 +148,7 @@ class GlossTranslationModel(pl.LightningModule):
 
         if landmarks is not None:
             x_landmarks = self._prepare_landmarks_tensor(landmarks)
+            x_landmarks = self.landmarks_model(x_landmarks)
             x = torch.concat([x, x_landmarks], dim=-1)
             x = self.pretransformer_model(x)
 
