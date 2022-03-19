@@ -116,7 +116,7 @@ class GlossTranslationModel(pl.LightningModule):
         )
 
         self.pretransformer_model = nn.Sequential(
-            nn.Linear(representation_size + representation_size),
+            nn.Linear(representation_size + representation_size, representation_size),
             nn.ELU(0.1),
             nn.Dropout(transformer_dropout_rate)
         )
