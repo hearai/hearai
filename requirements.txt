@@ -9,3 +9,4 @@ neptune-client==0.14.2
 transformers==4.15.0
 pandas~=1.1.5
 matplotlib==3.3.4
+scikit-multilearn==0.2.0
