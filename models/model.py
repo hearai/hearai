@@ -12,8 +12,8 @@ from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
-from lanmdarks_sequential_model import LandmarksSequentialModel
-from features_sequential_model import FeaturesSequentialModel
+from .lanmdarks_sequential_model import LandmarksSequentialModel
+from .features_sequential_model import FeaturesSequentialModel
 
 
 # initialize neptune logging
