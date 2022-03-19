@@ -61,6 +61,6 @@ freeze_scheduler:
     model_params:
         feature_extractor: [True, False, True, False, True, False]
         transformer: [False, True, False, True, False, True]
-    freeze_pattern_repeats: [200, 200, 200, 200, 200, 200]
+    freeze_pattern_repeats: [1600, 1600, 1600, 1600, 1600, 1600]
     freeze_mode: "step"
     verbose: False
