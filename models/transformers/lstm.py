@@ -1,6 +1,6 @@
 import torch
 class LSTM(torch.nn.Module):
-    """Basic transformer model"""
+    """Basic LSTM model"""
 
     def __init__(self, 
                  input_size: int,
@@ -10,7 +10,7 @@ class LSTM(torch.nn.Module):
                  num_encoder_layers = 2,
                  dropout_rate = 0.2):
         """
-        Lightweight function of basic LSTM model
+        Lightweight function of basic LSTM model. Not a transformer but nice to test.
         
         Args:
             input_size (int): Input size fot the LSTM model. Should be equal to the output size of the feature_extrator.
