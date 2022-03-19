@@ -144,8 +144,6 @@ class GlossTranslationModel(pl.LightningModule):
         )
         return torch.as_tensor(concatenated_landmarks, dtype=torch.float32, device=self.device)
 
-
-
     def training_step(self, batch, batch_idx):
         targets, predictions, losses = self._process_batch(batch)
         if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "step":
