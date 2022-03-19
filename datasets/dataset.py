@@ -19,15 +19,18 @@ if sys.version[0] == "2":
     reload(sys)
     sys.setdefaultencoding("utf-8")
 
-ALL_HAMNOSYS_HEADS = {"symmetry_operator": 3,
-            "hand_shape_base_form": 4,
-            "hand_shape_thumb_position": 5,
-            "hand_shape_bending": 6,
-            "hand_position_finger_direction": 7,
-            "hand_position_palm_orientation": 8,
-            "hand_location_x": 9,
-            "hand_location_y": 10,
-            "distance": 11}
+ALL_HAMNOSYS_HEADS = {
+    "symmetry_operator": 3,
+    "hand_shape_base_form": 4,
+    "hand_shape_thumb_position": 5,
+    "hand_shape_bending": 6,
+    "hand_position_finger_direction": 7,
+    "hand_position_palm_orientation": 8,
+    "hand_location_x": 9,
+    "hand_location_y": 10,
+    "distance": 11,
+}
+
 
 class VideoRecord(object):
     """
@@ -51,9 +54,7 @@ class VideoRecord(object):
         self._path = os.path.join(root_datapath, row[0])
         self.classification_heads = classification_heads
         try:
-            with open(
-                os.path.join(self._path, row[0] + "_properties.json"), "r"
-            ) as f:
+            with open(os.path.join(self._path, row[0] + "_properties.json"), "r") as f:
                 data = json.load(f)
             self.fps = int(data["FPS"])
         except:
@@ -156,7 +157,6 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
         self._parse_annotationfile()
         self._sanity_check_samples()
-        
 
     def _load_image(self, directory: str, idx: int) -> Image.Image:
         return Image.open(
@@ -168,8 +168,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
     def _parse_annotationfile(self):
         self.video_list = [
-            VideoRecord(x.strip().split(), self.root_path,
-                        self.classification_heads)
+            VideoRecord(x.strip().split(), self.root_path, self.classification_heads)
             for x in open(self.annotationfile_path)
         ]
 
@@ -366,7 +365,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             x = np.zeros(value["num_class"])
             x[class_label] = 1
             if self.is_pretraining:
-                target.append(torch.tensor(x, dtype = torch.long))
+                target.append(torch.tensor(x, dtype=torch.long))
             else:
                 target.append(torch.tensor(x))
 

@@ -31,8 +31,8 @@ def get_args_parser():
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default='train_config_default.yml',
-        help="path to .yaml config file specyfing hyperparameters of different model sections."
+        default="train_config_default.yml",
+        help="path to .yaml config file specyfing hyperparameters of different model sections.",
     )
     parser.add_argument(
         "--classification-mode",
@@ -134,26 +134,37 @@ def main(args):
     with open(args.model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
-    transforms_creator = TransformsCreator(bool(model_config["augmentations"]["apply_resize"]),
-                                           bool(model_config["augmentations"]["apply_center_crop"]),
-                                           bool(model_config["augmentations"]["apply_random_erasing"]),
-                                           bool(model_config["augmentations"]["apply_random_rotation"]),
-                                           bool(model_config["augmentations"]["apply_color_jitter"]),
-                                           int(model_config["augmentations"]["resize_size"]),
-                                           int(model_config["augmentations"]["center_crop_size"]),
-                                           float(model_config["augmentations"]["random_erasing_probability"]),
-                                           int(model_config["augmentations"]["random_rotation_degree"]),
-                                           float(model_config["augmentations"]["color_jitter_brightness"]),
-                                           float(model_config["augmentations"]["color_jitter_contrast"]),
-                                           float(model_config["augmentations"]["color_jitter_saturation"]),
-                                           float(model_config["augmentations"]["color_jitter_hue"]))
+    transforms_creator = TransformsCreator(
+        bool(model_config["augmentations"]["apply_resize"]),
+        bool(model_config["augmentations"]["apply_center_crop"]),
+        bool(model_config["augmentations"]["apply_random_erasing"]),
+        bool(model_config["augmentations"]["apply_random_rotation"]),
+        bool(model_config["augmentations"]["apply_color_jitter"]),
+        int(model_config["augmentations"]["resize_size"]),
+        int(model_config["augmentations"]["center_crop_size"]),
+        float(model_config["augmentations"]["random_erasing_probability"]),
+        int(model_config["augmentations"]["random_rotation_degree"]),
+        float(model_config["augmentations"]["color_jitter_brightness"]),
+        float(model_config["augmentations"]["color_jitter_contrast"]),
+        float(model_config["augmentations"]["color_jitter_saturation"]),
+        float(model_config["augmentations"]["color_jitter_hue"]),
+    )
 
-    dataset_creator = DatasetCreator(args.data, args.classification_mode,
-                                     model_config["heads"][args.classification_mode], args.num_segments, args.time,
-                                     args.landmarks, args.ratio, args.pre_training, transforms_creator)
+    dataset_creator = DatasetCreator(
+        args.data,
+        args.classification_mode,
+        model_config["heads"][args.classification_mode],
+        args.num_segments,
+        args.time,
+        args.landmarks,
+        args.ratio,
+        args.pre_training,
+        transforms_creator,
+    )
 
-    dataloader_train, dataloader_val = dataset_creator.get_train_and_val_dataloaders(args.batch_size, args.workers,
-                                                                                     args.num_segments, args.mode)
+    dataloader_train, dataloader_val = dataset_creator.get_train_and_val_dataloaders(
+        args.batch_size, args.workers, args.num_segments, args.mode
+    )
 
     # prepare model
     if args.pre_training:
@@ -161,25 +172,26 @@ def main(args):
     else:
         model_instance = GlossTranslationModel
 
-    model = model_instance(lr=args.lr,
-                           classification_mode=args.classification_mode,
-                           classification_heads=model_config["heads"][args.classification_mode],
-                           feature_extractor_name="cnn_extractor",
-                           feature_extractor_model_path=model_config["feature_extractor"]["model_path"],
-                           transformer_name="sign_language_transformer",
-                           num_attention_heads=model_config["transformer"]["num_attention_heads"],
-                           transformer_dropout_rate=model_config["transformer"]["dropout_rate"],
-                           num_segments=args.num_segments,
-                           model_save_dir=args.save,
-                           neptune=args.neptune,
-                           representation_size=model_config["feature_extractor"]["representation_size"],
-                           feedforward_size=model_config["transformer"]["feedforward_size"],
-                           num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
-                           transformer_output_size=model_config["transformer"]["output_size"],
-                           warmup_steps=20.0,
-                           multiply_lr_step=0.95,
-                           freeze_scheduler=model_config["freeze_scheduler"]
-                           )
+    model = model_instance(
+        lr=args.lr,
+        classification_mode=args.classification_mode,
+        classification_heads=model_config["heads"][args.classification_mode],
+        feature_extractor_name="cnn_extractor",
+        feature_extractor_model_path=model_config["feature_extractor"]["model_path"],
+        transformer_name="sign_language_transformer",
+        num_attention_heads=model_config["transformer"]["num_attention_heads"],
+        transformer_dropout_rate=model_config["transformer"]["dropout_rate"],
+        num_segments=args.num_segments,
+        model_save_dir=args.save,
+        neptune=args.neptune,
+        representation_size=model_config["feature_extractor"]["representation_size"],
+        feedforward_size=model_config["transformer"]["feedforward_size"],
+        num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
+        transformer_output_size=model_config["transformer"]["output_size"],
+        warmup_steps=20.0,
+        multiply_lr_step=0.95,
+        freeze_scheduler=model_config["freeze_scheduler"],
+    )
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,

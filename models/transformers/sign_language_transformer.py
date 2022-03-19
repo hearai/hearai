@@ -54,7 +54,9 @@ class SignLanguageTransformer(nn.Module):
 
     def forward(self, input: torch.Tensor):
         # Positional Encoding Start
-        positional_encoding = input + self._position_encoding[:, : input.shape[1]].to(input.device)
+        positional_encoding = input + self._position_encoding[:, : input.shape[1]].to(
+            input.device
+        )
 
         x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End
@@ -106,9 +108,7 @@ class SLRTEncoder(nn.Module):
         self._attention_dropout = nn.Dropout(dropout_rate)
 
         self._multi_headed_attention = MultiHeadedAttention(
-            num_heads=num_attention_heads,
-            size=input_size,
-            dropout_rate=dropout_rate,
+            num_heads=num_attention_heads, size=input_size, dropout_rate=dropout_rate,
         )
         self._feedforward_sequential = nn.Sequential(
             nn.LayerNorm(input_size),
@@ -118,8 +118,6 @@ class SLRTEncoder(nn.Module):
             nn.Linear(feedforward_size, input_size),
             nn.Dropout(dropout_rate),
         )
-
-
 
     def forward(self, input: torch.Tensor):
 

@@ -12,6 +12,7 @@ from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
+
 # initialize neptune logging
 def initialize_neptun(tags):
     return neptune.init(
@@ -44,18 +45,17 @@ class PreTrainingModel(pl.LightningModule):
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
-        classification_heads={"gloss": {
-                                "num_class": 2400, 
-                                "loss_weight": 1}
-                            },
+        classification_heads={"gloss": {"num_class": 2400, "loss_weight": 1}},
     ):
         super().__init__()
 
         if neptune:
-            tags = [classification_mode,
-            feature_extractor_name,
-            transformer_name,
-            "pre-training"]
+            tags = [
+                classification_mode,
+                feature_extractor_name,
+                transformer_name,
+                "pre-training",
+            ]
             self.run = initialize_neptun(tags)
             self.run["parameters"] = {
                 "lr": lr,
@@ -76,7 +76,7 @@ class PreTrainingModel(pl.LightningModule):
             }
         else:
             self.run = None
- 
+
         # parameters
         self.lr = lr
         self.model_save_dir = model_save_dir

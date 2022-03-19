@@ -46,10 +46,7 @@ class GlossTranslationModel(pl.LightningModule):
         transformer_name="fake_transformer",
         model_save_dir="",
         neptune=False,
-        classification_heads={"gloss": {
-                                "num_class": 2400, 
-                                "loss_weight": 1}
-                            },
+        classification_heads={"gloss": {"num_class": 2400, "loss_weight": 1}},
         freeze_scheduler=None,
         loss_function=nn.BCEWithLogitsLoss,
     ):
@@ -97,10 +94,10 @@ class GlossTranslationModel(pl.LightningModule):
         self.model_loader = ModelLoader()
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.model_loader.load_feature_extractor(
-            feature_extractor_name=feature_extractor_name,
-            representation_size = representation_size,
-            model_path=feature_extractor_model_path,
-        )
+                feature_extractor_name=feature_extractor_name,
+                representation_size=representation_size,
+                model_path=feature_extractor_model_path,
+            )
         )
         if transformer_name == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
@@ -134,7 +131,9 @@ class GlossTranslationModel(pl.LightningModule):
         targets = target["target"]
         predictions = self(input)
         loss = self.summary_loss(predictions, targets)
-        if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "step":
+        if (self.freeze_scheduler is not None) and self.freeze_scheduler[
+            "freeze_mode"
+        ] == "step":
             self.freeze_step()
         if self.run:
             self.run["metrics/batch/training_loss"].log(loss)
@@ -158,8 +157,12 @@ class GlossTranslationModel(pl.LightningModule):
             targets, predictions = single_batch["targets"], single_batch["predictions"]
             # append predictions and targets for every head
             for nr_head, head_targets in enumerate(targets):
-                all_targets[nr_head] += list(torch.argmax(targets[nr_head], dim=1).cpu().detach().numpy())
-                all_predictions[nr_head] += list(torch.argmax(predictions[nr_head], dim=1).cpu().detach().numpy())
+                all_targets[nr_head] += list(
+                    torch.argmax(targets[nr_head], dim=1).cpu().detach().numpy()
+                )
+                all_predictions[nr_head] += list(
+                    torch.argmax(predictions[nr_head], dim=1).cpu().detach().numpy()
+                )
 
         for nr_head, targets_for_head in enumerate(all_targets):
             head_name = head_names[nr_head]
@@ -173,18 +176,21 @@ class GlossTranslationModel(pl.LightningModule):
                 ]
             )
             print(head_report)
-            f1 = f1_score(targets_for_head, predictions_for_head,
-                          average='macro', zero_division=0)
+            f1 = f1_score(
+                targets_for_head, predictions_for_head, average="macro", zero_division=0
+            )
             if self.run:
                 log_path = "/".join(["metrics/epoch/", head_name])
                 self.run[log_path].log(head_report)
-                self.run[f'/metrics/epoch/f1/{head_name}'].log(f1)
+                self.run[f"/metrics/epoch/f1/{head_name}"].log(f1)
 
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
             self.scheduler.step()
-            if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "epoch":
+            if (self.freeze_scheduler is not None) and self.freeze_scheduler[
+                "freeze_mode"
+            ] == "epoch":
                 self.freeze_step()
 
     def configure_optimizers(self):
@@ -229,9 +235,9 @@ class GlossTranslationModel(pl.LightningModule):
 
     def freeze_step(self):
         ### TO- DO
-        #  If the `freeze_pattern_repeats` is set as an integer isntead of a list, 
-        # e.g. `freeze_pattern_repeats = 3`, it is equal to a pattern 
-        # `feature_extractor = [True, False] * freeze_pattern_repeats`, 
+        #  If the `freeze_pattern_repeats` is set as an integer isntead of a list,
+        # e.g. `freeze_pattern_repeats = 3`, it is equal to a pattern
+        # `feature_extractor = [True, False] * freeze_pattern_repeats`,
         # hence it is exactly the same as:
         #  ```
         #  "model_params": {
