@@ -324,7 +324,9 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         images = []
         landmarks = None
         if self.landmarks:
-            landmarks = {"face": [], "right_hand": [], "left_hand": [], "pose": []}
+            landmarks = {"right_hand": [], "left_hand": [], "pose": []}
+            if self.use_face_landmarks:
+                landmarks["face"] = []
             face, right_hand, left_hand, pose = self._get_landmarks(record._data[0])
 
         # from each start_index, load self.frames_per_segment
@@ -416,7 +418,13 @@ class PadCollate:
         the sequence will be cut
         """
         batch_split = list(zip(*batch))
-        seqs, targs = batch_split[0], batch_split[1]
+        seqs, targets_and_landmarks = batch_split[0], batch_split[1]
+
+        targets = []
+        landmarks = []
+        for item in targets_and_landmarks:
+            targets.append(item['target'])
+            landmarks.append(item['landmarks'])
 
         # get new dimensions
         dims = [len(seqs)]
@@ -433,14 +441,33 @@ class PadCollate:
             else:
                 new_batch[i, ...] = tensor[: self.total_length, ...]
 
+        # padding for landmarks
+        stacked_landmarks = None
+        if landmarks[0] is not None:
+            stacked_landmarks = {}
+            for landmark_name in landmarks[0].keys():
+                padded_landmarks = []
+                for single_video_landmarks in landmarks:
+                    concatenated_landmarks = np.stack(single_video_landmarks[landmark_name], axis=0)
+                    landmarks_frames_number = len(concatenated_landmarks)
+                    if landmarks_frames_number < self.total_length:
+                        padded_landmarks.append(
+                            np.pad(concatenated_landmarks,
+                                   pad_width=((0, self.total_length-landmarks_frames_number), (0, 0)),
+                                   mode='edge')
+                        )
+                    else:
+                        padded_landmarks.append(concatenated_landmarks[:self.total_length, ...])
+                stacked_landmarks[landmark_name] = np.stack(padded_landmarks, axis=0)
+
         return (
             new_batch,
             {
                 "target": [
-                    torch.stack([item["target"][i] for item in targs], 0)
-                    for i in range(len(targs[0]["target"]))
+                    torch.stack([target[i] for target in targets], 0)
+                    for i in range(len(targets[0]))
                 ],
-                "landmarks": [i["landmarks"] for i in targs],
+                "landmarks": stacked_landmarks,
             },
         )
 
