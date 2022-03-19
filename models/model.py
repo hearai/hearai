@@ -97,11 +97,18 @@ class GlossTranslationModel(pl.LightningModule):
         self.model_loader = ModelLoader()
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.model_loader.load_feature_extractor(
-            feature_extractor_name=feature_extractor_name,
-            representation_size = representation_size,
-            model_path=feature_extractor_model_path,
+                feature_extractor_name=feature_extractor_name,
+                representation_size=representation_size,
+                model_path=feature_extractor_model_path,
+            )
         )
+        self.landmarks_length = 600
+        self.pretransformer_model = nn.Sequential(
+            nn.Linear(representation_size + self.landmarks_length, representation_size),
+            nn.ELU(0.1),
+            nn.Dropout(transformer_dropout_rate)
         )
+
         if transformer_name == "sign_language_transformer":
             self.transformer = self.model_loader.load_transformer(
                 transformer_name,
@@ -125,11 +132,12 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = []
         frames, landmarks = input
 
-        x_landmarks = self._prepare_landmarks_tensor(landmarks)
+        x = self.multi_frame_feature_extractor(frames.to(self.device))
 
-        x_frames = self.multi_frame_feature_extractor(frames.to(self.device))
-
-        x = torch.concat([x_frames, x_landmarks], dim=-1)
+        if landmarks is not None:
+            x_landmarks = self._prepare_landmarks_tensor(landmarks)
+            x = torch.concat([x, x_landmarks], dim=-1)
+            x = self.pretransformer_model(x)
 
         x = self.transformer(x)
 
