@@ -30,16 +30,12 @@ In our studies we are using PJM lexicon with annotations provided at our interna
 - HamNoSys annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_hamnosys.txt` - 8 heads only [WiP]
 - glosses annotation file: `/dih4/dih4_2/hearai/data/frames/pjm/test_gloss2.txt`
 
-To load multiple datasets simply pass to ```args.parser``` list of datasets (file paths to video separated with spaces). We have possibility to load these datasets:
+We have possibility to load these datasets:
 - pjm: /dih4/dih4_2/hearai/data/frames/pjm
 - basic_lexicon: /dih4/dih4_2/hearai/data/frames/basic_lexicon
 - galex: /dih4/dih4_2/hearai/data/frames/galex
 - glex: /dih4/dih4_2/hearai/data/frames/glex
 - gsll: /dih4/dih4_2/hearai/data/frames/gsll_done
-
-```python
-python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1
-```
 
 Attention! The method requires that all ```annotation_files``` have exactly the same annotation filename e.g. ```"test_hamnosys.txt"```! If you need to pass different path you need to do it manually.
 
@@ -47,22 +43,6 @@ For this file, you can create basic charts with statistics. Every chart contains
 As input arguments, you must pass a path to the file with annotations, and an output directory for generated charts.
 Optionally, you can also pass a separator, which is used in the annotation file.
 This script is named ```make_statistics``` and is in the ```utils``` directory.
-
-Dataloader gives possibility to load data:
-- choosing number of frames by setting `--num_segments` variable (in this option `--time` argument is set to `None` as default)
-- evenly distribiuted using defined time unit by specifing `--time` argument in seconds and `--num_segments` as number of frames in video sequence (note that in this option in the same directory as frames has to be file with basic information about video, eg. `fps` value, named as `<video_name>_properties.json`)
-
-```python
-python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --time 0.1 --b 4 --workers 0 --gpu 1
-```
-
-Parametr ```landmarks``` gives additional possibility to read all coordinates for:
-- right hand: <video name>\_right_hand.csv
-- left hand: <video name>\_left_hand.csv
-- face: <video name>\_face.csv
-- pose: <video name>\_pose.csv
-
-Landmarks are provided for each video in the same folder as frames.
 
 ## 👥 Classification heads
 Pipeline handle multihead classification. We predefine `classification_heads` for both Gloss Translation and HamNoSys recognition. Our `classification_heads` are defined here: `utils/classification_mode.py`. For each head, a custom loss weight can be provided.
@@ -126,11 +106,95 @@ When you install a new library, please add it to the list in `requirements.txt` 
 
 Run with a single dataset:
 
-`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 16 --gpu 1`
+`python3 train.py --model_config_path train_config.yml`
 
-Run with multiple datasets (list datasets paths separated with spaces)
+train_config.yml file should define the following fields:
 
-`python3 train.py --data "/dih4/dih4_2/hearai/data/frames/pjm" "/dih4/dih4_2/hearai/data/frames/basic_lexicon" --epochs 100 --lr 1e-4 --classification-mode "hamnosys" --neptune --num_segments 16 --b 4 --workers 0 --gpu 1`
+`general_parameters` - parameters that do not affect the training process directly
+- `data_path` - (str) dir where input data is stored.
+- `ratio_train_test` - (float) train/test split ratio.
+- `workers` - (int) number of parallel workers (default: 0).
+- `gpu` - (int) number of GPU to train the model on. If -1 CPU will be used.
+- `path_to_save` - (str) path where model will be saved during/after training.
+- `seed` - (int) random seed number
+- `neptune` - (bool) if True training's results will be stored in neptune.ai
+
+`augmentations_parameters` - parameters describing augmentation methods that will be used while loading the data  
+- `apply_resize` - (bool) if True resizing operation will be applied.
+- `apply_center_crop` - (bool) if True cropping operation will be applied.
+- `apply_random_erasing` - (bool) if True random erasing operation will be applied.
+- `apply_random_rotation`  - (bool) if True random rotation will be applied.
+- `apply_color_jitter` - (bool) if True color jitter operation will be applied.
+
+- `resize_size` - (int) size of input image after resizing.
+- `center_crop_size` - (sequence or int): Desired output size of the crop. If size is an
+            int instead of sequence like (h, w), a square crop (size, size) is
+            made. If provided a sequence of length 1, it will be interpreted as (size[0], size[0]).
+- `random_erasing_probability` - (float) probability that the random erasing operation will be performed.
+- `random_rotation_degree` - (int) degrees for rotation operation.
+- `color_jitter_brightness` - (float or tuple of float (min, max)): How much to jitter brightness.
+            brightness_factor is chosen uniformly from [max(0, 1 - brightness), 1 + brightness]
+            or the given [min, max]. Should be non negative numbers.
+- `color_jitter_contrast` - (float or tuple of float (min, max)): How much to jitter contrast.
+            contrast_factor is chosen uniformly from [max(0, 1 - contrast), 1 + contrast]
+            or the given [min, max]. Should be non negative numbers.
+- `color_jitter_saturation` - (float or tuple of float (min, max)): How much to jitter saturation.
+            saturation_factor is chosen uniformly from [max(0, 1 - saturation), 1 + saturation]
+            or the given [min, max]. Should be non negative numbers.
+- `color_jitter_hue` - (float or tuple of float (min, max)): How much to jitter hue.
+            hue_factor is chosen uniformly from [-hue, hue] or the given [min, max].
+            Should have 0<= hue <= 0.5 or -0.5 <= min <= max <= 0.5.
+
+`train_parameters` - parameters that affect the training process  
+- `classification_mode` - (str) type of training, currently available are "hamnosys", "gloss"
+- `epochs` - (int) number of training epochs.
+- `batch_size` - (int) number of datapoints in batch.
+- `lr` - (float) learning rate.
+- `num_segments` - (int) Number of consecutive frames that will be used as input.
+- `fast_dev_run` - (bool) if True model will be run in faster-development mode.
+- `pre_training` - (bool) if True model will be run in pre_training mode.
+- `landmarks` - (bool) if True all coordinates for right hand, left hand, face, pose will be read.
+- `time` - (float) time-distance (in seconds) between consecutive frames that will be used as input.
+- `warmup_steps` - (float) number of steps with reduced learning rate before training with the proper rate.
+- `multiply_lr_step` - (float) rate of change of learning rate after each step.
+
+`feature_extractor` - parameters required by feature extractor class
+- `name` - feature extractor name, currently available "cnn_extractor", "resnet50_extractor".
+- `model_path` - (str) name of the model as provided in {timm} module, necessary if using "cnn_extrctor".
+- `representation_size` - (int) Number of output featuresto be constructed by any feature extractor.
+
+`transformer` - parameters required by transformer class
+- `name` - (str) currently available names are "sign_language_transformer", "hubert_transformer", "fake_transformer".
+- `feedforward_size` - (int) number of feedforward features in "sign_language_transformer".
+- `num_attention_heads` - (int) number of attention heads in "sign_language_transformer".
+- `num_encoder_layers` - (int) number of encoder layers in "sign_language_transformer".
+- `output_size` - (int) output size of the final layer "sign_language_transformer", "hubert_transformer" & "fake_transformer".
+- `dropout_rate` - (float) dropout rate in "sign_language_transformer".
+
+`heads` - parameters defining output heads, number of available classes at each head and every head's weight
+    Example - there are two available training choices 'gloss' & 'hamnosys' each with different number of heads.
+- `heads`:
+    `gloss`:
+        `gloss`:
+            `num_class`: 2400
+            `loss_weight`: 1
+    `hamnosys`:
+        `symmetry_operator`:
+            `num_class`: 9
+            `loss_weight`: 0.125
+        `hand_shape_base_form`:
+            `num_class`: 12
+            `loss_weight`: 0.125
+
+`freeze_scheduler` - description of freezing/unfreezing of the feature extractor and tranformer during the training.
+    Example - `freeze_scheduler` config is presented below. For this configuration, freeze_scheduler will freeze `feature_extractor` for ten epochs, and then- `freeze` `transformer` for five. After freezeing patterns ends, all params are unfreezed.
+- `freeze_scheduler`:
+    `model_params`:
+        `feature_extractor`: [True, False]
+        `transformer`: [False, True]
+    `freeze_pattern_repeats`: [10, 5]
+    `freeze_mode`: "epoch"
+    `verbose`: True
 
 # Training tips & tricks
 
@@ -149,19 +213,6 @@ The `freeze_scheduler` config is explained below:
     "freeze_pattern_repeats": list(int), # A list of integers defines how many times each param in model_params will be repeated.
     "freeze_mode": str, # the freeze scheduler can be executed either every "epoch" or "step"
 }
-
-```
-
-Example `freeze_scheduler` config is presented below. For this configuration, freeze_scheduler will freeze `feature_extractor` for ten epochs, and then freeze `transformer` for five. After freezeing patterns ends, all params are unfreezed.
-
-```python
-"freeze_scheduler": {
-    "model_params": {
-        "feature_extractor":  [True, False],
-        "transformer": [False, True],
-    },
-    "freeze_pattern_repeats": [10, 5],
-    "freeze_mode": "epoch",
 
 ```
 
