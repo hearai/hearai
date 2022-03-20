@@ -14,6 +14,8 @@ if __name__ == "__main__":
     ap.add_argument("-ai", "--ann-input", type=str, help="path to source annotations")
     ap.add_argument("-ao", "--ann-output", type=str, help="path to output annotations")
     ap.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size")
+    ap.add_argument("--jpg", action="store_true", default=False,
+        help="Decide if you are reading from video")
     args = vars(ap.parse_args())
     # read annotations
     df = pd.read_csv(args["ann_input"], delimiter=" ")
@@ -25,8 +27,10 @@ if __name__ == "__main__":
     for name in tqdm.tqdm(df.name.to_numpy()):
         num_i = -1
         film_i += 1
-        # we are reading from a video file
-        vs = cv2.VideoCapture(os.path.join(args["video"], str(name) + ".mp4"))
+        # we are reading from a video file or just separate frames
+        if not args["jpg"]:
+            vs = cv2.VideoCapture(
+                os.path.join(args["video"], str(name) + ".mp4"))
         # initialize the first frame in the video stream
         firstFrame = None
         # loop over the frames of the video
@@ -36,8 +40,11 @@ if __name__ == "__main__":
         while succes:
             num_i += 1
             # grab the current frame
-            frame = vs.read()
-            frame = frame if args.get("video", None) is None else frame[1]
+            if not args["jpg"]:
+                frame = vs.read()[1]
+            else:
+                frame = cv2.imread(
+                    os.path.join(args["video"], str(name), str(name) + f"_{num_i}.jpg"))
             # if the frame could not be grabbed, then we have reached the end
             # of the video
             if frame is None:
