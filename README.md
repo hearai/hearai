@@ -35,6 +35,7 @@ We have possibility to load these datasets:
 - basic_lexicon: /dih4/dih4_2/hearai/data/frames/basic_lexicon
 - galex: /dih4/dih4_2/hearai/data/frames/galex
 - glex: /dih4/dih4_2/hearai/data/frames/glex
+- gsll: /dih4/dih4_2/hearai/data/frames/gsll_done
 
 Attention! The method requires that all ```annotation_files``` have exactly the same annotation filename e.g. ```"test_hamnosys.txt"```! If you need to pass different path you need to do it manually.
 
