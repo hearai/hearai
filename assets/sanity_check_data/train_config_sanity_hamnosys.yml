@@ -51,7 +51,7 @@ transformer:
 
 heads:
     model:
-        additional_layers: 1
+        additional_layers: 0
         dropout_rate: 0.1
     gloss:
         gloss:
