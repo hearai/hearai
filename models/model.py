@@ -144,6 +144,10 @@ class GlossTranslationModel(pl.LightningModule):
         targets = target["target"]
         predictions = self(input)
         loss = self.summary_loss(predictions, targets)
+        if self.global_step>2:
+            for name, child in self.named_children():
+                for param in child.parameters():
+                    param.requires_grad = True
         if self.run:
             self.run["metrics/batch/validation_loss"].log(loss)
         return {"val_loss": loss, "targets": targets, "predictions": predictions}

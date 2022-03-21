@@ -33,7 +33,7 @@ def get_args_parser():
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default='train_config_check.yml',
+        default='train_config_default.yml',
         help="path to .yaml config file specyfing hyperparameters of different model sections."
     )
     parser.add_argument(
