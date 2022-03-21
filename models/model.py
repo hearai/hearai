@@ -1,13 +1,15 @@
 from typing import Dict
 
 import neptune.new as neptune
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
+from torch.optim.lr_scheduler import MultiplicativeLR
 from utils.summary_loss import SummaryLoss
 
-from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
@@ -219,7 +221,7 @@ class GlossTranslationModel(pl.LightningModule):
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
-            
+
             self.scheduler.step()
             if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "epoch":
                 self.freeze_step()
