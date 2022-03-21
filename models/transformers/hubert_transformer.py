@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import numpy as np
 import torch
@@ -14,28 +14,33 @@ class HubertTransformer(nn.Module):
 
     def __init__(
         self,
-        input_features: int = 2048,
-        output_features: int = 512,
-        num_segments: int = 10,
-        device="cpu",
+        feature_extractor_parameters: Dict = None,
+        transformer_parameters: Dict = None,
+        train_parameters: Dict = None,
         *args,
         **kwargs
     ):
         """
         Args:
-            input_features (int): Argument to keep name convention consistency.
-            output_features (int): Expected number of output features from the model.
-            num_segments (int): Number of frames associated with single sign.
+            feature_extractor_parameters (Dict): Dict containing parameters regarding currently used feature extractor.
+                [Warning] Must contain fields: 
+                    - "representation_size" (int)
+            transformer_parameters (Dict): Dict containing parameters regarding currently used transformer.
+                [Warning] Must containt fields:
+                    - "output_size" (int)
+            train_parameters (Dict): Dict containing parameters of the training process.
+                [Warning] Must containt fields:
+                    - "num_segments" (int)
         """
         super(HubertTransformer, self).__init__()
         configuration = HubertConfig()
         self.model = HubertModel(configuration,)
-        self._input_features = input_features
-        self._output_features = output_features
+        self._input_features = feature_extractor_parameters["representation_size"]
+        self._output_features = transformer_parameters["output_size"]
 
         # Define layers
         hidden_features = self.find_hidden_features_number(
-            input_size=input_features * num_segments,
+            input_size=self._input_features * train_parameters["num_segments"],
             hidden_size=configuration.hidden_size,
             kernels=configuration.conv_kernel,
             strides=configuration.conv_stride,
