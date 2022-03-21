@@ -18,7 +18,7 @@ class HeadClassificationSequentialModel(nn.Module):
         self.dropout_rate = dropout_rate
         self.layers_list = nn.ModuleList()
         if additional_layers > 0:
-            self.layers_list.append(SimpleSequentialModel(layers=representation_size,
+            self.layers_list.append(SimpleSequentialModel(layers=classes_number,
                                                           representation_size=representation_size,
                                                           dropout_rate=dropout_rate))
         self.layers_list.append(nn.Linear(representation_size, classes_number))
