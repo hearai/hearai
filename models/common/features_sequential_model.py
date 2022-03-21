@@ -1,4 +1,5 @@
 import torch.nn as nn
+from models.common.simple_sequencial_model import SimpleSequentialModel
 
 
 class FeaturesSequentialModel(nn.Module):
@@ -9,11 +10,9 @@ class FeaturesSequentialModel(nn.Module):
 
         self.representation_size = representation_size
         self.dropout_rate = dropout_rate
-        self.model = nn.Sequential(
-            nn.LazyLinear(representation_size),
-            nn.ELU(0.1),
-            nn.Dropout(dropout_rate)
-        )
+        self.model = SimpleSequentialModel(layers=1,
+                                           representation_size=representation_size,
+                                           dropout_rate=dropout_rate)
 
     def forward(self, x, **kwargs):
         return self.model(x)
