@@ -175,7 +175,7 @@ def main(args):
     else:
         model_instance = GlossTranslationModel
 
-# full model
+
     model = model_instance(lr=args.lr,
                            classification_mode=args.classification_mode,
                            classification_heads=model_config["heads"][args.classification_mode],
