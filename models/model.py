@@ -114,9 +114,11 @@ class GlossTranslationModel(pl.LightningModule):
             )
         )
 
-        self.landmarks_model = LandmarksSequentialModel(representation_size, transformer_dropout_rate)
+        self.landmarks_model = LandmarksSequentialModel(feature_extractor_parameters["representation_size"],
+                                                        transformer_parameters["dropout_rate"])
 
-        self.pretransformer_model = FeaturesSequentialModel(representation_size, transformer_dropout_rate)
+        self.pretransformer_model = FeaturesSequentialModel(feature_extractor_parameters["representation_size"],
+                                                            transformer_parameters["dropout_rate"])
         
         self.transformer = self.model_loader.load_transformer(
                 transformer_name=transformer_parameters["name"],
