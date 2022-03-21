@@ -27,7 +27,7 @@ class SimpleSequentialModel(nn.Module):
             ]
         )
         for _ in range(1, layers):
-            self.layers_list.append(nn.Linear(representation_size))
+            self.layers_list.append(nn.Linear(representation_size, representation_size))
             self.layers_list.append(nn.ELU(alpha))
             self.layers_list.append(nn.Dropout(dropout_rate))
 
