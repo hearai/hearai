@@ -14,6 +14,8 @@ from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
+from .lanmdarks_sequential_model import LandmarksSequentialModel
+from .features_sequential_model import FeaturesSequentialModel
 
 
 # initialize neptune logging
@@ -111,6 +113,13 @@ class GlossTranslationModel(pl.LightningModule):
                 model_path=feature_extractor_parameters["model_path"],
             )
         )
+
+        self.landmarks_model = LandmarksSequentialModel(feature_extractor_parameters["representation_size"],
+                                                        transformer_parameters["dropout_rate"])
+
+        self.pretransformer_model = FeaturesSequentialModel(feature_extractor_parameters["representation_size"],
+                                                            transformer_parameters["dropout_rate"])
+        
         self.transformer = self.model_loader.load_transformer(
                 transformer_name=transformer_parameters["name"],
                 feature_extractor_parameters=feature_extractor_parameters,
@@ -124,31 +133,48 @@ class GlossTranslationModel(pl.LightningModule):
 
     def forward(self, input, **kwargs):
         predictions = []
-        x = self.multi_frame_feature_extractor(input.to(self.device))
+        frames, landmarks = input
+
+        x = self.multi_frame_feature_extractor(frames.to(self.device))
+
+        if landmarks is not None:
+            x_landmarks = self._prepare_landmarks_tensor(landmarks)
+            x_landmarks = self.landmarks_model(x_landmarks)
+            x = torch.concat([x, x_landmarks], dim=-1)
+            x = self.pretransformer_model(x)
+
         x = self.transformer(x)
+
         for head in self.cls_head:
             predictions.append(head(x.cpu()))
         return predictions
 
+    def _prepare_landmarks_tensor(self, landmarks):
+        concatenated_landmarks = np.concatenate(
+            [landmarks[landmarks_name] for landmarks_name in landmarks.keys()],
+            axis=-1
+        )
+        return torch.as_tensor(concatenated_landmarks, dtype=torch.float32, device=self.device)
+
     def training_step(self, batch, batch_idx):
-        input, target = batch
-        targets = target["target"]
-        predictions = self(input)
-        loss = self.summary_loss(predictions, targets)
+        targets, predictions, losses = self._process_batch(batch)
         if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "step":
             self.freeze_step()
         if self.run:
-            self.run["metrics/batch/training_loss"].log(loss)
-        return {"loss": loss}
+            self.run["metrics/batch/training_loss"].log(losses)
+        return {"loss": losses}
 
     def validation_step(self, batch, batch_idx):
-        input, target = batch
-        targets = target["target"]
-        predictions = self(input)
-        loss = self.summary_loss(predictions, targets)
+        targets, predictions, losses = self._process_batch(batch)
         if self.run:
-            self.run["metrics/batch/validation_loss"].log(loss)
-        return {"val_loss": loss, "targets": targets, "predictions": predictions}
+            self.run["metrics/batch/validation_loss"].log(losses)
+        return {"val_loss": losses, "targets": targets, "predictions": predictions}
+
+    def _process_batch(self, batch):
+        frames, landmarks, targets = batch
+        predictions = self((frames, landmarks))
+        losses = self.summary_loss(predictions, targets)
+        return targets, predictions, losses
 
     def validation_epoch_end(self, out):
         head_names = list(self.classification_heads.keys())
