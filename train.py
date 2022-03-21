@@ -190,7 +190,7 @@ def main(args):
                            feedforward_size=model_config["transformer"]["feedforward_size"],
                            num_encoder_layers=model_config["transformer"]["num_encoder_layers"],
                            transformer_output_size=model_config["transformer"]["output_size"],
-                           warmup_steps=5000.0,
+                           warmup_steps=100.0,
                            multiply_lr_step=1,
                            freeze_scheduler=model_config["freeze_scheduler"]
                            )
@@ -200,7 +200,7 @@ def main(args):
         val_check_interval=1.0,
         gpus=[0] if args.gpu > -1 else None,
         progress_bar_refresh_rate=10,
-        accumulate_grad_batches=8,
+        accumulate_grad_batches=256,
         fast_dev_run=args.fast_dev_run,
     )
 

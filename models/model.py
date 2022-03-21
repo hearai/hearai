@@ -53,7 +53,7 @@ class GlossTranslationModel(pl.LightningModule):
                                 "loss_weight": 1}
                             },
         freeze_scheduler=None,
-        loss_function=nn.BCEWithLogitsLoss,
+        loss_function=nn.CrossEntropyLoss,
     ):
         super().__init__()
 
@@ -86,10 +86,21 @@ class GlossTranslationModel(pl.LightningModule):
         self.warmup_steps = warmup_steps
         self.multiply_lr_step = multiply_lr_step
         self.classification_heads = classification_heads
-        self.cls_head = []
+        self.cls_head = nn.ModuleList()
         self.loss_weights = []
         for value in self.classification_heads.values():
-            self.cls_head.append(nn.Linear(transformer_output_size, value["num_class"]))
+            # self.cls_head.append(nn.Linear(transformer_output_size, value["num_class"]))
+            self.cls_head.append(
+                nn.Sequential(
+                    nn.LazyLinear(representation_size),
+                    nn.ELU(0.1),
+                    nn.Dropout(transformer_dropout_rate),
+                    nn.Linear(representation_size, representation_size),
+                    nn.ELU(0.1),
+                    nn.Dropout(transformer_dropout_rate),
+                    nn.Linear(representation_size, value["num_class"])
+                )
+            )
             self.loss_weights.append(value["loss_weight"])
 
         # losses
@@ -132,18 +143,18 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = []
         frames, landmarks = input
 
-        x = self.multi_frame_feature_extractor(frames.to(self.device))
+        # x = self.multi_frame_feature_extractor(frames.to(self.device))
 
         if landmarks is not None:
             x_landmarks = self._prepare_landmarks_tensor(landmarks)
             x_landmarks = self.landmarks_model(x_landmarks)
-            x = torch.concat([x, x_landmarks], dim=-1)
+            x = x_landmarks  # torch.concat([x, x_landmarks], dim=-1)
             x = self.pretransformer_model(x)
 
         x = self.transformer(x)
 
         for head in self.cls_head:
-            predictions.append(head(x.cpu()))
+            predictions.append(head(x))
         return predictions
 
     def _prepare_landmarks_tensor(self, landmarks):

@@ -62,7 +62,7 @@ class SignLanguageTransformer(nn.Module):
         for slrt_layer in self._slrt_layers:
             x = slrt_layer(x)
 
-        x = self._last_norm(x)
+        # x = self._last_norm(x)
         x = torch.reshape(x, (x.shape[0], -1))
         x = self._last_linear(x)
         return x
@@ -111,11 +111,12 @@ class SLRTEncoder(nn.Module):
             dropout_rate=dropout_rate,
         )
         self._feedforward_sequential = nn.Sequential(
-            nn.LayerNorm(input_size),
-            nn.Linear(input_size, feedforward_size),
-            nn.ReLU(),
+            # nn.LayerNorm(input_size),
+            nn.Linear(2 * input_size, feedforward_size),
+            nn.ELU(0.1),
             nn.Dropout(dropout_rate),
             nn.Linear(feedforward_size, input_size),
+            nn.ELU(0.1),
             nn.Dropout(dropout_rate),
         )
 
@@ -133,7 +134,7 @@ class SLRTEncoder(nn.Module):
         attention_output = self._attention_dropout(attention_output)
 
         # Self Attention (Multi-Head Attention) End
-        x = input + attention_output
+        x = torch.concat([input, attention_output], dim=-1)  # input + attention_output
         feedforward_x = self._feedforward_sequential(x)
         # Feedforward End
 

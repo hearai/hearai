@@ -19,11 +19,11 @@ feature_extractor:
     representation_size: 1024
 
 transformer:
-    feedforward_size: 512
-    transformer_output_size: 512
-    num_attention_heads: 4
-    num_encoder_layers: 2
-    output_size: 512
+    feedforward_size: 1024
+    transformer_output_size: 1024
+    num_attention_heads: 8
+    num_encoder_layers: 1
+    output_size: 1024
     dropout_rate: 0.2
 
 heads:
@@ -61,6 +61,6 @@ freeze_scheduler:
     model_params:
         feature_extractor: [True]
         transformer: [False]
-    freeze_pattern_repeats: [1600]
-    freeze_mode: "step"
+    freeze_pattern_repeats: [16000]
+    freeze_mode: "epoch"
     verbose: False
