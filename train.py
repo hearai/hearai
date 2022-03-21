@@ -33,7 +33,7 @@ def get_args_parser():
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default='train_config_default.yml',
+        default='train_config_check.yml',
         help="path to .yaml config file specyfing hyperparameters of different model sections."
     )
     parser.add_argument(
@@ -175,6 +175,7 @@ def main(args):
     else:
         model_instance = GlossTranslationModel
 
+# full model
     model = model_instance(lr=args.lr,
                            classification_mode=args.classification_mode,
                            classification_heads=model_config["heads"][args.classification_mode],
