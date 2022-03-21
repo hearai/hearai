@@ -1,5 +1,5 @@
 import torch.nn as nn
-from models.common.simple_sequencial_model import SimpleSequentialModel
+from models.common.simple_sequential_model import SimpleSequentialModel
 
 
 class LandmarksSequentialModel(nn.Module):

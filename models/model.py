@@ -16,7 +16,7 @@ from models.feature_extractors.multi_frame_feature_extractor import (
 from models.model_loader import ModelLoader
 from models.common.lanmdarks_sequential_model import LandmarksSequentialModel
 from models.common.features_sequential_model import FeaturesSequentialModel
-
+from models.common.head_sequential_model import HeadClassificationSequentialModel
 
 # initialize neptune logging
 def initialize_neptun(tags):
@@ -95,10 +95,17 @@ class GlossTranslationModel(pl.LightningModule):
         self.warmup_steps = train_parameters["warmup_steps"]
         self.multiply_lr_step = train_parameters["multiply_lr_step"]
         self.classification_heads = heads[train_parameters['classification_mode']]
-        self.cls_head = []
+        self.cls_head = nn.ModuleList()
         self.loss_weights = []
         for value in self.classification_heads.values():
-            self.cls_head.append(nn.Linear(transformer_parameters["output_size"], value["num_class"]))
+            self.cls_head.append(
+                HeadClassificationSequentialModel(
+                    classes_number=value["num_class"],
+                    representation_size=transformer_parameters["output_size"],
+                    additional_layers=heads["model"]["additional_layers"],
+                    dropout_rate=heads["model"]["dropout_rate"]
+                )
+            )
             self.loss_weights.append(value["loss_weight"])
 
         # losses
@@ -146,7 +153,7 @@ class GlossTranslationModel(pl.LightningModule):
         x = self.transformer(x)
 
         for head in self.cls_head:
-            predictions.append(head(x.cpu()))
+            predictions.append(head(x))
         return predictions
 
     def _prepare_landmarks_tensor(self, landmarks):
