@@ -35,6 +35,7 @@ class PreTrainingModel(pl.LightningModule):
         transformer_parameters: Dict = None,
         heads: Dict = None,
         freeze_scheduler: Dict = None,
+        steps_per_epoch: int = 1000
     ):
         """
         Args:

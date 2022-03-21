@@ -94,9 +94,8 @@ def main(args):
         feature_extractor_parameters=model_config["feature_extractor"],
         transformer_parameters=model_config["transformer"],
         heads=model_config["heads"],
-        freeze_scheduler=model_config["freeze_scheduler"]),
-        steps_per_epoch=max(1, len(train_subset) // model_config["train_parameters"]["batch_size"])
-    )
+        freeze_scheduler=model_config["freeze_scheduler"],
+        steps_per_epoch=max(1, len(train_subset) // model_config["train_parameters"]["batch_size"]))
 
     trainer = pl.Trainer(
         max_epochs=model_config['train_parameters']['epochs'],

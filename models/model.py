@@ -39,7 +39,8 @@ class GlossTranslationModel(pl.LightningModule):
         transformer_parameters: Dict = None,
         heads: Dict = None,
         freeze_scheduler: Dict = None,
-        loss_function=nn.BCEWithLogitsLoss
+        loss_function=nn.BCEWithLogitsLoss,
+        steps_per_epoch: int = 1000
     ):
         """
         Args:
