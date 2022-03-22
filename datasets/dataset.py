@@ -120,7 +120,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                             consecutive frames are loaded.
         imagefile_template: The image filename template that video frame files
                             have inside of their video folders.
-        landmarks: If True, additional landmarks are taken as annotations
+        use_landmarks: If True, additional landmarks are taken as annotations
         transform: Transform pipeline that receives a list of PIL images/frames.
         test_mode: If True, frames are taken from the center of each
                    segment, instead of a random location in each segment.
@@ -136,7 +136,8 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         frames_per_segment: int = 1,
         time: Union[float, None] = None,
         imagefile_template: str = "{:s}_{:d}.jpg",
-        landmarks: bool = False,
+        use_frames: bool = True,
+        use_landmarks: bool = False,
         use_face_landmarks: bool = False,
         transform=None,
         test_mode: bool = False,
@@ -149,7 +150,8 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.frames_per_segment = frames_per_segment
         self.time = time
         self.imagefile_template = imagefile_template
-        self.landmarks = landmarks
+        self.use_frames = use_frames
+        self.use_landmarks = use_landmarks
         self.use_face_landmarks = use_face_landmarks
         self.transform = transform
         self.test_mode = test_mode
@@ -321,9 +323,11 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         """
 
         frame_start_indices = frame_start_indices + record.start_frame
-        images = []
+        images = None
+        if self.use_frames:
+            images = []
         landmarks = None
-        if self.landmarks:
+        if self.use_landmarks:
             landmarks = {"right_hand": [], "left_hand": [], "pose": []}
             if self.use_face_landmarks:
                 landmarks["face"] = []
@@ -333,7 +337,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         # consecutive frames
         for start_index in frame_start_indices:
             frame_index = int(start_index)
-            if self.landmarks:
+            if self.use_landmarks:
                 landmarks["pose"].append(pose[frame_index, :])
                 landmarks["right_hand"].append(right_hand[frame_index, :])
                 landmarks["left_hand"].append(left_hand[frame_index, :])
@@ -341,12 +345,13 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                     landmarks["face"].append(face[frame_index, :])
 
             # load self.frames_per_segment consecutive frames
-            for _ in range(self.frames_per_segment):
-                image = self._load_image(record.path, frame_index)
-                images.append(image)
+            if self.use_frames:
+                for _ in range(self.frames_per_segment):
+                    image = self._load_image(record.path, frame_index)
+                    images.append(image)
 
-                if frame_index < record.end_frame:
-                    frame_index += 1
+                    if frame_index < record.end_frame:
+                        frame_index += 1
         # create target in one-hot encoding form
         target = []
         labels = []
@@ -362,7 +367,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             else:
                 target.append(torch.tensor(x))
 
-        if self.transform is not None:
+        if self.transform is not None and self.use_frames:
             images = self.transform(images)
 
         return images, {"target": target, "landmarks": landmarks}
@@ -426,20 +431,22 @@ class PadCollate:
             targets.append(item['target'])
             landmarks.append(item['landmarks'])
 
-        # get new dimensions
-        dims = [len(seqs)]
-        dims.extend(list(seqs[0].shape))
-        dims[1] = self.total_length
+        new_batch = None
+        if seqs[0] is not None:
+            # get new dimensions
+            dims = [len(seqs)]
+            dims.extend(list(seqs[0].shape))
+            dims[1] = self.total_length
 
-        # pad all seqs to desired length with 0
-        # or get rid of too many frames
-        new_batch = torch.zeros(dims)
-        for i, tensor in enumerate(seqs):
-            length = tensor.size(0)
-            if length <= self.total_length:
-                new_batch[i, :length, ...] = tensor
-            else:
-                new_batch[i, ...] = tensor[: self.total_length, ...]
+            # pad all seqs to desired length with 0
+            # or get rid of too many frames
+            new_batch = torch.zeros(dims)
+            for i, tensor in enumerate(seqs):
+                length = tensor.size(0)
+                if length <= self.total_length:
+                    new_batch[i, :length, ...] = tensor
+                else:
+                    new_batch[i, ...] = tensor[: self.total_length, ...]
 
         # padding for landmarks
         stacked_landmarks = None

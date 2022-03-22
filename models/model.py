@@ -1,13 +1,15 @@
 from typing import Dict
 
 import neptune.new as neptune
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
+from torch.optim.lr_scheduler import MultiplicativeLR
 from utils.summary_loss import SummaryLoss
 
-from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
@@ -78,7 +80,7 @@ class GlossTranslationModel(pl.LightningModule):
             self.run = initialize_neptun(tags)
             self.run["parameters"] = {
                 "general_parameters": general_parameters,
-                "train_parameters": general_parameters,
+                "train_parameters": train_parameters,
                 "feature_extractor_parameters": feature_extractor_parameters,
                 "transformer_parameters": transformer_parameters,
                 "heads": heads,
@@ -93,6 +95,8 @@ class GlossTranslationModel(pl.LightningModule):
         self.model_save_dir = general_parameters["path_to_save"]
         self.warmup_steps = train_parameters["warmup_steps"]
         self.multiply_lr_step = train_parameters["multiply_lr_step"]
+        self.use_frames = train_parameters["use_frames"]
+        self.use_landmarks = train_parameters["use_landmarks"]
         self.classification_heads = heads[train_parameters['classification_mode']]
         self.cls_head = nn.ModuleList()
         self.loss_weights = []
@@ -112,19 +116,26 @@ class GlossTranslationModel(pl.LightningModule):
 
         # models-parts
         self.model_loader = ModelLoader()
-        self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
-            self.model_loader.load_feature_extractor(
-                feature_extractor_name=feature_extractor_parameters["name"],
-                representation_size=feature_extractor_parameters["representation_size"],
-                model_path=feature_extractor_parameters["model_path"]
+
+        if self.use_frames:
+            self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
+                self.model_loader.load_feature_extractor(
+                    feature_extractor_name=feature_extractor_parameters["name"],
+                    representation_size=feature_extractor_parameters["representation_size"],
+                    model_path=feature_extractor_parameters["model_path"],
+                )
             )
-        )
+        else:
+            self.multi_frame_feature_extractor = None
 
-        self.landmarks_model = LandmarksSequentialModel(feature_extractor_parameters["representation_size"],
-                                                        transformer_parameters["dropout_rate"])
-
-        self.pretransformer_model = FeaturesSequentialModel(feature_extractor_parameters["representation_size"],
+        if self.use_landmarks:
+            self.landmarks_model = LandmarksSequentialModel(feature_extractor_parameters["representation_size"],
                                                             transformer_parameters["dropout_rate"])
+            self.pretransformer_model = FeaturesSequentialModel(feature_extractor_parameters["representation_size"],
+                                                                transformer_parameters["dropout_rate"])
+        else:
+            self.landmarks_model = None
+            self.pretransformer_model = None
         
         self.transformer = self.model_loader.load_transformer(
                 transformer_name=transformer_parameters["name"],
@@ -142,12 +153,16 @@ class GlossTranslationModel(pl.LightningModule):
         predictions = []
         frames, landmarks = input
 
-        x = self.multi_frame_feature_extractor(frames.to(self.device))
+        if self.use_frames:
+            x = self.multi_frame_feature_extractor(frames.to(self.device))
 
-        if landmarks is not None:
+        if self.use_landmarks:
             x_landmarks = self._prepare_landmarks_tensor(landmarks)
             x_landmarks = self.landmarks_model(x_landmarks)
-            x = torch.concat([x, x_landmarks], dim=-1)
+            if self.use_frames:
+                x = torch.concat([x, x_landmarks], dim=-1)
+            else:
+                x = x_landmarks
             x = self.pretransformer_model(x)
 
         x = self.transformer(x)
@@ -219,7 +234,7 @@ class GlossTranslationModel(pl.LightningModule):
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
-            
+
             self.scheduler.step()
             if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "epoch":
                 self.freeze_step()

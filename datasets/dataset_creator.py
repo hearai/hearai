@@ -19,7 +19,8 @@ class DatasetCreator:
                  classification_heads: int,
                  num_segments: int,
                  time: float,
-                 landmarks: bool,
+                 use_frames: bool,
+                 use_landmarks: bool,
                  ratio: float,
                  pre_training: bool,
                  transforms_creator: TransformsCreator):
@@ -28,7 +29,8 @@ class DatasetCreator:
         self.classification_heads = classification_heads
         self.num_segments = num_segments
         self.time = time
-        self.landmarks = landmarks
+        self.use_frames = use_frames
+        self.use_landmarks = use_landmarks
         self.ratio = ratio
         self.pre_training = pre_training
         self.transforms_creator = transforms_creator
@@ -61,7 +63,8 @@ class DatasetCreator:
                 is_pretraining=self.pre_training,
                 num_segments=self.num_segments,
                 time=self.time,
-                landmarks=self.landmarks,
+                use_frames=self.use_frames,
+                use_landmarks=self.use_landmarks,
                 transform=transform,
                 test_mode=True,
             )
