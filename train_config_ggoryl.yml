@@ -34,26 +34,26 @@ train_parameters:
     use_frames: False
     use_landmarks: True
     time: 0.2
-    warmup_steps: 1000.0
+    warmup_steps: 5000.0
     multiply_lr_step: 1
 
 feature_extractor:
     name: "cnn_extractor"
     model_path: "efficientnet_b1"
-    representation_size: 512
+    representation_size: 256
 
 transformer:
     name: "sign_language_transformer"
-    feedforward_size: 512
-    num_attention_heads: 8
+    feedforward_size: 256
+    num_attention_heads: 1
     num_encoder_layers: 2
-    output_size: 512
+    output_size: 256
     dropout_rate: 0.2
 
 heads:
     model:
         additional_layers: 3
-        dropout_rate: 0.1
+        dropout_rate: 0.2
     gloss:
         gloss:
             num_class: 2400
