@@ -3,17 +3,16 @@ from typing import Dict
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import numpy as np
-from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
-import neptune.new as neptune
-from torch.optim.lr_scheduler import MultiplicativeLR
 from sklearn.metrics import classification_report
-from utils.summary_loss import SummaryLoss
 
+from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
+from utils.summary_loss import SummaryLoss
+
+
 # initialize neptune logging
 def initialize_neptun(tags):
     return neptune.init(
@@ -36,6 +35,7 @@ class PreTrainingModel(pl.LightningModule):
         transformer_parameters: Dict = None,
         heads: Dict = None,
         freeze_scheduler: Dict = None,
+        steps_per_epoch: int = 1000
     ):
         """
         Args:
@@ -67,7 +67,6 @@ class PreTrainingModel(pl.LightningModule):
             freeze_scheduler (Dict): Dict containing information describing feature_extractor & transformer freezing/unfreezing process.
         """
         super().__init__()
-
         if general_parameters["neptune"]:
             tags = [train_parameters["classification_mode"], feature_extractor_parameters["name"], transformer_parameters["name"], "pre_training"]
             self.run = initialize_neptun(tags)
@@ -81,7 +80,7 @@ class PreTrainingModel(pl.LightningModule):
             }
         else:
             self.run = None
- 
+
         # parameters
         self.lr = train_parameters["lr"]
         self.model_save_dir = general_parameters["path_to_save"]
@@ -107,6 +106,8 @@ class PreTrainingModel(pl.LightningModule):
         self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
             self.feature_extractor
         )
+
+        self.steps_per_epoch = steps_per_epoch
 
     def forward(self, input, **kwargs):
         predictions = []
@@ -168,32 +169,24 @@ class PreTrainingModel(pl.LightningModule):
             torch.save(self.state_dict(), self.model_save_dir)
 
     def configure_optimizers(self):
-        # set optimizer
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.RAdam(self.parameters(), lr=self.lr)
 
-        # set scheduler: multiply lr every epoch
-        def lambd(epoch):
-            return self.multiply_lr_step
-
-        scheduler = MultiplicativeLR(optimizer, lr_lambda=lambd)
-        return [optimizer], [scheduler]
+        steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr, epochs=self.trainer.max_epochs,
+                                                             steps_per_epoch=steps_per_epoch)
+        return [optimizer], [self.scheduler]
 
     def optimizer_step(
-        self,
-        epoch,
-        batch_idx,
-        optimizer,
-        optimizer_idx,
-        optimizer_closure,
-        on_tpu=False,
-        using_native_amp=False,
-        using_lbfgs=False,
+            self,
+            epoch,
+            batch_idx,
+            optimizer,
+            optimizer_idx,
+            optimizer_closure,
+            on_tpu=False,
+            using_native_amp=False,
+            using_lbfgs=False,
     ):
-        # set warm-up
-        if self.trainer.global_step < self.warmup_steps:
-            lr_scale = min(1.0, float(self.trainer.global_step + 1) / self.warmup_steps)
-            for pg in optimizer.param_groups:
-                pg["lr"] = lr_scale * self.lr
 
         optimizer.step(closure=optimizer_closure)
         if self.run:
