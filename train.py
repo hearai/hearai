@@ -56,7 +56,8 @@ def main(args):
         classification_heads=model_config["heads"][model_config["train_parameters"]["classification_mode"]],
         num_segments=model_config["train_parameters"]["num_segments"],
         time=model_config["train_parameters"]["time"],
-        landmarks=model_config["train_parameters"]["landmarks"],
+        use_frames=model_config["train_parameters"]["use_frames"],
+        use_landmarks=model_config["train_parameters"]["use_landmarks"],
         ratio=model_config["general_parameters"]["ratio_train_test"],
         pre_training=model_config["train_parameters"]["pre_training"],
         transforms_creator=transforms_creator)
