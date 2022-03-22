@@ -14,9 +14,9 @@ class LSTM(torch.nn.Module):
         **kwargs
     ):
         """
-        Lightweight function of basic LSTM model
+        Lightweight basic LSTM model.
         
-        Required args:
+        Required args (should be passed in a Dict):
             input_size (int): Input size fot the LSTM model. Should be equal to the output size of the feature_extrator.
             output_size (int): Output size. Should be equal to the selected representation size. 
             num_frames (int): Number of input frames.
