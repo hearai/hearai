@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
-from torch.optim.lr_scheduler import MultiplicativeLR
 from utils.summary_loss import SummaryLoss
 
 from models.feature_extractors.multi_frame_feature_extractor import (
