@@ -90,7 +90,7 @@ class PreTrainingModel(pl.LightningModule):
         self.cls_head = []
         self.loss_weights = []
         for value in self.classification_heads.values():
-            self.cls_head.append(nn.Linear(transformer_parameters["output_size"], value["num_class"]))
+            self.cls_head.append(nn.Linear(feature_extractor_parameters["representation_size"], value["num_class"]))
             self.loss_weights.append(value["loss_weight"])
 
         # losses
