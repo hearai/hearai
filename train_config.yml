@@ -1,5 +1,8 @@
 general_parameters:
-    data_paths: ["assets/sanity_check_data"]
+    data_paths: ["/dih4/dih4_2/hearai/nczerep/pjm-keyframes/",
+                "/dih4/dih4_2/hearai/nczerep/basiclexicon-keyframes/",
+                "/dih4/dih4_2/hearai/nczerep/galex-keyframes/",
+                "/dih4/dih4_2/hearai/nczerep/glex-keyframes/"]
     ratio_train_test: 0.8
     workers: 0
     gpu: -1
