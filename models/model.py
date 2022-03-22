@@ -4,9 +4,7 @@ import neptune.new as neptune
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
-from torch.optim.lr_scheduler import MultiplicativeLR
 from utils.summary_loss import SummaryLoss
 
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
@@ -14,9 +12,9 @@ from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
-from models.common.lanmdarks_sequential_model import LandmarksSequentialModel
-from models.common.features_sequential_model import FeaturesSequentialModel
-from models.common.head_sequential_model import HeadClassificationSequentialModel
+from models.landmarks_models.lanmdarks_sequential_model import LandmarksSequentialModel
+from models.landmarks_models.features_sequential_model import FeaturesSequentialModel
+from models.head_models.head_sequential_model import HeadClassificationSequentialModel
 
 # initialize neptune logging
 def initialize_neptun(tags):
