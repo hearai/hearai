@@ -50,6 +50,9 @@ transformer:
     dropout_rate: 0.2
 
 heads:
+    model:
+        additional_layers: 0
+        dropout_rate: 0.1
     gloss:
         gloss:
             num_class: 2400
