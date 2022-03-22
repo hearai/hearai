@@ -28,12 +28,12 @@ train_parameters:
     epochs: 5000
     batch_size: 8
     lr: 0.0003
-    num_segments: 16
+    num_segments: 32
     fast_dev_run: False
     pre_training: False
     use_frames: False
     use_landmarks: True
-    time: null
+    time: 0.2
     warmup_steps: 1000.0
     multiply_lr_step: 1
 
