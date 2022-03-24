@@ -162,17 +162,15 @@ class MultiHeadedAttention(nn.Module):
         """
         super(MultiHeadedAttention, self).__init__()
 
-        assert size % num_heads == 0
-
-        self.head_size = head_size = size // num_heads
+        self.head_size = head_size = size
         self.model_size = size
         self.num_heads = num_heads
 
-        self.k_layer = nn.Linear(size, num_heads * head_size)
-        self.v_layer = nn.Linear(size, num_heads * head_size)
-        self.q_layer = nn.Linear(size, num_heads * head_size)
+        self.k_layer = nn.Linear(size, self.num_heads * head_size)
+        self.v_layer = nn.Linear(size, self.num_heads * head_size)
+        self.q_layer = nn.Linear(size, self.num_heads * head_size)
 
-        self.output_layer = nn.Linear(size, size)
+        self.output_layer = nn.Linear(self.num_heads * size, size)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(
@@ -183,7 +181,6 @@ class MultiHeadedAttention(nn.Module):
         mask: torch.Tensor = None,
     ):
         batch_size = k.size(0)
-        num_heads = self.num_heads
 
         # project the queries (q), keys (k), and values (v)
         k = self.k_layer(k)
@@ -191,9 +188,9 @@ class MultiHeadedAttention(nn.Module):
         q = self.q_layer(q)
 
         # reshape q, k, v for our computation to [batch_size, num_heads, ..]
-        k = k.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
-        v = v.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
-        q = q.view(batch_size, -1, num_heads, self.head_size).transpose(1, 2)
+        k = k.view(batch_size, -1, self.num_heads, self.head_size).transpose(1, 2)
+        v = v.view(batch_size, -1, self.num_heads, self.head_size).transpose(1, 2)
+        q = q.view(batch_size, -1, self.num_heads, self.head_size).transpose(1, 2)
 
         # compute scores
         q = q / math.sqrt(self.head_size)
@@ -214,7 +211,7 @@ class MultiHeadedAttention(nn.Module):
         context = (
             context.transpose(1, 2)
             .contiguous()
-            .view(batch_size, -1, num_heads * self.head_size)
+            .view(batch_size, -1, self.num_heads * self.head_size)
         )
 
         output = self.output_layer(context)
