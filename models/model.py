@@ -8,6 +8,7 @@ import torch.nn as nn
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
 from utils.summary_loss import SummaryLoss
+from math import ceil
 
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
@@ -241,9 +242,12 @@ class GlossTranslationModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.RAdam(self.parameters(), lr=self.lr)
 
-        steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
-        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr,
-                                                             total_steps=self.trainer.max_epochs * steps_per_epoch + 2)
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
+                                                             max_lr=self.lr,
+                                                             div_factor=100,
+                                                             final_div_factor=10,
+                                                             pct_start=0.2,
+                                                             total_steps=self.trainer.max_epochs * self.steps_per_epoch)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(
