@@ -114,11 +114,12 @@ class SLRTEncoder(nn.Module):
             dropout_rate=dropout_rate,
         )
         self._feedforward_sequential = nn.Sequential(
-            nn.LayerNorm(input_size),
-            nn.Linear(input_size, feedforward_size),
+            nn.LayerNorm(2 * input_size),
+            nn.Linear(2 * input_size, feedforward_size),
             nn.ELU(0.1),
             nn.Dropout(dropout_rate),
             nn.Linear(feedforward_size, input_size),
+            nn.ELU(0.1),
             nn.Dropout(dropout_rate),
         )
 
@@ -136,7 +137,7 @@ class SLRTEncoder(nn.Module):
         attention_output = self._attention_dropout(attention_output)
 
         # Self Attention (Multi-Head Attention) End
-        x = input + attention_output
+        x = torch.concat([input, attention_output], dim=-1)
         feedforward_x = self._feedforward_sequential(x)
         # Feedforward End
 
