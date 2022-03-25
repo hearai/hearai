@@ -7,8 +7,8 @@ class Conv1DFeaturesProcessor(nn.Module):
 
     def __init__(self,
                  representation_size: int = 512,
-                 channels_factor: int = 2,
-                 kernel_size: int = 5,
+                 channels_factor: int = 3,
+                 kernel_size: int = 3,
                  additional_layers: int = 2,
                  dropout_rate: float = 0.2):
         super().__init__()
