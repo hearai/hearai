@@ -16,8 +16,8 @@ from models.feature_extractors.multi_frame_feature_extractor import (
 from models.model_loader import ModelLoader
 from models.common.simple_sequential_model import SimpleSequentialModel
 from models.landmarks_models.lanmdarks_sequential_model import LandmarksSequentialModel
-from models.landmarks_models.features_sequential_model import FeaturesSequentialModel
 from models.head_models.head_sequential_model import HeadClassificationSequentialModel
+from models.feature_extractors.conv1d_features_processor import Conv1DFeaturesProcessor
 
 # initialize neptune logging
 def initialize_neptun(tags):
@@ -134,11 +134,11 @@ class GlossTranslationModel(pl.LightningModule):
         if self.use_landmarks:
             self.landmarks_model = LandmarksSequentialModel(representation_size,
                                                             transformer_parameters["dropout_rate"])
-            self.pretransformer_model = FeaturesSequentialModel(representation_size,
-                                                                transformer_parameters["dropout_rate"])
         else:
             self.landmarks_model = None
-            self.pretransformer_model = None
+
+        self.pretransformer_model = Conv1DFeaturesProcessor(representation_size=representation_size,
+                                                            dropout_rate=heads["model"]["dropout_rate"])
         
         self.transformer = self.model_loader.load_transformer(
                 transformer_name=transformer_parameters["name"],
@@ -168,9 +168,10 @@ class GlossTranslationModel(pl.LightningModule):
             x_landmarks = self.landmarks_model(x_landmarks)
             if self.use_frames:
                 x = torch.concat([x, x_landmarks], dim=-1)
-                x = self.pretransformer_model(x)
             else:
                 x = x_landmarks
+
+        x = self.pretransformer_model(x)
 
         x = self.transformer(x)
 
