@@ -10,7 +10,7 @@ class FeaturesSequentialModel(nn.Module):
 
         self.representation_size = representation_size
         self.dropout_rate = dropout_rate
-        self.model = SimpleSequentialModel(layers=3,
+        self.model = SimpleSequentialModel(layers=2,
                                            representation_size=representation_size,
                                            dropout_rate=dropout_rate)
 
