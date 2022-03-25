@@ -1,5 +1,8 @@
 general_parameters:
-    data_paths: ["assets/sanity_check_data"]
+    data_paths: ["/dih4/dih4_2/hearai/nczerep/pjm-keyframes/",
+                "/dih4/dih4_2/hearai/nczerep/basiclexicon-keyframes/",
+                "/dih4/dih4_2/hearai/nczerep/galex-keyframes/",
+                "/dih4/dih4_2/hearai/nczerep/glex-keyframes/"]
     ratio_train_test: 0.8
     workers: 0
     gpu: -1
@@ -31,7 +34,8 @@ train_parameters:
     num_segments: 20
     fast_dev_run: False
     pre_training: False
-    landmarks: False
+    use_frames: True
+    use_landmarks: False
     time: null
     warmup_steps: 20.0
     multiply_lr_step: 0.95
@@ -50,6 +54,9 @@ transformer:
     dropout_rate: 0.2
 
 heads:
+    model:
+        additional_layers: 0
+        dropout_rate: 0.1
     gloss:
         gloss:
             num_class: 2400

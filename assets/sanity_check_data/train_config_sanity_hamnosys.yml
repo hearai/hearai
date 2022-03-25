@@ -31,7 +31,8 @@ train_parameters:
     num_segments: 8
     fast_dev_run: True
     pre_training: False
-    landmarks: False
+    use_frames: True
+    use_landmarks: False
     time: null
     warmup_steps: 20.0
     multiply_lr_step: 0.95
@@ -50,6 +51,9 @@ transformer:
     dropout_rate: 0.1
 
 heads:
+    model:
+        additional_layers: 1
+        dropout_rate: 0.1
     gloss:
         gloss:
             num_class: 2400
