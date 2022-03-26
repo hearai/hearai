@@ -76,4 +76,4 @@ class DatasetCreator:
         return train_len, val_len
 
     def _get_annotations_path(self, video_root: str) -> str:
-        return os.path.join(video_root, f'test_{self.classification_mode}.txt')
+        return os.path.join(video_root, f'test_{self.classification_mode}_cut_less.txt')

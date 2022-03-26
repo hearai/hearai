@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from datasets.dataset import PadCollate
 from datasets.dataset_creator import DatasetCreator
 from datasets.transforms_creator import TransformsCreator
-from models.model import GlossTranslationModel
+from models.video_model import GlossTranslationModel
 from models.model_for_pretraining import PreTrainingModel
 
 warnings.filterwarnings("ignore")

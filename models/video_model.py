@@ -1,18 +1,16 @@
 from typing import Dict
 
 import neptune.new as neptune
-import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
 from torch.optim.lr_scheduler import MultiplicativeLR
-from torchvision import models
-from utils.summary_loss import SummaryLoss
+from torchvision.models.video import r2plus1d_18
 
+from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from models.model_loader import ModelLoader
-from models.feature_extractors.video_resnet import CustomVideoResNet
+from utils.summary_loss import SummaryLoss
 
 
 # initialize neptune logging
@@ -30,15 +28,15 @@ class GlossTranslationModel(pl.LightningModule):
     """Awesome model for Gloss Translation"""
 
     def __init__(
-        self,
-        general_parameters: Dict = None,
-        train_parameters: Dict = None,
-        feature_extractor_parameters: Dict = None,
-        transformer_parameters: Dict = None,
-        heads: Dict = None,
-        freeze_scheduler: Dict = None,
-        loss_function=nn.BCEWithLogitsLoss,
-        steps_per_epoch: int = 1000,
+            self,
+            general_parameters: Dict = None,
+            train_parameters: Dict = None,
+            feature_extractor_parameters: Dict = None,
+            transformer_parameters: Dict = None,
+            heads: Dict = None,
+            freeze_scheduler: Dict = None,
+            loss_function=nn.BCEWithLogitsLoss,
+            steps_per_epoch: int = 1000,
     ):
         """
         Args:
@@ -88,7 +86,7 @@ class GlossTranslationModel(pl.LightningModule):
         self.classification_heads = heads[train_parameters["classification_mode"]]
         self.num_segments = train_parameters["num_segments"]
         self.num_channels = 3
-        
+
         # heads
         self.cls_head = []
         self.loss_weights = []
@@ -103,7 +101,7 @@ class GlossTranslationModel(pl.LightningModule):
 
         # models-parts
         self.model_loader = ModelLoader()
-        self.multi_frame_feature_extractor = CustomVideoResNet(feature_extractor_parameters["representation_size"])
+        self.multi_frame_feature_extractor = r2plus1d_18(True)
 
     def forward(self, input, **kwargs):
         predictions = []
@@ -163,7 +161,7 @@ class GlossTranslationModel(pl.LightningModule):
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
-            
+
     def configure_optimizers(self):
         # set optimizer
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
@@ -176,15 +174,15 @@ class GlossTranslationModel(pl.LightningModule):
         return [optimizer], [self.scheduler]
 
     def optimizer_step(
-        self,
-        epoch,
-        batch_idx,
-        optimizer,
-        optimizer_idx,
-        optimizer_closure,
-        on_tpu=False,
-        using_native_amp=False,
-        using_lbfgs=False,
+            self,
+            epoch,
+            batch_idx,
+            optimizer,
+            optimizer_idx,
+            optimizer_closure,
+            on_tpu=False,
+            using_native_amp=False,
+            using_lbfgs=False,
     ):
         # set warm-up
         if self.trainer.global_step < self.warmup_steps:

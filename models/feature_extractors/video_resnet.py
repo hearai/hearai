@@ -1,5 +1,6 @@
-from typing import Tuple, Optional, Callable, List, Sequence, Type, Any, Union
-from torchvision.models.video.resnet import VideoResNet, BasicBlock, Conv3DSimple, Conv3DNoTemporal, BasicStem, R2Plus1dStem, Conv2Plus1D
+from typing import Any
+
+from torchvision.models.video.resnet import VideoResNet, BasicBlock, R2Plus1dStem, Conv2Plus1D
 
 
 def CustomVideoResNet(num_classes, **kwargs: Any):
