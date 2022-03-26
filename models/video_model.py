@@ -5,7 +5,6 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from sklearn.metrics import classification_report, f1_score
-from torch.optim.lr_scheduler import MultiplicativeLR
 from torchvision.models.video import r2plus1d_18
 
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
@@ -166,11 +165,9 @@ class GlossTranslationModel(pl.LightningModule):
         # set optimizer
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
 
-        # set scheduler: multiply lr every epoch
-        def lambd(epoch):
-            return self.multiply_lr_step
+        self.scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.lr, max_lr=0.001, step_size_up=5,
+                                                           mode="exp_range", gamma=0.85, cycle_momentum=False)
 
-        self.scheduler = MultiplicativeLR(optimizer, lr_lambda=lambd)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(

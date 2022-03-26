@@ -1,5 +1,5 @@
 general_parameters:
-    data_paths: ["/dih4/dih4_2/hearai/nczerep/glex-keyframes/", "/dih4/dih4_2/hearai/nczerep/basiclexicon-keyframes/", "/dih4/dih4_2/hearai/nczerep/galex-keyframes/", "/dih4/dih4_2/hearai/nczerep/pjm-keyframes/"]
+    data_paths: ['/dih4/dih4_2/hearai/nczerep/pjm-keyframes/', '/dih4/dih4_2/hearai/nczerep/basiclexicon-keyframes/', '/dih4/dih4_2/hearai/nczerep/galex-keyframes/', '/dih4/dih4_2/hearai/nczerep/glex-keyframes/']
     ratio_train_test: 0.8
     workers: 8
     gpu: 1
@@ -10,22 +10,22 @@ general_parameters:
 augmentations_parameters:
     apply_resize: True
     apply_center_crop: True
-    apply_random_erasing: False
+    apply_random_erasing: True
     apply_random_rotation: True
-    apply_color_jitter: False
+    apply_color_jitter: True
 
     resize_size: 240
     center_crop_size: 224
     random_erasing_probability: 0
-    random_rotation_degree: 10
-    color_jitter_brightness: 0.1
-    color_jitter_contrast: 0.1
-    color_jitter_saturation: 0.1
+    random_rotation_degree: 5
+    color_jitter_brightness: 0.05
+    color_jitter_contrast: 0.05
+    color_jitter_saturation: 0.05
     color_jitter_hue: 0.05
 
 train_parameters:
     classification_mode: "hamnosys"
-    epochs: 1
+    epochs: 40
     batch_size: 1
     accumulate_grad_batches: 16
     lr: 0.0005
