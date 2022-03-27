@@ -17,7 +17,6 @@ from models.model_loader import ModelLoader
 from models.common.simple_sequential_model import SimpleSequentialModel
 from models.landmarks_models.lanmdarks_sequential_model import LandmarksSequentialModel
 from models.head_models.head_sequential_model import HeadClassificationSequentialModel
-from models.feature_extractors.conv1d_features_processor import Conv1DFeaturesProcessor
 
 # initialize neptune logging
 def initialize_neptun(tags):
@@ -105,8 +104,9 @@ class GlossTranslationModel(pl.LightningModule):
             self.cls_head.append(
                 HeadClassificationSequentialModel(
                     classes_number=value["num_class"],
-                    representation_size=3 * value["num_class"],
-                    additional_layers=heads["model"]["additional_layers"],
+                    representation_size=5 * value["num_class"],
+                    additional_layers=int(max(heads["model"]["additional_layers"],
+                                              value["num_class"] / 2)),
                     dropout_rate=heads["model"]["dropout_rate"]
                 )
             )
@@ -137,9 +137,6 @@ class GlossTranslationModel(pl.LightningModule):
         else:
             self.landmarks_model = None
 
-        self.pretransformer_model = Conv1DFeaturesProcessor(representation_size=representation_size,
-                                                            dropout_rate=heads["model"]["dropout_rate"])
-        
         self.transformer = self.model_loader.load_transformer(
                 transformer_name=transformer_parameters["name"],
                 feature_extractor_parameters=feature_extractor_parameters,
@@ -170,8 +167,6 @@ class GlossTranslationModel(pl.LightningModule):
                 x = torch.concat([x, x_landmarks], dim=-1)
             else:
                 x = x_landmarks
-
-        x = self.pretransformer_model(x)
 
         x = self.transformer(x)
 
@@ -254,8 +249,8 @@ class GlossTranslationModel(pl.LightningModule):
 
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
                                                              max_lr=self.lr,
-                                                             div_factor=100,
-                                                             final_div_factor=10,
+                                                             div_factor=10,
+                                                             final_div_factor=100,
                                                              pct_start=0.2,
                                                              total_steps=self.trainer.max_epochs * self.steps_per_epoch + 2)
         return [optimizer], [self.scheduler]
