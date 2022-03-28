@@ -185,6 +185,7 @@ class GlossTranslationModel(pl.LightningModule):
                 for param in child.parameters():
                     param.requires_grad = True
         if self.freeze_scheduler["freeze_mode"] == "step":
+            self.freeze_step()
         if self.run:
             self.run["metrics/batch/training_loss"].log(losses)
         return {"loss": losses}
