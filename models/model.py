@@ -1,18 +1,21 @@
+from typing import Dict
+
 import neptune.new as neptune
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
-from sklearn.metrics import classification_report
-from torch.optim.lr_scheduler import MultiplicativeLR
+from sklearn.metrics import classification_report, f1_score
 from utils.summary_loss import SummaryLoss
 
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
-
+from models.landmarks_models.lanmdarks_sequential_model import LandmarksSequentialModel
+from models.landmarks_models.features_sequential_model import FeaturesSequentialModel
+from models.head_models.head_sequential_model import HeadClassificationSequentialModel
 
 # initialize neptune logging
 def initialize_neptun(tags):
@@ -30,127 +33,173 @@ class GlossTranslationModel(pl.LightningModule):
 
     def __init__(
         self,
-        lr=1e-5,
-        multiply_lr_step=0.7,
-        warmup_steps=100.0,
-        transformer_output_size=1024,
-        representation_size=2048,
-        feedforward_size=4096,
-        num_encoder_layers=1,
-        num_segments=8,
-        num_attention_heads=16,
-        transformer_dropout_rate=0.1,
-        classification_mode="gloss",
-        feature_extractor_name="cnn_extractor",
-        feature_extractor_model_path="efficientnet_b1",
-        transformer_name="fake_transformer",
-        model_save_dir="",
-        neptune=False,
-        classification_heads={"gloss": {
-                                "num_class": 2400, 
-                                "loss_weight": 1}
-                            },
-        freeze_scheduler=None,
+        general_parameters: Dict = None,
+        train_parameters: Dict = None,
+        feature_extractor_parameters: Dict = None,
+        transformer_parameters: Dict = None,
+        heads: Dict = None,
+        freeze_scheduler: Dict = None,
+        loss_function=nn.BCEWithLogitsLoss,
+        steps_per_epoch: int = 1000
     ):
+        """
+        Args:
+            general_parameters (Dict): Dict containing general parameters not parameterizing training process.
+                [Warning] Must contain fields:
+                    - path_to_save (str)
+                    - neptune (bool)
+            feature_extractor_parameters (Dict): Dict containing parameters regarding currently used feature extractor.
+                [Warning] Must contain fields:
+                    - "name" (str)
+                    - "model_path" (str)
+                    - "representation_size" (int)
+            transformer_parameters (Dict): Dict containing parameters regarding currently used transformer.
+                [Warning] Must contain fields:
+                    - "name" (str)
+                    - "output_size" (int)
+                    - "feedforward_size" (int)
+                    - "num_encoder_layers" (int)
+                    - "num_attention_heads" (int)
+                    - "dropout_rate" (float)
+            train_parameters (Dict): Dict containing parameters parameterizing the training process.
+                [Warning] Must contain fields:
+                    - "num_segments" (int)
+                    - "lr" (float)
+                    - "multiply_lr_step" (float)
+                    - "warmup_steps" (float)
+                    - "classification_mode" (str)
+            heads (Dict): Dict containg information describing structure of output heads for specific tasks (gloss/hamnosys).
+            freeze_scheduler (Dict): Dict containing information describing feature_extractor & transformer freezing/unfreezing process.
+            loss_function (torch.nn.Module): Loss function.
+        """
         super().__init__()
 
-        if neptune:
-            tags = [classification_mode, feature_extractor_name, transformer_name]
+        if general_parameters["neptune"]:
+            tags = [train_parameters["classification_mode"], feature_extractor_parameters["name"], transformer_parameters["name"]]
             self.run = initialize_neptun(tags)
             self.run["parameters"] = {
-                "lr": lr,
-                "multiply_lr_step": multiply_lr_step,
-                "warmup_steps": warmup_steps,
-                "transformer_output_size": transformer_output_size,
-                "representation_size": representation_size,
-                "feedforward_size": feedforward_size,
-                "num_encoder_layers": num_encoder_layers,
-                "num_segments": num_segments,
-                "num_attention_heads": num_attention_heads,
-                "transformer_dropout_rate": transformer_dropout_rate,
-                "classification_mode": classification_mode,
-                "feature_extractor_name": feature_extractor_name,
-                "feature_extractor_model_path": feature_extractor_model_path,
-                "transformer_name": transformer_name,
-                "classification_heads": classification_heads,
+                "general_parameters": general_parameters,
+                "train_parameters": train_parameters,
+                "feature_extractor_parameters": feature_extractor_parameters,
+                "transformer_parameters": transformer_parameters,
+                "heads": heads,
+                "freeze_scheduler": freeze_scheduler,
+                "loss_function": loss_function
             }
         else:
             self.run = None
 
         # parameters
-        self.lr = lr
-        self.model_save_dir = model_save_dir
-        self.warmup_steps = warmup_steps
-        self.multiply_lr_step = multiply_lr_step
-        self.classification_heads = classification_heads
-        self.cls_head = []
+        self.lr = train_parameters["lr"]
+        self.model_save_dir = general_parameters["path_to_save"]
+        self.warmup_steps = train_parameters["warmup_steps"]
+        self.multiply_lr_step = train_parameters["multiply_lr_step"]
+        self.use_frames = train_parameters["use_frames"]
+        self.use_landmarks = train_parameters["use_landmarks"]
+        self.classification_heads = heads[train_parameters['classification_mode']]
+        self.cls_head = nn.ModuleList()
         self.loss_weights = []
         for value in self.classification_heads.values():
-            self.cls_head.append(nn.Linear(transformer_output_size, value["num_class"]))
+            self.cls_head.append(
+                HeadClassificationSequentialModel(
+                    classes_number=value["num_class"],
+                    representation_size=transformer_parameters["output_size"],
+                    additional_layers=heads["model"]["additional_layers"],
+                    dropout_rate=heads["model"]["dropout_rate"]
+                )
+            )
             self.loss_weights.append(value["loss_weight"])
 
         # losses
-        self.summary_loss = SummaryLoss(nn.CrossEntropyLoss, self.loss_weights)
+        self.summary_loss = SummaryLoss(loss_function, self.loss_weights)
 
         # models-parts
         self.model_loader = ModelLoader()
-        self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
-            self.model_loader.load_feature_extractor(
-            feature_extractor_name=feature_extractor_name,
-            representation_size = representation_size,
-            model_path=feature_extractor_model_path,
-        )
-        )
-        if transformer_name == "sign_language_transformer":
-            self.transformer = self.model_loader.load_transformer(
-                transformer_name,
-                input_size=representation_size,
-                output_size=transformer_output_size,
-                feedforward_size=feedforward_size,
-                num_encoder_layers=num_encoder_layers,
-                num_frames=num_segments,
-                num_attention_heads=num_attention_heads,
-                dropout_rate=transformer_dropout_rate,
+
+        if self.use_frames:
+            self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
+                self.model_loader.load_feature_extractor(
+                    feature_extractor_name=feature_extractor_parameters["name"],
+                    representation_size=feature_extractor_parameters["representation_size"],
+                    model_path=feature_extractor_parameters["model_path"],
+                )
             )
         else:
-            self.transformer = self.model_loader.load_transformer(
-                transformer_name, representation_size, transformer_output_size
+            self.multi_frame_feature_extractor = None
+
+        if self.use_landmarks:
+            self.landmarks_model = LandmarksSequentialModel(feature_extractor_parameters["representation_size"],
+                                                            transformer_parameters["dropout_rate"])
+            self.pretransformer_model = FeaturesSequentialModel(feature_extractor_parameters["representation_size"],
+                                                                transformer_parameters["dropout_rate"])
+        else:
+            self.landmarks_model = None
+            self.pretransformer_model = None
+        
+        self.transformer = self.model_loader.load_transformer(
+                transformer_name=transformer_parameters["name"],
+                feature_extractor_parameters=feature_extractor_parameters,
+                transformer_parameters=transformer_parameters,
+                train_parameters=train_parameters
             )
-        if freeze_scheduler != None:
+
+        self.steps_per_epoch = steps_per_epoch
+        if freeze_scheduler is not None:
             self.freeze_scheduler = freeze_scheduler
             self.configure_freeze_scheduler()
 
     def forward(self, input, **kwargs):
         predictions = []
-        x = self.multi_frame_feature_extractor(input.to(self.device))
+        frames, landmarks = input
+
+        if self.use_frames:
+            x = self.multi_frame_feature_extractor(frames.to(self.device))
+
+        if self.use_landmarks:
+            x_landmarks = self._prepare_landmarks_tensor(landmarks)
+            x_landmarks = self.landmarks_model(x_landmarks)
+            if self.use_frames:
+                x = torch.concat([x, x_landmarks], dim=-1)
+            else:
+                x = x_landmarks
+            x = self.pretransformer_model(x)
+
         x = self.transformer(x)
+
         for head in self.cls_head:
-            predictions.append(head(x.cpu()))
+            predictions.append(head(x))
         return predictions
+
+    def _prepare_landmarks_tensor(self, landmarks):
+        concatenated_landmarks = np.concatenate(
+            [landmarks[landmarks_name] for landmarks_name in landmarks.keys()],
+            axis=-1
+        )
+        return torch.as_tensor(concatenated_landmarks, dtype=torch.float32, device=self.device)
 
     def training_step(self, batch, batch_idx):
         input, target = batch
-        targets = target["target"]
-        predictions = self(input)
-        loss = self.summary_loss(predictions, targets)
+        targets, predictions, losses = self._process_batch(batch)
         if self.global_step < 2:
             for name, child in self.named_children():
                 for param in child.parameters():
                     param.requires_grad = True
         if self.freeze_scheduler["freeze_mode"] == "step":
-            self.freeze_step()
         if self.run:
-            self.run["metrics/batch/training_loss"].log(loss)
-        return {"loss": loss}
+            self.run["metrics/batch/training_loss"].log(losses)
+        return {"loss": losses}
 
     def validation_step(self, batch, batch_idx):
-        input, target = batch
-        targets = target["target"]
-        predictions = self(input)
-        loss = self.summary_loss(predictions, targets)
+        targets, predictions, losses = self._process_batch(batch)
         if self.run:
-            self.run["metrics/batch/validation_loss"].log(loss)
-        return {"val_loss": loss, "targets": targets, "predictions": predictions}
+            self.run["metrics/batch/validation_loss"].log(losses)
+        return {"val_loss": losses, "targets": targets, "predictions": predictions}
+
+    def _process_batch(self, batch):
+        frames, landmarks, targets = batch
+        predictions = self((frames, landmarks))
+        losses = self.summary_loss(predictions, targets)
+        return targets, predictions, losses
 
     def validation_epoch_end(self, out):
         head_names = list(self.classification_heads.keys())
@@ -164,55 +213,52 @@ class GlossTranslationModel(pl.LightningModule):
                 all_targets[nr_head] += list(torch.argmax(targets[nr_head], dim=1).cpu().detach().numpy())
                 all_predictions[nr_head] += list(torch.argmax(predictions[nr_head], dim=1).cpu().detach().numpy())
 
-        for nr_head, head_targets in enumerate(all_targets):
+        for nr_head, targets_for_head in enumerate(all_targets):
+            head_name = head_names[nr_head]
+            predictions_for_head = all_predictions[nr_head]
             head_report = "\n".join(
                 [
-                    head_names[nr_head],
+                    head_name,
                     classification_report(
-                        all_targets[nr_head], all_predictions[nr_head], zero_division=0
+                        targets_for_head, predictions_for_head, zero_division=0
                     ),
                 ]
             )
             print(head_report)
+            f1 = f1_score(targets_for_head, predictions_for_head,
+                          average='macro', zero_division=0)
             if self.run:
-                log_path = "/".join(["metrics/epoch/", head_names[nr_head]])
+                log_path = "/".join(["metrics/epoch/", head_name])
                 self.run[log_path].log(head_report)
+                self.run[f'/metrics/epoch/f1/{head_name}'].log(f1)
 
         if self.trainer.global_step > 0:
             print("Saving model...")
             torch.save(self.state_dict(), self.model_save_dir)
+
             self.scheduler.step()
-            if self.freeze_scheduler["freeze_mode"] == "epoch":
+            if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "epoch":
                 self.freeze_step()
 
     def configure_optimizers(self):
-        # set optimizer
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.RAdam(self.parameters(), lr=self.lr)
 
-        # set scheduler: multiply lr every epoch
-        def lambd(epoch):
-            return self.multiply_lr_step
-
-        self.scheduler = MultiplicativeLR(optimizer, lr_lambda=lambd)
+        steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr,
+                                                             total_steps=self.trainer.max_epochs * steps_per_epoch + 2)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(
-        self,
-        epoch,
-        batch_idx,
-        optimizer,
-        optimizer_idx,
-        optimizer_closure,
-        on_tpu=False,
-        using_native_amp=False,
-        using_lbfgs=False,
+            self,
+            epoch,
+            batch_idx,
+            optimizer,
+            optimizer_idx,
+            optimizer_closure,
+            on_tpu=False,
+            using_native_amp=False,
+            using_lbfgs=False,
     ):
-        # set warm-up
-        if self.trainer.global_step < self.warmup_steps:
-            lr_scale = min(1.0, float(self.trainer.global_step + 1) / self.warmup_steps)
-            for pg in optimizer.param_groups:
-                pg["lr"] = lr_scale * self.lr
-
         optimizer.step(closure=optimizer_closure)
         if self.run:
             self.run["params/lr"].log(optimizer.param_groups[0]["lr"])
@@ -237,11 +283,11 @@ class GlossTranslationModel(pl.LightningModule):
         #         "transformer": [False, True,False, True, False, True],
         #     }
         # ```
-        if self.freeze_scheduler != None:
+        if self.freeze_scheduler is not None:
             self.freeze_update()
             for params_to_freeze in list(self.freeze_scheduler["model_params"].keys()):
                 if self.freeze_scheduler["current_pattern"] >= len(
-                    self.freeze_scheduler["model_params"][params_to_freeze]
+                        self.freeze_scheduler["model_params"][params_to_freeze]
                 ):
                     current_pattern = True
                 else:
@@ -263,16 +309,16 @@ class GlossTranslationModel(pl.LightningModule):
 
     def freeze_update(self):
         if self.freeze_scheduler["current_pattern"] >= len(
-            self.freeze_scheduler["model_params"][
-                list(self.freeze_scheduler["model_params"].keys())[0]
-            ]
+                self.freeze_scheduler["model_params"][
+                    list(self.freeze_scheduler["model_params"].keys())[0]
+                ]
         ):
             return
         if (
-            self.freeze_scheduler["current_counter"]
-            >= self.freeze_scheduler["freeze_pattern_repeats"][
-                self.freeze_scheduler["current_pattern"]
-            ]
+                self.freeze_scheduler["current_counter"]
+                >= self.freeze_scheduler["freeze_pattern_repeats"][
+            self.freeze_scheduler["current_pattern"]
+        ]
         ):
             self.freeze_scheduler["current_pattern"] += 1
             self.freeze_scheduler["current_counter"] = 0
