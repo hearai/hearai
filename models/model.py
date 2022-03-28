@@ -179,9 +179,11 @@ class GlossTranslationModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         targets, predictions, losses = self._process_batch(batch)
-        self.scheduler.step()
-
-        if (self.freeze_scheduler is not None) and self.freeze_scheduler["freeze_mode"] == "step":
+        if self.global_step < 2:
+            for name, child in self.named_children():
+                for param in child.parameters():
+                    param.requires_grad = True
+        if self.freeze_scheduler["freeze_mode"] == "step":
             self.freeze_step()
         if self.run:
             self.run["metrics/batch/training_loss"].log(losses)
