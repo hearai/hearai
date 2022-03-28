@@ -1,3 +1,5 @@
+from typing import Dict
+
 import torchvision.transforms as T
 
 from datasets.dataset import ImglistToTensor
@@ -8,40 +10,45 @@ class TransformsCreator:
     Class for transforms creation and parametrization.
     """
 
-    def __init__(self,
-                 apply_resize: bool = True,
-                 apply_center_crop: bool = True,
-                 apply_random_erasing: bool = True,
-                 apply_random_rotation: bool = True,
-                 apply_color_jitter: bool = True,
+    def __init__(self, augmentations_parameters: Dict = None):
+        """
+        Args:
+            augmentations_parameters (Dict): Dict containing parameters regarding currently used augmentations.
+                [Warning] Must contain fields:
+                    - "apply_resize" (bool)
+                    - "apply_center_crop" (bool)
+                    - "apply_random_erasing" (bool)
+                    - "apply_random_rotation" (bool)
+                    - "apply_color_jitter" (bool)
 
-                 resize_size: int = 256,
-                 center_crop_size: int = 256,
-                 random_erasing_probability: float = 0.5,
-                 random_rotation_degree: int = 5,
-                 color_jitter_brightness: float = 0.1,
-                 color_jitter_contrast: float = 0.1,
-                 color_jitter_saturation: float = 0.1,
-                 color_jitter_hue: float = 0.05):
+                    - "resize_size" (int)
+                    - "center_crop_size" (int)
+                    - "random_erasing_probability" (float)
+                    - "random_rotation_degree" (int)
+                    - "color_jitter_brightness" (float)
+                    - "color_jitter_contrast" (float)
+                    - "color_jitter_saturation" (float)
+                    - "color_jitter_brcolor_jitter_hueightness" (float)
+        """
 
-        self.apply_resize = apply_resize
-        self.apply_center_crop = apply_center_crop
-        self.apply_random_erasing = apply_random_erasing
-        self.apply_random_rotation = apply_random_rotation
-        self.apply_color_jitter = apply_color_jitter
+        self.apply_resize = augmentations_parameters["apply_resize"]
+        self.apply_center_crop = augmentations_parameters["apply_center_crop"]
+        self.apply_random_erasing = augmentations_parameters["apply_random_erasing"]
+        self.apply_random_rotation = augmentations_parameters["apply_random_rotation"]
+        self.apply_color_jitter = augmentations_parameters["apply_color_jitter"]
 
-        self.resize_size = resize_size
+        self.resize_size = augmentations_parameters["resize_size"]
 
-        self.center_crop_size = center_crop_size
+        self.center_crop_size = augmentations_parameters["center_crop_size"]
 
-        self.random_erasing_probability = random_erasing_probability
+        self.random_erasing_probability = augmentations_parameters["random_erasing_probability"]
 
-        self.random_rotation_degree = random_rotation_degree
+        self.random_rotation_degree = augmentations_parameters["random_rotation_degree"]
 
-        self.color_jitter_brightness = color_jitter_brightness
-        self.color_jitter_contrast = color_jitter_contrast
-        self.color_jitter_saturation = color_jitter_saturation
-        self.color_jitter_hue = color_jitter_hue
+        self.color_jitter_brightness = augmentations_parameters["color_jitter_brightness"]
+        self.color_jitter_contrast = augmentations_parameters["color_jitter_contrast"]
+        self.color_jitter_saturation = augmentations_parameters["color_jitter_saturation"]
+        self.color_jitter_hue = augmentations_parameters["color_jitter_hue"]
 
     def get_train_transforms(self) -> T.Compose:
         pil_augmentations = []

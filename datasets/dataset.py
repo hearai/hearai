@@ -120,7 +120,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                             consecutive frames are loaded.
         imagefile_template: The image filename template that video frame files
                             have inside of their video folders.
-        landmarks: If True, additional landmarks are taken as annotations
+        use_landmarks: If True, additional landmarks are taken as annotations
         transform: Transform pipeline that receives a list of PIL images/frames.
         test_mode: If True, frames are taken from the center of each
                    segment, instead of a random location in each segment.
@@ -136,7 +136,9 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         frames_per_segment: int = 1,
         time: Union[float, None] = None,
         imagefile_template: str = "{:s}_{:d}.jpg",
-        landmarks: bool = False,
+        use_frames: bool = True,
+        use_landmarks: bool = False,
+        use_face_landmarks: bool = False,
         transform=None,
         test_mode: bool = False,
     ):
@@ -148,7 +150,9 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         self.frames_per_segment = frames_per_segment
         self.time = time
         self.imagefile_template = imagefile_template
-        self.landmarks = landmarks
+        self.use_frames = use_frames
+        self.use_landmarks = use_landmarks
+        self.use_face_landmarks = use_face_landmarks
         self.transform = transform
         self.test_mode = test_mode
         self.is_pretraining = is_pretraining
@@ -201,25 +205,13 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                     f"error when trying to load this video.\n"
                 )
 
-    def _get_landmarks(
-        self, video_name: str, indices: "np.ndarray[int]", col_name: str = "Unnamed: 0"
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        face = pd.read_csv(
-            os.path.join(self.root_path, video_name, video_name + "_face.csv"),
-            index_col=col_name,
-        ).loc[indices, :]
-        left_hand = pd.read_csv(
-            os.path.join(self.root_path, video_name, video_name + "_left_hand.csv"),
-            index_col=col_name,
-        ).loc[indices, :]
-        right_hand = pd.read_csv(
-            os.path.join(self.root_path, video_name, video_name + "_right_hand.csv"),
-            index_col=col_name,
-        ).loc[indices, :]
-        pose = pd.read_csv(
-            os.path.join(self.root_path, video_name, video_name + "_pose.csv"),
-            index_col=col_name,
-        ).loc[indices, :]
+    def _get_landmarks(self, video_name: str
+                       ) -> Tuple["np.ndarray[float]", "np.ndarray[float]", "np.ndarray[float]", "np.ndarray[float]"]:
+        landmarks = np.load(os.path.join(self.root_path, video_name, video_name + ".npz"))
+        face = landmarks['face']
+        left_hand = landmarks['left_hand']
+        right_hand = landmarks['right_hand']
+        pose = landmarks['pose']
         return face, right_hand, left_hand, pose
 
     def _get_start_indices(self, record: VideoRecord) -> "np.ndarray[int]":
@@ -331,30 +323,35 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         """
 
         frame_start_indices = frame_start_indices + record.start_frame
-        images = []
-        if self.landmarks:
-            landmarks = {"face": [], "right_hand": [], "left_hand": [], "pose": []}
+        images = None
+        if self.use_frames:
+            images = []
+        landmarks = None
+        if self.use_landmarks:
+            landmarks = {"right_hand": [], "left_hand": [], "pose": []}
+            if self.use_face_landmarks:
+                landmarks["face"] = []
+            face, right_hand, left_hand, pose = self._get_landmarks(record._data[0])
 
         # from each start_index, load self.frames_per_segment
         # consecutive frames
         for start_index in frame_start_indices:
             frame_index = int(start_index)
-            if self.landmarks:
-                face, right_hand, left_hand, pose = self._get_landmarks(
-                    record._data[0], frame_start_indices
-                )
-                landmarks["face"].append(face)
-                landmarks["right_hand"].append(right_hand)
-                landmarks["left_hand"].append(left_hand)
-                landmarks["pose"].append(pose)
+            if self.use_landmarks:
+                landmarks["pose"].append(pose[frame_index, :])
+                landmarks["right_hand"].append(right_hand[frame_index, :])
+                landmarks["left_hand"].append(left_hand[frame_index, :])
+                if self.use_face_landmarks:
+                    landmarks["face"].append(face[frame_index, :])
 
             # load self.frames_per_segment consecutive frames
-            for _ in range(self.frames_per_segment):
-                image = self._load_image(record.path, frame_index)
-                images.append(image)
+            if self.use_frames:
+                for _ in range(self.frames_per_segment):
+                    image = self._load_image(record.path, frame_index)
+                    images.append(image)
 
-                if frame_index < record.end_frame:
-                    frame_index += 1
+                    if frame_index < record.end_frame:
+                        frame_index += 1
         # create target in one-hot encoding form
         target = []
         labels = []
@@ -366,17 +363,14 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             x = np.zeros(value["num_class"])
             x[class_label] = 1
             if self.is_pretraining:
-                target.append(torch.tensor(x, dtype = torch.long))
+                target.append(torch.tensor(x, dtype=torch.long))
             else:
                 target.append(torch.tensor(x))
 
-        if self.transform is not None:
+        if self.transform is not None and self.use_frames:
             images = self.transform(images)
 
-        if not self.landmarks:
-            landmarks = None
-
-        return images, {"target": target, "landmark": landmarks}
+        return images, {"target": target, "landmarks": landmarks}
 
     def __len__(self):
         return len(self.video_list)
@@ -429,32 +423,57 @@ class PadCollate:
         the sequence will be cut
         """
         batch_split = list(zip(*batch))
-        seqs, targs = batch_split[0], batch_split[1]
+        seqs, targets_and_landmarks = batch_split[0], batch_split[1]
 
-        # get new dimensions
-        dims = [len(seqs)]
-        dims.extend(list(seqs[0].shape))
-        dims[1] = self.total_length
+        targets = []
+        landmarks = []
+        for item in targets_and_landmarks:
+            targets.append(item['target'])
+            landmarks.append(item['landmarks'])
 
-        # pad all seqs to desired length with 0
-        # or get rid of too many frames
-        new_batch = torch.zeros(dims)
-        for i, tensor in enumerate(seqs):
-            length = tensor.size(0)
-            if length <= self.total_length:
-                new_batch[i, :length, ...] = tensor
-            else:
-                new_batch[i, ...] = tensor[: self.total_length, ...]
+        new_batch = None
+        if seqs[0] is not None:
+            # get new dimensions
+            dims = [len(seqs)]
+            dims.extend(list(seqs[0].shape))
+            dims[1] = self.total_length
+
+            # pad all seqs to desired length with 0
+            # or get rid of too many frames
+            new_batch = torch.zeros(dims)
+            for i, tensor in enumerate(seqs):
+                length = tensor.size(0)
+                if length <= self.total_length:
+                    new_batch[i, :length, ...] = tensor
+                else:
+                    new_batch[i, ...] = tensor[: self.total_length, ...]
+
+        # padding for landmarks
+        stacked_landmarks = None
+        if landmarks[0] is not None:
+            stacked_landmarks = {}
+            for landmark_name in landmarks[0].keys():
+                padded_landmarks = []
+                for single_video_landmarks in landmarks:
+                    concatenated_landmarks = np.stack(single_video_landmarks[landmark_name], axis=0)
+                    landmarks_frames_number = len(concatenated_landmarks)
+                    if landmarks_frames_number < self.total_length:
+                        padded_landmarks.append(
+                            np.pad(concatenated_landmarks,
+                                   pad_width=((0, self.total_length-landmarks_frames_number), (0, 0)),
+                                   mode='edge')
+                        )
+                    else:
+                        padded_landmarks.append(concatenated_landmarks[:self.total_length, ...])
+                stacked_landmarks[landmark_name] = np.nan_to_num(np.stack(padded_landmarks, axis=0), nan=-1+10)
 
         return (
             new_batch,
-            {
-                "target": [
-                    torch.stack([item["target"][i] for item in targs], 0)
-                    for i in range(len(targs[0]["target"]))
-                ],
-                "landmark": [i["landmark"] for i in targs],
-            },
+            stacked_landmarks,
+            [
+                torch.stack([target[i] for target in targets], 0)
+                for i in range(len(targets[0]))
+            ]
         )
 
     def __call__(self, batch):
