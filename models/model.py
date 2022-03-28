@@ -178,7 +178,6 @@ class GlossTranslationModel(pl.LightningModule):
         return torch.as_tensor(concatenated_landmarks, dtype=torch.float32, device=self.device)
 
     def training_step(self, batch, batch_idx):
-        input, target = batch
         targets, predictions, losses = self._process_batch(batch)
         if self.global_step < 2:
             for name, child in self.named_children():
