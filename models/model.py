@@ -104,9 +104,8 @@ class GlossTranslationModel(pl.LightningModule):
             self.cls_head.append(
                 HeadClassificationSequentialModel(
                     classes_number=value["num_class"],
-                    representation_size=5 * value["num_class"],
-                    additional_layers=int(max(heads["model"]["additional_layers"],
-                                              value["num_class"] / 2)),
+                    representation_size=3 * value["num_class"],
+                    additional_layers=1,
                     dropout_rate=heads["model"]["dropout_rate"]
                 )
             )
@@ -120,6 +119,8 @@ class GlossTranslationModel(pl.LightningModule):
 
         representation_size = feature_extractor_parameters["representation_size"]
 
+        self.adjustment_to_representatios_size = nn.LazyLinear(out_features=representation_size)
+
         if self.use_frames:
             self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
                 self.model_loader.load_feature_extractor(
@@ -131,11 +132,6 @@ class GlossTranslationModel(pl.LightningModule):
         else:
             self.multi_frame_feature_extractor = None
 
-        if self.use_landmarks:
-            self.landmarks_model = LandmarksSequentialModel(representation_size,
-                                                            transformer_parameters["dropout_rate"])
-        else:
-            self.landmarks_model = None
 
         self.transformer = self.model_loader.load_transformer(
                 transformer_name=transformer_parameters["name"],
@@ -143,10 +139,6 @@ class GlossTranslationModel(pl.LightningModule):
                 transformer_parameters=transformer_parameters,
                 train_parameters=train_parameters
             )
-
-        self.postransformer_model = SimpleSequentialModel(layers=2,
-                                                          representation_size=representation_size,
-                                                          dropout_rate=heads["model"]["dropout_rate"])
 
         self.steps_per_epoch = steps_per_epoch
         if freeze_scheduler is not None:
@@ -162,15 +154,13 @@ class GlossTranslationModel(pl.LightningModule):
 
         if self.use_landmarks:
             x_landmarks = self._prepare_landmarks_tensor(landmarks)
-            x_landmarks = self.landmarks_model(x_landmarks)
             if self.use_frames:
                 x = torch.concat([x, x_landmarks], dim=-1)
             else:
                 x = x_landmarks
 
+        x = self.adjustment_to_representatios_size(x)
         x = self.transformer(x)
-
-        x = self.postransformer_model(x)
 
         for head in self.cls_head:
             predictions.append(head(x))
@@ -249,8 +239,8 @@ class GlossTranslationModel(pl.LightningModule):
 
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
                                                              max_lr=self.lr,
-                                                             div_factor=10,
-                                                             final_div_factor=100,
+                                                             div_factor=100,
+                                                             final_div_factor=10,
                                                              pct_start=0.2,
                                                              total_steps=self.trainer.max_epochs * self.steps_per_epoch + 2)
         return [optimizer], [self.scheduler]
