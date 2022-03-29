@@ -1,9 +1,7 @@
 from typing import Dict
 
 import albumentations as A
-import cv2
 from albumentations.pytorch.transforms import ToTensorV2
-from datasets.dataset import ImglistToTensor
 
 
 class TransformsCreator:
@@ -80,7 +78,7 @@ class TransformsCreator:
                 *additional_augmentations,
                 A.SmallestMaxSize(max_size=self.resize_size),  # image batch, resize smaller edge to 256
                 A.CenterCrop(width=self.center_crop_size, height=self.center_crop_size),
-                # A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=1),
                 ToTensorV2()
             ]
         )
