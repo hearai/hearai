@@ -371,8 +371,21 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             img_list_to_tensor = ImglistToTensor()
             images = img_list_to_tensor(images)
 
-            for image in images:
-                print(f'Shape of the single image: {image.shape}')
+            # for image in images:
+            #     print(f'Shape of the single image: {image.shape}')
+            #     image = np.moveaxis(image.numpy(), 0, -1)
+            #     print(f'Shape of the single image: {image.shape}')
+            #     image = np.moveaxis(image, -1, 0)
+            #     print(f'Shape of the single image: {image.shape}')
+            #     break
+
+            images = [self.transform(image=np.moveaxis(image.numpy(), 0, -1)) for image in images]
+            # images = [torch.tensor(np.moveaxis(image['image'], -1, 0)) for image in images]
+            # images = [torch.tensor(np.moveaxis(image['image'], -1, 0)) for image in images]
+            # images = torch.stack(images)
+            images = torch.stack([image['image'] for image in images])
+
+            # images = torch.stack([torch.tensor(self.transform(np.moveaxis(image.numpy(), 0, -1))) for image in images])
             # images = [self.transform(image=np.moveaxis(image.numpy(), 0, -1)) for image in images]
             # images = torch.stack([torch.tensor(image['image']) for image in images])
             # images = self.transform(images)

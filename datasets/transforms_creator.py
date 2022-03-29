@@ -93,8 +93,8 @@ class TransformsCreator:
                 *tensor_augmentations,
                 A.SmallestMaxSize(max_size=self.resize_size),  # image batch, resize smaller edge to 256
                 A.CenterCrop(width=self.center_crop_size, height=self.center_crop_size),
-                # image batch, center crop to square 256x256
-                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                # # image batch, center crop to square 256x256
+                # A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 ToTensorV2()
             ]
         )
