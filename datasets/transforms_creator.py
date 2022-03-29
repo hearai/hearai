@@ -2,9 +2,8 @@ from typing import Dict
 
 # import torchvision.transforms as T
 import albumentations as A
-from albumentations.pytorch.transforms import ToTensorV2
 import cv2
-
+from albumentations.pytorch.transforms import ToTensorV2
 from datasets.dataset import ImglistToTensor
 
 
@@ -69,17 +68,15 @@ class TransformsCreator:
         #                                               saturation=self.color_jitter_saturation,
         #                                               hue=self.color_jitter_hue))
 
-        tensor_augmentations = A.Compose(
-            [
-                A.Rotate(limit=5, p=0.9, border_mode=cv2.BORDER_CONSTANT),
-                A.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.9),
-                A.RandomBrightnessContrast(p=0.2),
-                A.OneOf([
-                    A.Blur(blur_limit=3, p=0.5),
-                    A.ColorJitter(p=0.5),
-                ], p=1.0),
-            ]
-        )
+        tensor_augmentations = [
+            # A.Rotate(limit=5, p=0.9, border_mode=cv2.BORDER_CONSTANT),
+            # A.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.9),
+            # A.RandomBrightnessContrast(p=0.2),
+            # A.OneOf([
+            #     A.Blur(blur_limit=3, p=0.5),
+            #     A.ColorJitter(p=0.5),
+            # ], p=1.0),
+        ]
 
         return self._get_transforms(pil_augmentations, tensor_augmentations)
 
@@ -95,7 +92,8 @@ class TransformsCreator:
                 # ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
                 *tensor_augmentations,
                 A.SmallestMaxSize(max_size=self.resize_size),  # image batch, resize smaller edge to 256
-                A.CenterCrop(width=self.center_crop_size, height=self.center_crop_size),  # image batch, center crop to square 256x256
+                A.CenterCrop(width=self.center_crop_size, height=self.center_crop_size),
+                # image batch, center crop to square 256x256
                 A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 ToTensorV2()
             ]
