@@ -8,7 +8,7 @@ from datasets.transforms_creator import TransformsCreator
 
 
 def get_dataloader_train():
-    with open("train_config_default.yml") as file:
+    with open("train_config.yml") as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
     transforms_creator = TransformsCreator(model_config["augmentations_parameters"])
@@ -42,14 +42,17 @@ def get_dataloader_train():
 def investigate_augmentations():
     dataloader_train = get_dataloader_train()
 
-    for imgs, _ in enumerate(dataloader_train):
-        imgs = imgs[0].detach().numpy().transpose(0, 2, 3, 1)
-        _, axs = plt.subplots(2, 5, figsize=(20, 8))
-        axs = axs.flatten()
-        for img, ax in zip(imgs, axs):
-            ax.imshow(img)
-        plt.savefig('aug.png')
-        break
+    dataiter = iter(dataloader_train)
+
+    print(len(dataiter.next()))
+    images, labels, _ = dataiter.next()
+
+    imgs = images[0].detach().numpy().transpose(0, 2, 3, 1)
+    _, axs = plt.subplots(2, 5, figsize=(20, 8))
+    axs = axs.flatten()
+    for img, ax in zip(imgs, axs):
+        ax.imshow(img)
+    plt.savefig('aug.png')
 
 
 if __name__ == '__main__':

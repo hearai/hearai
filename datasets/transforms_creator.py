@@ -1,6 +1,8 @@
 from typing import Dict
 
-import torchvision.transforms as T
+# import torchvision.transforms as T
+import albumentations as A
+import cv2
 
 from datasets.dataset import ImglistToTensor
 
@@ -50,37 +52,49 @@ class TransformsCreator:
         self.color_jitter_saturation = augmentations_parameters["color_jitter_saturation"]
         self.color_jitter_hue = augmentations_parameters["color_jitter_hue"]
 
-    def get_train_transforms(self) -> T.Compose:
+    def get_train_transforms(self) -> A.Compose:
         pil_augmentations = []
         tensor_augmentations = []
 
-        if self.apply_random_erasing:
-            tensor_augmentations.append(T.RandomErasing(self.random_erasing_probability))
+        # if self.apply_random_erasing:
+        #     tensor_augmentations.append(T.RandomErasing(self.random_erasing_probability, scale=(0.1, 0.1)))
+        #
+        # if self.apply_random_rotation:
+        #     tensor_augmentations.append(T.RandomRotation(degrees=self.random_rotation_degree))
+        #
+        # if self.apply_color_jitter:
+        #     tensor_augmentations.append(T.ColorJitter(brightness=self.color_jitter_brightness,
+        #                                               contrast=self.color_jitter_contrast,
+        #                                               saturation=self.color_jitter_saturation,
+        #                                               hue=self.color_jitter_hue))
 
-        if self.apply_random_rotation:
-            tensor_augmentations.append(T.RandomRotation(degrees=self.random_rotation_degree))
-
-        if self.apply_color_jitter:
-            tensor_augmentations.append(T.ColorJitter(brightness=self.color_jitter_brightness,
-                                                      contrast=self.color_jitter_contrast,
-                                                      saturation=self.color_jitter_saturation,
-                                                      hue=self.color_jitter_hue))
+        tensor_augmentations = A.Compose(
+            [
+                A.Rotate(limit=5, p=0.9, border_mode=cv2.BORDER_CONSTANT),
+                A.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.9),
+                A.RandomBrightnessContrast(p=0.2),
+                A.OneOf([
+                    A.Blur(blur_limit=3, p=0.5),
+                    A.ColorJitter(p=0.5),
+                ], p=1.0),
+            ]
+        )
 
         return self._get_transforms(pil_augmentations, tensor_augmentations)
 
-    def get_val_transforms(self) -> T.Compose:
+    def get_val_transforms(self) -> A.Compose:
         pil_augmentations = []
         tensor_augmentations = []
         return self._get_transforms(pil_augmentations, tensor_augmentations)
 
-    def _get_transforms(self, pil_augmentations: list, tensor_augmentations: list) -> T.Compose:
-        return T.Compose(
+    def _get_transforms(self, pil_augmentations: list, tensor_augmentations: list) -> A.Compose:
+        return A.Compose(
             [
                 *pil_augmentations,
                 ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
                 *tensor_augmentations,
-                T.Resize(self.resize_size),  # image batch, resize smaller edge to 256
-                T.CenterCrop(self.center_crop_size),  # image batch, center crop to square 256x256
-                T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                A.SmallestMaxSize(max_size=self.resize_size),  # image batch, resize smaller edge to 256
+                A.CenterCrop(width=self.center_crop_size, height=self.center_crop_size),  # image batch, center crop to square 256x256
+                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
