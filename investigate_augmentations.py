@@ -1,10 +1,12 @@
-import yaml
-from matplotlib import pyplot as plt
-from torch.utils.data import DataLoader
+import time
+import tqdm
 
+import yaml
 from datasets.dataset import PadCollate
 from datasets.dataset_creator import DatasetCreator
 from datasets.transforms_creator import TransformsCreator
+from matplotlib import pyplot as plt
+from torch.utils.data import DataLoader
 
 
 def get_dataloader_train():
@@ -14,7 +16,7 @@ def get_dataloader_train():
     transforms_creator = TransformsCreator(model_config["augmentations_parameters"])
 
     dataset_creator = DatasetCreator(
-        data_paths=model_config["general_parameters"]["data_paths"],
+        data_paths=["/dih4/dih4_2/hearai/akrzeminska/hearai/sample_input"],
         classification_mode=model_config["train_parameters"]["classification_mode"],
         classification_heads=model_config["heads"][model_config["train_parameters"]["classification_mode"]],
         num_segments=model_config["train_parameters"]["num_segments"],
@@ -40,17 +42,19 @@ def get_dataloader_train():
 
 
 def investigate_augmentations():
-    dataloader_train = get_dataloader_train()
+    for _ in tqdm.tqdm(range(10)):
+        dataloader_train = get_dataloader_train()
 
-    dataiter = iter(dataloader_train)
-    images, labels, _ = dataiter.next()
+        dataiter = iter(dataloader_train)
+        images, labels, _ = dataiter.next()
 
-    imgs = images[0].detach().numpy().transpose(0, 2, 3, 1)
-    _, axs = plt.subplots(2, 5, figsize=(20, 8))
-    axs = axs.flatten()
-    for img, ax in zip(imgs, axs):
-        ax.imshow(img)
-    plt.savefig('aug.png')
+        imgs = images[0].detach().numpy().transpose(0, 2, 3, 1)
+        _, axs = plt.subplots(2, 5, figsize=(20, 8))
+        axs = axs.flatten()
+        for img, ax in zip(imgs, axs):
+            ax.imshow(img)
+
+        plt.savefig(f'aug_{int(time.time())}.png')
 
 
 if __name__ == '__main__':

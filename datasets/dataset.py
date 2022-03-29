@@ -4,30 +4,33 @@ https://github.com/RaivoKoot/Video-Dataset-Loading-Pytorch
 """
 import json
 import os
-import numpy as np
-import pandas as pd
-from PIL import Image
-from torchvision import transforms
-import torch
-from typing import List, Union, Tuple, Any
-import warnings
-
+import random
+import time
 # for non-latin encoding
 import sys
+import warnings
+from typing import List, Union, Tuple, Any
+
+import numpy as np
+import pandas as pd
+import torch
+from PIL import Image
+from torchvision import transforms
 
 if sys.version[0] == "2":
     reload(sys)
     sys.setdefaultencoding("utf-8")
 
 ALL_HAMNOSYS_HEADS = {"symmetry_operator": 3,
-            "hand_shape_base_form": 4,
-            "hand_shape_thumb_position": 5,
-            "hand_shape_bending": 6,
-            "hand_position_finger_direction": 7,
-            "hand_position_palm_orientation": 8,
-            "hand_location_x": 9,
-            "hand_location_y": 10,
-            "distance": 11}
+                      "hand_shape_base_form": 4,
+                      "hand_shape_thumb_position": 5,
+                      "hand_shape_bending": 6,
+                      "hand_position_finger_direction": 7,
+                      "hand_position_palm_orientation": 8,
+                      "hand_location_x": 9,
+                      "hand_location_y": 10,
+                      "distance": 11}
+
 
 class VideoRecord(object):
     """
@@ -52,7 +55,7 @@ class VideoRecord(object):
         self.classification_heads = classification_heads
         try:
             with open(
-                os.path.join(self._path, row[0] + "_properties.json"), "r"
+                    os.path.join(self._path, row[0] + "_properties.json"), "r"
             ) as f:
                 data = json.load(f)
             self.fps = int(data["FPS"])
@@ -127,20 +130,20 @@ class VideoFrameDataset(torch.utils.data.Dataset):
     """
 
     def __init__(
-        self,
-        root_path: str,
-        annotationfile_path: str,
-        is_pretraining: bool,
-        classification_heads={},
-        num_segments: int = -1,
-        frames_per_segment: int = 1,
-        time: Union[float, None] = None,
-        imagefile_template: str = "{:s}_{:d}.jpg",
-        use_frames: bool = True,
-        use_landmarks: bool = False,
-        use_face_landmarks: bool = False,
-        transform=None,
-        test_mode: bool = False,
+            self,
+            root_path: str,
+            annotationfile_path: str,
+            is_pretraining: bool,
+            classification_heads={},
+            num_segments: int = -1,
+            frames_per_segment: int = 1,
+            time: Union[float, None] = None,
+            imagefile_template: str = "{:s}_{:d}.jpg",
+            use_frames: bool = True,
+            use_landmarks: bool = False,
+            use_face_landmarks: bool = False,
+            transform=None,
+            test_mode: bool = False,
     ):
         super(VideoFrameDataset, self).__init__()
 
@@ -160,7 +163,6 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
         self._parse_annotationfile()
         self._sanity_check_samples()
-        
 
     def _load_image(self, directory: str, idx: int) -> Image.Image:
         return Image.open(
@@ -246,8 +248,8 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         # choose start indices that are perfectly evenly spread across the video frames.
         elif self.test_mode:
             distance_between_indices = (
-                record.num_frames - self.frames_per_segment + 1
-            ) / float(self.num_segments)
+                                               record.num_frames - self.frames_per_segment + 1
+                                       ) / float(self.num_segments)
 
             start_indices = np.array(
                 [
@@ -258,8 +260,8 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         # randomly sample start indices that are approximately evenly spread across the video frames.
         else:
             max_valid_start_index = (
-                record.num_frames - self.frames_per_segment + 1
-            ) // self.num_segments
+                                            record.num_frames - self.frames_per_segment + 1
+                                    ) // self.num_segments
 
             start_indices = np.multiply(
                 list(range(self.num_segments)), max_valid_start_index
@@ -268,7 +270,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         return start_indices
 
     def __getitem__(
-        self, idx: int
+            self, idx: int
     ) -> Union[
         Tuple[List[Image.Image], Union[int, List[int]]],
         Tuple[
@@ -297,7 +299,7 @@ class VideoFrameDataset(torch.utils.data.Dataset):
         return self._get(record, frame_start_indices)
 
     def _get(
-        self, record: VideoRecord, frame_start_indices: "np.ndarray[int]"
+            self, record: VideoRecord, frame_start_indices: "np.ndarray[int]"
     ) -> Union[
         Tuple[List[Image.Image], Union[int, List[int]]],
         Tuple[
@@ -367,28 +369,18 @@ class VideoFrameDataset(torch.utils.data.Dataset):
             else:
                 target.append(torch.tensor(x))
 
+        transforms_seed = int(time.time())
         if self.transform is not None and self.use_frames:
             img_list_to_tensor = ImglistToTensor()
             images = img_list_to_tensor(images)
 
-            # for image in images:
-            #     print(f'Shape of the single image: {image.shape}')
-            #     image = np.moveaxis(image.numpy(), 0, -1)
-            #     print(f'Shape of the single image: {image.shape}')
-            #     image = np.moveaxis(image, -1, 0)
-            #     print(f'Shape of the single image: {image.shape}')
-            #     break
+            transformed_images = []
+            for image in images:
+                random.seed(transforms_seed)
+                transformed_image = self.transform(image=np.moveaxis(image.numpy(), 0, -1))
+                transformed_images.append(transformed_image)
 
-            images = [self.transform(image=np.moveaxis(image.numpy(), 0, -1)) for image in images]
-            # images = [torch.tensor(np.moveaxis(image['image'], -1, 0)) for image in images]
-            # images = [torch.tensor(np.moveaxis(image['image'], -1, 0)) for image in images]
-            # images = torch.stack(images)
-            images = torch.stack([image['image'] for image in images])
-
-            # images = torch.stack([torch.tensor(self.transform(np.moveaxis(image.numpy(), 0, -1))) for image in images])
-            # images = [self.transform(image=np.moveaxis(image.numpy(), 0, -1)) for image in images]
-            # images = torch.stack([torch.tensor(image['image']) for image in images])
-            # images = self.transform(images)
+            images = torch.stack([image['image'] for image in transformed_images])
 
         return images, {"target": target, "landmarks": landmarks}
 
@@ -405,7 +397,7 @@ class ImglistToTensor(torch.nn.Module):
 
     @staticmethod
     def forward(
-        img_list: List[Image.Image],
+            img_list: List[Image.Image],
     ) -> "torch.Tensor[NUM_IMAGES, CHANNELS, HEIGHT, WIDTH]":
         """
         Converts each PIL image in a list to
@@ -480,12 +472,12 @@ class PadCollate:
                     if landmarks_frames_number < self.total_length:
                         padded_landmarks.append(
                             np.pad(concatenated_landmarks,
-                                   pad_width=((0, self.total_length-landmarks_frames_number), (0, 0)),
+                                   pad_width=((0, self.total_length - landmarks_frames_number), (0, 0)),
                                    mode='edge')
                         )
                     else:
                         padded_landmarks.append(concatenated_landmarks[:self.total_length, ...])
-                stacked_landmarks[landmark_name] = np.nan_to_num(np.stack(padded_landmarks, axis=0), nan=-1+10)
+                stacked_landmarks[landmark_name] = np.nan_to_num(np.stack(padded_landmarks, axis=0), nan=-1 + 10)
 
         return (
             new_batch,
