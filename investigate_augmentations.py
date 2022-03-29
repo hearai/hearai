@@ -43,8 +43,6 @@ def investigate_augmentations():
     dataloader_train = get_dataloader_train()
 
     dataiter = iter(dataloader_train)
-
-    print(len(dataiter.next()))
     images, labels, _ = dataiter.next()
 
     imgs = images[0].detach().numpy().transpose(0, 2, 3, 1)

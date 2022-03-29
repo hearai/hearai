@@ -368,7 +368,11 @@ class VideoFrameDataset(torch.utils.data.Dataset):
                 target.append(torch.tensor(x))
 
         if self.transform is not None and self.use_frames:
-            images = self.transform(images)
+            img_list_to_tensor = ImglistToTensor()
+            images = img_list_to_tensor(images)
+            images = [self.transform(image=np.moveaxis(image.numpy(), 0, -1)) for image in images]
+            images = torch.stack([torch.tensor(image['image']) for image in images])
+            # images = self.transform(images)
 
         return images, {"target": target, "landmarks": landmarks}
 
