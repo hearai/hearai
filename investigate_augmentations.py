@@ -16,7 +16,7 @@ def get_dataloader_train():
     transforms_creator = TransformsCreator(model_config["augmentations_parameters"])
 
     dataset_creator = DatasetCreator(
-        data_paths=["/dih4/dih4_2/hearai/akrzeminska/hearai/sample_input"],
+        data_paths=model_config["general_parameters"]["data_paths"],
         classification_mode=model_config["train_parameters"]["classification_mode"],
         classification_heads=model_config["heads"][model_config["train_parameters"]["classification_mode"]],
         num_segments=model_config["train_parameters"]["num_segments"],
@@ -42,7 +42,7 @@ def get_dataloader_train():
 
 
 def investigate_augmentations():
-    for _ in tqdm.tqdm(range(10)):
+    for _ in tqdm.tqdm(range(1)):
         dataloader_train = get_dataloader_train()
 
         dataiter = iter(dataloader_train)
