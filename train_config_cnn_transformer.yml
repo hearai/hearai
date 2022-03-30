@@ -28,7 +28,7 @@ train_parameters:
     epochs: 10000
     batch_size: 16
     lr: 0.001
-    num_segments: 32
+    num_segments: 64
     fast_dev_run: False
     pre_training: False
     use_frames: False
