@@ -4,7 +4,7 @@ general_parameters:
                 "/dih4/dih4_2/hearai/nczerep/galex-keyframes/",
                 "/dih4/dih4_2/hearai/nczerep/glex-keyframes/"]
     ratio_train_test: 0.8
-    workers: 8
+    workers: 16
     gpu: 0
     path_to_save: "saved_model.pth"
     seed: 2021
@@ -16,11 +16,10 @@ augmentations_parameters:
     apply_random_erasing: False
     apply_random_rotation: True
     apply_color_jitter: True
-
     resize_size: 230
     center_crop_size: 224
-    random_erasing_probability: 0
-    random_rotation_degree: 10
+    random_erasing_probability: 0.5
+    random_rotation_degree: 5
     color_jitter_brightness: 0.1
     color_jitter_contrast: 0.1
     color_jitter_saturation: 0.1
@@ -30,24 +29,33 @@ train_parameters:
     classification_mode: "hamnosys"
     epochs: 100
     batch_size: 8
-    accumulate_grad_batches: 8
-    lr: 0.0005
+    lr: 0.0001
     num_segments: 5
     fast_dev_run: False
     pre_training: False
-    landmarks: False
-    time: null
-    warmup_steps: 20.0
-    multiply_lr_step: 0.99
     use_frames: True
     use_landmarks: True
+    time: null
+    warmup_steps: 20.0
+    multiply_lr_step: 0.95
+    accumulate_grad_batches: 8
 
 feature_extractor:
     representation_size: 400
+    load_pretrained: True
 
-transformer: None
+transformer:
+    name: "sign_language_transformer"
+    feedforward_size: 512
+    num_attention_heads: 4
+    num_encoder_layers: 2
+    output_size: 400
+    dropout_rate: 0.1
 
 heads:
+    model:
+        additional_layers: 0
+        dropout_rate: 0.1
     gloss:
         gloss:
             num_class: 2400
@@ -78,4 +86,5 @@ heads:
             num_class: 15
             loss_weight: 1
 
-freeze_scheduler: None
+freeze_scheduler:
+    None
