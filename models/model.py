@@ -8,13 +8,14 @@ import torch.nn as nn
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
 from utils.summary_loss import SummaryLoss
+from math import ceil
 
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
+from models.common.simple_sequential_model import SimpleSequentialModel
 from models.landmarks_models.lanmdarks_sequential_model import LandmarksSequentialModel
-from models.landmarks_models.features_sequential_model import FeaturesSequentialModel
 from models.head_models.head_sequential_model import HeadClassificationSequentialModel
 
 # initialize neptune logging
@@ -103,8 +104,8 @@ class GlossTranslationModel(pl.LightningModule):
             self.cls_head.append(
                 HeadClassificationSequentialModel(
                     classes_number=value["num_class"],
-                    representation_size=transformer_parameters["output_size"],
-                    additional_layers=heads["model"]["additional_layers"],
+                    representation_size=3 * value["num_class"],
+                    additional_layers=1,
                     dropout_rate=heads["model"]["dropout_rate"]
                 )
             )
@@ -116,26 +117,22 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
 
+        representation_size = feature_extractor_parameters["representation_size"]
+
+        self.adjustment_to_representatios_size = nn.LazyLinear(out_features=representation_size)
+
         if self.use_frames:
             self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
                 self.model_loader.load_feature_extractor(
                     feature_extractor_name=feature_extractor_parameters["name"],
-                    representation_size=feature_extractor_parameters["representation_size"],
+                    representation_size=representation_size,
                     model_path=feature_extractor_parameters["model_path"],
                 )
             )
         else:
             self.multi_frame_feature_extractor = None
 
-        if self.use_landmarks:
-            self.landmarks_model = LandmarksSequentialModel(feature_extractor_parameters["representation_size"],
-                                                            transformer_parameters["dropout_rate"])
-            self.pretransformer_model = FeaturesSequentialModel(feature_extractor_parameters["representation_size"],
-                                                                transformer_parameters["dropout_rate"])
-        else:
-            self.landmarks_model = None
-            self.pretransformer_model = None
-        
+
         self.transformer = self.model_loader.load_transformer(
                 transformer_name=transformer_parameters["name"],
                 feature_extractor_parameters=feature_extractor_parameters,
@@ -157,13 +154,12 @@ class GlossTranslationModel(pl.LightningModule):
 
         if self.use_landmarks:
             x_landmarks = self._prepare_landmarks_tensor(landmarks)
-            x_landmarks = self.landmarks_model(x_landmarks)
             if self.use_frames:
                 x = torch.concat([x, x_landmarks], dim=-1)
             else:
                 x = x_landmarks
-            x = self.pretransformer_model(x)
 
+        x = self.adjustment_to_representatios_size(x)
         x = self.transformer(x)
 
         for head in self.cls_head:
@@ -243,9 +239,12 @@ class GlossTranslationModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.RAdam(self.parameters(), lr=self.lr)
 
-        steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
-        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr,
-                                                             total_steps=self.trainer.max_epochs * steps_per_epoch + 2)
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
+                                                             max_lr=self.lr,
+                                                             div_factor=100,
+                                                             final_div_factor=10,
+                                                             pct_start=0.2,
+                                                             total_steps=self.trainer.max_epochs * self.steps_per_epoch + 2)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(
