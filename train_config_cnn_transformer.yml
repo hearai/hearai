@@ -1,5 +1,5 @@
 general_parameters:
-    data_paths: ["/media/data512/hearai/frames/pjm", "/media/data512/hearai/frames/basic_lexicon", "/media/data512/hearai/frames/galex", "/media/data512/hearai/frames/glex"]
+    data_paths: ["assets/sanity_check_data"]
     ratio_train_test: 0.8
     workers: 16
     gpu: 0
