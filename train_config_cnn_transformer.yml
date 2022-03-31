@@ -45,7 +45,7 @@ feature_extractor:
 transformer:
     name: "sign_language_cnn_transformer"
     feedforward_size: 64
-    num_attention_heads: 1
+    num_attention_heads: 8
     num_encoder_layers: 4
     output_size: 64
     dropout_rate: 0.2
