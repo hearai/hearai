@@ -40,14 +40,14 @@ train_parameters:
 feature_extractor:
     name: "cnn_extractor"
     model_path: "efficientnet_b1"
-    representation_size: 64
+    representation_size: 128
 
 transformer:
     name: "sign_language_cnn_transformer"
-    feedforward_size: 64
+    feedforward_size: 128
     num_attention_heads: 8
-    num_encoder_layers: 4
-    output_size: 64
+    num_encoder_layers: 1
+    output_size: 128
     dropout_rate: 0.2
 
 heads:

@@ -49,17 +49,28 @@ class SignLanguageCNNTransformer(nn.Module):
                                            activation='gelu',
                                            batch_first=True)
                 for _ in range(transformer_parameters["num_encoder_layers"])
-        ]
+            ]
         )
-        self._cnn_layers = nn.ModuleList(
+        self._reversed_transformers_layers = nn.ModuleList(
             [
-                Conv1DFeaturesProcessor(
-                    representation_size=self._input_size,
-                    dropout_rate=transformer_parameters["dropout_rate"]
-                )
+                nn.TransformerEncoderLayer(d_model=train_parameters["num_segments"],
+                                           nhead=transformer_parameters["num_attention_heads"],
+                                           dim_feedforward=train_parameters["num_segments"],
+                                           dropout=transformer_parameters["dropout_rate"],
+                                           activation='gelu',
+                                           batch_first=True)
                 for _ in range(transformer_parameters["num_encoder_layers"])
             ]
         )
+        # self._cnn_layers = nn.ModuleList(
+        #     [
+        #         Conv1DFeaturesProcessor(
+        #             representation_size=self._input_size,
+        #             dropout_rate=transformer_parameters["dropout_rate"]
+        #         )
+        #         for _ in range(transformer_parameters["num_encoder_layers"])
+        #     ]
+        # )
         self._dropout_positional_encoding = nn.Dropout(transformer_parameters["dropout_rate"])
         self._last_norm = nn.LayerNorm(self._input_size)
         self._last_linear = nn.Linear(train_parameters["num_segments"] * self._input_size, transformer_parameters["output_size"])
@@ -74,8 +85,11 @@ class SignLanguageCNNTransformer(nn.Module):
         #x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End
 
-        for slrt_layer, cnn_layer in zip(self._transformers_layers, self._cnn_layers):
-            x = cnn_layer(x)
+        for rev_slrt_layer, slrt_layer in zip(self._reversed_transformers_layers, self._transformers_layers):
+            #x = cnn_layer(x)
+            x = torch.transpose(x, -2, -1)
+            x = rev_slrt_layer(x)
+            x = torch.transpose(x, -2, -1)
             x = slrt_layer(x)
 
         x = self._last_norm(x)
