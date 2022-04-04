@@ -175,6 +175,7 @@ class GlossTranslationModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         targets, predictions, losses = self._process_batch(batch)
+        self.scheduler.step()
         if self.global_step < 2:
             for name, child in self.named_children():
                 for param in child.parameters():
