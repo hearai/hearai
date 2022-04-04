@@ -40,14 +40,14 @@ train_parameters:
 feature_extractor:
     name: "cnn_extractor"
     model_path: "efficientnet_b1"
-    representation_size: 64
+    representation_size: 512
 
 transformer:
-    name: "sign_language_cnn_transformer"
-    feedforward_size: 64
+    name: "sign_language_double_transformer"
+    feedforward_size: 512
     num_attention_heads: 1
     num_encoder_layers: 4
-    output_size: 64
+    output_size: 512
     dropout_rate: 0.2
 
 heads:
@@ -61,28 +61,28 @@ heads:
     hamnosys:
         symmetry_operator:
             num_class: 3
-            loss_weight: 1
+            loss_weight: 3
         hand_shape_base_form:
             num_class: 12
-            loss_weight: 1
+            loss_weight: 12
         hand_shape_thumb_position:
             num_class: 4
-            loss_weight: 1
+            loss_weight: 4
         hand_shape_bending:
             num_class: 2
-            loss_weight: 1
+            loss_weight: 2
         hand_position_finger_direction:
             num_class: 9
-            loss_weight: 1
+            loss_weight: 9
         hand_position_palm_orientation:
             num_class: 8
-            loss_weight: 1
+            loss_weight: 8
         hand_location_x:
             num_class: 3
-            loss_weight: 1
+            loss_weight: 3
         hand_location_y:
             num_class: 15
-            loss_weight: 1
+            loss_weight: 15
 
 freeze_scheduler:
     model_params:
