@@ -75,11 +75,13 @@ class SignLanguageDoubleTransformer(nn.Module):
         x = self._dropout_positional_encoding(positional_encoding)
         # Positional Encoding End
 
-        for transformer_layer, reversed_transformer_layer in zip(self._transformers_layers, self._reversed_transformer_layers):
+        for transformer_layer in self._transformers_layers:
+            x = transformer_layer(x)
+
+        for reversed_transformer_layer in self._reversed_transformer_layers:
             x = torch.transpose(x, -1, -2)
             x = reversed_transformer_layer(x)
             x = torch.transpose(x, -1, -2)
-            x = transformer_layer(x)
 
         x = self._last_norm(x)
         x = torch.reshape(x, (x.shape[0], -1))
