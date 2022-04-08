@@ -105,7 +105,7 @@ class GlossTranslationModel(pl.LightningModule):
                 HeadClassificationSequentialModel(
                     classes_number=value["num_class"],
                     representation_size=3 * value["num_class"],
-                    additional_layers=1,
+                    additional_layers=3,
                     dropout_rate=heads["model"]["dropout_rate"]
                 )
             )

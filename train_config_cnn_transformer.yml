@@ -43,7 +43,7 @@ feature_extractor:
     representation_size: 512
 
 transformer:
-    name: "sign_language_double_transformer"
+    name: "sign_language_keyframe_selector"
     feedforward_size: 512
     num_attention_heads: 8
     num_encoder_layers: 4
