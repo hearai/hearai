@@ -42,11 +42,6 @@ class SignLanguageKeyframeSelector(nn.Module):
         self._attention_heads = transformer_parameters["num_attention_heads"]
 
 
-        # self._cnn_layers = Conv1DFeaturesProcessor(
-        #             representation_size=self._input_size,
-        #             dropout_rate=transformer_parameters["dropout_rate"]
-        #         )
-
         self._cnn_layers = nn.Conv2d(in_channels=self._attention_heads,
                                      out_channels=self._attention_heads,
                                      groups=self._attention_heads,
@@ -63,8 +58,8 @@ class SignLanguageKeyframeSelector(nn.Module):
         self._importance_dropout = nn.Dropout(transformer_parameters["dropout_rate"])
         self._importance_activation = nn.Softmax(dim=-2)
 
-        self._sequential = SimpleSequentialModel(layers=5,
-                                                 representation_size=self._input_size,
+        self._sequential = SimpleSequentialModel(layers=2,
+                                                 representation_size=transformer_parameters["output_size"],
                                                  dropout_rate=transformer_parameters["dropout_rate"])
 
     def forward(self, input: torch.Tensor):
@@ -88,7 +83,6 @@ class SignLanguageKeyframeSelector(nn.Module):
         x = self._importance_calculator(x)
         x = self._importance_activation(x)
 
-        # x = torch.flatten(x, start_dim=-2)
         x = torch.multiply(x, input)
         x = torch.sum(x, dim=-2)
 

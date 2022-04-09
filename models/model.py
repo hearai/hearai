@@ -105,7 +105,7 @@ class GlossTranslationModel(pl.LightningModule):
                 HeadClassificationSequentialModel(
                     classes_number=value["num_class"],
                     representation_size=3 * value["num_class"],
-                    additional_layers=3,
+                    additional_layers=heads["model"]["additional_layers"],
                     dropout_rate=heads["model"]["dropout_rate"]
                 )
             )
@@ -117,15 +117,15 @@ class GlossTranslationModel(pl.LightningModule):
         # models-parts
         self.model_loader = ModelLoader()
 
-        representation_size = feature_extractor_parameters["representation_size"]
+        self.representation_size = feature_extractor_parameters["representation_size"]
 
-        self.adjustment_to_representatios_size = nn.LazyLinear(out_features=representation_size)
+        self.adjustment_to_representatios_size = nn.LazyLinear(out_features=self.representation_size)
 
         if self.use_frames:
             self.multi_frame_feature_extractor = MultiFrameFeatureExtractor(
                 self.model_loader.load_feature_extractor(
                     feature_extractor_name=feature_extractor_parameters["name"],
-                    representation_size=representation_size,
+                    representation_size=self.representation_size,
                     model_path=feature_extractor_parameters["model_path"],
                 )
             )
@@ -158,8 +158,8 @@ class GlossTranslationModel(pl.LightningModule):
                 x = torch.concat([x, x_landmarks], dim=-1)
             else:
                 x = x_landmarks
-
-        x = self.adjustment_to_representatios_size(x)
+        if x.shape[-1] != self.representation_size:
+            x = self.adjustment_to_representatios_size(x)
         x = self.transformer(x)
 
         for head in self.cls_head:
