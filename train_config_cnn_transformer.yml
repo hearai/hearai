@@ -40,20 +40,20 @@ train_parameters:
 feature_extractor:
     name: "cnn_extractor"
     model_path: "efficientnet_b1"
-    representation_size: 512
+    representation_size: 600
 
 transformer:
     name: "sign_language_keyframe_selector"
-    feedforward_size: 512
+    feedforward_size: 600
     num_attention_heads: 8
     num_encoder_layers: 4
-    output_size: 512
+    output_size: 600
     dropout_rate: 0.2
 
 heads:
     model:
         additional_layers: 3
-        dropout_rate: 0.3
+        dropout_rate: 0.2
     gloss:
         gloss:
             num_class: 2400
