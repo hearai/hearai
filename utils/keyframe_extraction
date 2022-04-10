@@ -1,0 +1,82 @@
+import cv2
+import os
+import numpy as np
+
+
+def detect_keyframes(input_dir, threshold, output_dir, method: str = 'nonzero'):
+    """
+    methods: neighbors, keyframe_neighbors, rgb_keyframes
+    """
+    diffs = []
+    prefix = input_dir.split('/')[-1]
+    output_dir_prefixed = os.path.join(output_dir, prefix)
+    if not os.path.exists(output_dir_prefixed):
+        os.makedirs(output_dir_prefixed)
+
+    for r, d, filenames in os.walk(input_dir):
+        num_filenames = len([filename for filename in filenames if '.jpg' in filename])
+        if num_filenames == 0:
+            print(f'Skipping due to num_filenames: {num_filenames}')
+            continue
+        filename = prefix + '_0.jpg'
+        previous_frame = cv2.imread(os.path.join(input_dir, filename))
+        previous_keyframe = previous_frame
+        cv2.imwrite(os.path.join(output_dir_prefixed, filename), previous_keyframe)
+
+        keyframe_counter = 0
+        for num_filename in range(1, num_filenames):
+            filename = input_dir.split('/')[-1] + f'_{num_filename}.jpg'
+            current_frame = cv2.imread(os.path.join(input_dir, filename))
+
+            if method == 'rgb':
+                diff = cv2.absdiff(current_frame, previous_keyframe)
+                rgb_diff = np.sum(diff)
+                diffs.append(rgb_diff)
+                condition = rgb_diff > threshold
+            elif method == 'nonzero':
+                diff = cv2.absdiff(current_frame, previous_keyframe)
+                non_zero_count = np.count_nonzero(diff)
+                diffs.append(non_zero_count)
+                condition = non_zero_count > threshold
+            elif method == 'hist':
+                previous_histogram = cv2.calcHist(cv2.cvtColor(previous_keyframe, cv2.COLOR_BGR2GRAY), channels=[1], mask=None, histSize=[128], ranges=[0, 256])
+                current_histogram = cv2.calcHist(cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY), channels=[1], mask=None, histSize=[128], ranges=[0, 256])
+                diff = np.sum(np.abs(current_histogram - previous_histogram))
+                diffs.append(diff)
+                condition = diff > threshold
+
+            if condition:
+                cv2.imwrite(os.path.join(output_dir_prefixed, filename), current_frame)
+                previous_keyframe = current_frame
+                keyframe_counter += 1
+        print(f'Keyframes detected: {keyframe_counter}')
+
+    return diffs
+
+
+
+
+if __name__ == "__main__":
+
+    input_dirs = ['/dih4/dih4_2/hearai/data/frames/pjm',
+                  '/dih4/dih4_2/hearai/data/frames/glex',
+                  '/dih4/dih4_2/hearai/data/frames/galex',
+                  '/dih4/dih4_2/hearai/data/frames/basiclexicon']
+
+    threshold_rgb = 1e7
+    
+    output_dirs = ['/dih4/dih4_2/hearai/wfilipiuk/keyframes/pjm_keyframes',
+                   '/dih4/dih4_2/hearai/wfilipiuk/keyframes/glex_keyframes',
+                   '/dih4/dih4_2/hearai/wfilipiuk/keyframes/galex_keyframes',
+                   '/dih4/dih4_2/hearai/wfilipiuk/keyframes/basiclexicon_keyframes']
+
+    for input_dir, output_dir in zip(input_dirs[1:], output_dirs[1:]):
+        for r, video_directories, f in os.walk(input_dir):
+            for video_directory in video_directories:
+                print(input_dir, video_directory)
+                diffs = detect_keyframes(input_dir=os.path.join(input_dir, video_directory),
+                                            threshold=threshold_rgb,
+                                            output_dir=output_dir,
+                                            method='rgb')
+
+
