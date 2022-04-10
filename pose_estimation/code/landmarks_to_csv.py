@@ -115,7 +115,7 @@ def draw_hand_landmarks(image, landmarks):
     return image
 
 
-def video_to_landmarks(video, generate_new_video=True, generate_segmentation_mask=False):
+def video_to_landmarks(video, generate_new_video=True, generate_segmentation_mask=False, smoothing=True):
     face_columns_names = get_face_columns_names()
     pose_columns_names = get_pose_columns_names()
     left_hand_columns_names = get_left_hand_columns_names()
@@ -135,16 +135,16 @@ def video_to_landmarks(video, generate_new_video=True, generate_segmentation_mas
     pose_frames_ls = []
     left_hand_frames_ls = []
     right_hand_frames_ls = []
-    segmenation_frames_ls = []
+    segmentation_frames_ls = []
 
     counter = 1
 
-    with mp_holistic.Holistic(model_complexity=1,
-                              smooth_landmarks=True,
+    with mp_holistic.Holistic(model_complexity=2,
+                              smooth_landmarks=smoothing,
                               refine_face_landmarks=False,
                               enable_segmentation=generate_segmentation_mask,
-                              min_detection_confidence=0.5,
-                              min_tracking_confidence=0.5) as holistic:
+                              min_detection_confidence=0.25,
+                              min_tracking_confidence=0.25) as holistic:
         success, frame = video.read()
 
         progress_bar = tqdm(total=video_n_frames,
@@ -212,7 +212,7 @@ def video_to_landmarks(video, generate_new_video=True, generate_segmentation_mas
             right_hand_frames_ls.append(right_hand_row)
 
             if generate_segmentation_mask:
-                segmenation_frames_ls.append(results.segmentation_mask.tolist())
+                segmentation_frames_ls.append(results.segmentation_mask.tolist())
 
             if generate_new_video:
                 new_video.append(annotated_frame)
@@ -228,12 +228,34 @@ def video_to_landmarks(video, generate_new_video=True, generate_segmentation_mas
     video_left_hand = pd.DataFrame(left_hand_frames_ls, columns=left_hand_columns_names)
     video_right_hand = pd.DataFrame(right_hand_frames_ls, columns=right_hand_columns_names)
 
-    return video_face, video_pose, video_left_hand, video_right_hand, new_video, segmenation_frames_ls
+    return video_face, video_pose, video_left_hand, video_right_hand, new_video, segmentation_frames_ls
+
+
+def save_segmentation_masks(segmentation_masks, name, output_dir):
+    segmentation_file_name = os.path.join(output_dir, name + "_segmentations.json")
+    with open(segmentation_file_name, 'w') as prop_file:
+        prop_file.write(json.dumps(segmentation_masks))
+
+
+def save_landmarks_csvs(dfs, name, output_dir):
+    dfs_filenames = [name + "_face.csv",
+                     name + "_pose.csv",
+                     name + "_left_hand.csv",
+                     name + "_right_hand.csv"]
+
+    for i in range(len(dfs)):
+        df = dfs[i]
+        filename = dfs_filenames[i]
+        path = os.path.join(output_dir, filename)
+        df.to_csv(path)
+
+    print('Landmarks saved to files:')
+    print(dfs_filenames)
 
 
 def process_single_video_file(video_file,
-                              output_directory,
-                              save_annotated_video=True,
+                              output_dir,
+                              save_annotated=True,
                               generate_segmentation_mask=False):
     output_video_codec = 'mp4v'
     resize_factor = 1
@@ -274,14 +296,14 @@ def process_single_video_file(video_file,
         video_left_hand_df, \
         video_right_hand_df, \
         new_video,\
-        segmentation_masks = video_to_landmarks(video, save_annotated_video, generate_segmentation_mask)
+        segmentation_masks = video_to_landmarks(video, save_annotated, generate_segmentation_mask)
 
     video.release()
 
-    os.makedirs(output_directory, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
-    if save_annotated_video:
-        output_video_path = os.path.join(output_directory,
+    if save_annotated:
+        output_video_path = os.path.join(output_dir,
                                          video_file_main_name + output_video_suffix)
 
         output_video_width = round(resize_factor * video_width)
@@ -300,28 +322,67 @@ def process_single_video_file(video_file,
         output_video.release()
 
     if generate_segmentation_mask:
-        segmentation_file_name = os.path.join(output_directory, video_file_main_name + "_segmentations.json")
-        with open(segmentation_file_name, 'w') as prop_file:
-            prop_file.write(json.dumps(segmentation_masks))
+        save_segmentation_masks(segmentation_masks, video_file_main_name, output_dir)
 
-    dfs = [video_face_df, video_pose_df, video_left_hand_df, video_right_hand_df]
-    dfs_filenames = [video_file_main_name + "_face.csv",
-                     video_file_main_name + "_pose.csv",
-                     video_file_main_name + "_left_hand.csv",
-                     video_file_main_name + "_right_hand.csv"]
-
-    properties_file_name = os.path.join(output_directory, video_file_main_name + "_properties.json")
+    properties_file_name = os.path.join(output_dir, video_file_main_name + "_properties.json")
     with open(properties_file_name, 'w') as prop_file:
         prop_file.write(json.dumps(video_properties))
 
-    for i in range(len(dfs)):
-        df = dfs[i]
-        filename = dfs_filenames[i]
-        path = os.path.join(output_directory, filename)
-        df.to_csv(path)
+    save_landmarks_csvs([video_face_df, video_pose_df, video_left_hand_df, video_right_hand_df],
+                        video_file_main_name,
+                        output_dir)
 
-    print('Landmarks saved to files:')
-    print(dfs_filenames)
+
+def process_frames_in_directory(input_dir,
+                                output_dir,
+                                save_annotated=True,
+                                generate_segmentation_mask=False):
+    resize_factor = 1
+    output_video_suffix = '_annotated.avi'
+
+    video_directory_name = os.path.basename(os.path.normpath(input_dir))
+
+    print('Processing directory ' + video_directory_name)
+
+    video = cv.VideoCapture(input_dir, cv.CAP_IMAGES)
+
+    video_face_df, \
+        video_pose_df, \
+        video_left_hand_df, \
+        video_right_hand_df, \
+        new_video,\
+        segmentation_masks = video_to_landmarks(video, save_annotated, generate_segmentation_mask, smoothing=False)
+
+    video.release()
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    if save_annotated:
+        output_video_path = os.path.join(output_dir,
+                                         video_directory_name + output_video_suffix)
+
+        video_width, video_height = new_video[0].size
+        output_video_width = round(resize_factor * video_width)
+        output_video_height = round(resize_factor * video_height)
+        fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
+        output_video = cv.VideoWriter(output_video_path,
+                                      fourcc,
+                                      1,
+                                      (output_video_width, output_video_height))
+        for frame in new_video:
+            if resize_factor != 1:
+                frame = cv.resize(frame,
+                                  (output_video_width, output_video_height),
+                                  cv.INTER_AREA)
+            output_video.write(frame)
+        output_video.release()
+
+    if generate_segmentation_mask:
+        save_segmentation_masks(segmentation_masks, video_directory_name, output_dir)
+
+    save_landmarks_csvs([video_face_df, video_pose_df, video_left_hand_df, video_right_hand_df],
+                        video_directory_name,
+                        output_dir)
 
 
 class FileWithDirectory:
@@ -335,32 +396,41 @@ if __name__ == "__main__":
     parser.add_argument("input", help="Path to input video")
     parser.add_argument("output", help="Path to save outputs")
     parser.add_argument("save", help="true / false flag if to generate output file")
+    parser.add_argument("frames", default=False, type=bool, help="Path to input video")
     args = parser.parse_args()
     print(args.input)
-
     files_with_directories = []
 
     root_directory = ''
     output_root_directory = args.output
+    save_annotated_video = args.save and (
+            (args.save == 'True') or (args.save == 'true') or (args.save == 't') or (args.save == 'T')
+    )
+    use_frames = args.frames
 
     if os.path.isdir(args.input):
         root_directory = args.input
-        for directory, _, files in os.walk(root_directory, topdown=True):
-            for file in files:
-                files_with_directories.append(FileWithDirectory(directory, file))
+        if use_frames:
+            for directory, _, _ in os.walk(root_directory, topdown=True):
+                files_with_directories.append(FileWithDirectory(directory, None))
+        else:
+            for directory, _, files in os.walk(root_directory, topdown=True):
+                for file in files:
+                    files_with_directories.append(FileWithDirectory(directory, file))
     elif os.path.isfile(args.input):
         files_with_directories = [FileWithDirectory('.', args.input)]
     else:
         raise Exception("Incorrect input file name or directory!")
-
-    save_annotated_video = args.save and ((args.save == 'true') or (args.save == 't'))
 
     for fwd in files_with_directories:
         subdirectory = fwd.directory[len(root_directory):]
         output_directory = os.path.join(output_root_directory, subdirectory)
 
         try:
-            process_single_video_file(fwd.file_with_path, output_directory, save_annotated_video)
+            if use_frames:
+                process_frames_in_directory(subdirectory, output_directory, save_annotated_video)
+            else:
+                process_single_video_file(fwd.file_with_path, output_directory, save_annotated_video)
         except Exception as e:
             print('Processing error for file ' + fwd.file_with_path)
             print(e)
