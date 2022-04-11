@@ -384,7 +384,6 @@ def process_frames_in_directory(input_dir,
         output_video_path = os.path.join(output_dir,
                                          frames_directory_name + output_video_suffix)
 
-        #video_width, video_height = new_frames[0].size
         output_video_width = round(resize_factor * frames_width)
         output_video_height = round(resize_factor * frames_height)
         fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
