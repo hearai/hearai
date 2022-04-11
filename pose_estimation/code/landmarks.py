@@ -7,6 +7,7 @@ import cv2 as cv
 import mediapipe as mp
 from tqdm import tqdm
 
+import csv_to_array as cta
 
 POSE_LANDMARKS_NAMES = [name.name for name in mp.solutions.holistic.PoseLandmark]
 HAND_LANDMARKS_NAMES = [name.name for name in mp.solutions.holistic.HandLandmark]
@@ -332,6 +333,24 @@ def process_single_video_file(video_file,
                         video_file_main_name,
                         output_dir)
 
+    face_extended, \
+        pose_extended, \
+        left_hand_extended, \
+        right_hand_extended = cta.extend_landmarks_dfs(video_face_df,
+                                                       video_pose_df,
+                                                       video_left_hand_df,
+                                                       video_right_hand_df,
+                                                       video_width,
+                                                       video_height)
+
+    np.savez_compressed(os.path.join(output_directory, video_file_main_name + ".npz"),
+                        face=face_extended.to_numpy(),
+                        pose=pose_extended.to_numpy(),
+                        left_hand=left_hand_extended.to_numpy(),
+                        right_hand=right_hand_extended.to_numpy())
+
+    print('Arrays with landmarks saved')
+
 
 def process_frames_in_directory(input_dir,
                                 output_dir,
@@ -340,36 +359,40 @@ def process_frames_in_directory(input_dir,
     resize_factor = 1
     output_video_suffix = '_annotated.avi'
 
-    video_directory_name = os.path.basename(os.path.normpath(input_dir))
+    frames_directory_name = os.path.basename(os.path.normpath(input_dir))
 
-    print('Processing directory ' + video_directory_name)
+    print('Processing directory ' + frames_directory_name)
 
-    video = cv.VideoCapture(input_dir, cv.CAP_IMAGES)
+    frames = cv.VideoCapture(f'{input_dir}/{frames_directory_name}_%d.jpg', cv.CAP_IMAGES)
+    frames_width = int(frames.get(cv.CAP_PROP_FRAME_WIDTH))
+    frames_height = int(frames.get(cv.CAP_PROP_FRAME_HEIGHT))
+    if frames_width == 0 or frames_height == 0:
+        return
 
-    video_face_df, \
-        video_pose_df, \
-        video_left_hand_df, \
-        video_right_hand_df, \
-        new_video,\
-        segmentation_masks = video_to_landmarks(video, save_annotated, generate_segmentation_mask, smoothing=False)
+    face_df, \
+        pose_df, \
+        left_hand_df, \
+        right_hand_df, \
+        new_frames,\
+        segmentation_masks = video_to_landmarks(frames, save_annotated, generate_segmentation_mask, smoothing=False)
 
-    video.release()
+    frames.release()
 
     os.makedirs(output_dir, exist_ok=True)
 
     if save_annotated:
         output_video_path = os.path.join(output_dir,
-                                         video_directory_name + output_video_suffix)
+                                         frames_directory_name + output_video_suffix)
 
-        video_width, video_height = new_video[0].size
-        output_video_width = round(resize_factor * video_width)
-        output_video_height = round(resize_factor * video_height)
+        #video_width, video_height = new_frames[0].size
+        output_video_width = round(resize_factor * frames_width)
+        output_video_height = round(resize_factor * frames_height)
         fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
         output_video = cv.VideoWriter(output_video_path,
                                       fourcc,
                                       1,
                                       (output_video_width, output_video_height))
-        for frame in new_video:
+        for frame in new_frames:
             if resize_factor != 1:
                 frame = cv.resize(frame,
                                   (output_video_width, output_video_height),
@@ -378,42 +401,69 @@ def process_frames_in_directory(input_dir,
         output_video.release()
 
     if generate_segmentation_mask:
-        save_segmentation_masks(segmentation_masks, video_directory_name, output_dir)
+        save_segmentation_masks(segmentation_masks, frames_directory_name, output_dir)
 
-    save_landmarks_csvs([video_face_df, video_pose_df, video_left_hand_df, video_right_hand_df],
-                        video_directory_name,
+    save_landmarks_csvs([face_df, pose_df, left_hand_df, right_hand_df],
+                        frames_directory_name,
                         output_dir)
+
+    face_extended, \
+        pose_extended, \
+        left_hand_extended, \
+        right_hand_extended = cta.extend_landmarks_dfs(face_df,
+                                                       pose_df,
+                                                       left_hand_df,
+                                                       right_hand_df,
+                                                       frames_width,
+                                                       frames_height)
+
+    np.savez_compressed(os.path.join(output_directory, frames_directory_name + ".npz"),
+                        face=face_extended.to_numpy(),
+                        pose=pose_extended.to_numpy(),
+                        left_hand=left_hand_extended.to_numpy(),
+                        right_hand=right_hand_extended.to_numpy())
+
+    print('Arrays with landmarks saved')
 
 
 class FileWithDirectory:
     def __init__(self, d, f_name):
         self.directory = d
-        self.file_with_path = os.path.join(d, f_name)
+        if f_name is not None:
+            self.file_with_path = os.path.join(d, f_name)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("input", help="Path to input video")
-    parser.add_argument("output", help="Path to save outputs")
-    parser.add_argument("save", help="true / false flag if to generate output file")
-    parser.add_argument("frames", default=False, type=bool, help="Path to input video")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--frames',
+                       action='store_true')
+    group.add_argument('--video',
+                       action='store_true')
+    parser.add_argument("--input",
+                        help="Path to input directory")
+    parser.add_argument("--output",
+                        help="Path to save outputs")
+    parser.add_argument("--annotate",
+                        default=False,
+                        action=argparse.BooleanOptionalAction,
+                        help="Flag whether to generate output video")
     args = parser.parse_args()
     print(args.input)
     files_with_directories = []
 
     root_directory = ''
     output_root_directory = args.output
-    save_annotated_video = args.save and (
-            (args.save == 'True') or (args.save == 'true') or (args.save == 't') or (args.save == 'T')
-    )
+    save_annotated_video = args.annotate
     use_frames = args.frames
+    use_video = args.video
 
     if os.path.isdir(args.input):
         root_directory = args.input
         if use_frames:
             for directory, _, _ in os.walk(root_directory, topdown=True):
                 files_with_directories.append(FileWithDirectory(directory, None))
-        else:
+        elif use_video:
             for directory, _, files in os.walk(root_directory, topdown=True):
                 for file in files:
                     files_with_directories.append(FileWithDirectory(directory, file))
@@ -428,8 +478,8 @@ if __name__ == "__main__":
 
         try:
             if use_frames:
-                process_frames_in_directory(subdirectory, output_directory, save_annotated_video)
-            else:
+                process_frames_in_directory(fwd.directory, output_directory, save_annotated_video)
+            elif use_video:
                 process_single_video_file(fwd.file_with_path, output_directory, save_annotated_video)
         except Exception as e:
             print('Processing error for file ' + fwd.file_with_path)

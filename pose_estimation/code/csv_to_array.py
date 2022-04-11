@@ -156,32 +156,17 @@ def normalize(landmarks_df, norm_factor, suffixes=['.x', '.y', '.z', '.r']):
     return landmarks_df
 
 
-def process_single_json_file(json_file,
-                             output_directory):
-
-    with open(json_file, 'r') as f:
-        properties = json.load(f)
-
-    file_name = json_file[0:(len(json_file) - 16)]
-
-    file_main_name = os.path.basename(file_name)
-
-    face_df = pd.read_csv(file_name + '_face.csv').iloc[:, 1:]
-    pose_df = pd.read_csv(file_name + '_pose.csv').iloc[:, 1:]
-    left_hand_df = pd.read_csv(file_name + '_left_hand.csv').iloc[:, 1:]
-    right_hand_df = pd.read_csv(file_name + '_right_hand.csv').iloc[:, 1:]
-
+def extend_landmarks_dfs(face_df, pose_df, left_hand_df, right_hand_df, width, height):
     face_df = remove_column_prefix(face_df, 'Face.')
     pose_df = remove_column_prefix(pose_df, 'Pose.')
     left_hand_df = remove_column_prefix(left_hand_df, 'Left_hand.')
     right_hand_df = remove_column_prefix(right_hand_df, 'Right_hand.')
 
     # In order to preserve angles and original proportions:
-    face_df = back_to_pixels(face_df, properties['Width'], properties['Height'])
-    pose_df = back_to_pixels(pose_df, properties['Width'], properties['Height'])
-    left_hand_df = back_to_pixels(left_hand_df, properties['Width'], properties['Height'])
-    right_hand_df = back_to_pixels(right_hand_df, properties['Width'], properties['Height'])
-
+    face_df = back_to_pixels(face_df, width, height)
+    pose_df = back_to_pixels(pose_df, width, height)
+    left_hand_df = back_to_pixels(left_hand_df, width, height)
+    right_hand_df = back_to_pixels(right_hand_df, width, height)
     face_df = impute_landmark_coordinates(face_df)
     pose_df = impute_landmark_coordinates(pose_df)
     left_hand_df = impute_landmark_coordinates(left_hand_df)
@@ -197,6 +182,34 @@ def process_single_json_file(json_file,
     pose_extended = normalize(pose_extended, normalizing_factor)
     left_hand_extended = normalize(left_hand_extended, normalizing_factor)
     right_hand_extended = normalize(right_hand_extended, normalizing_factor)
+
+    return face_extended, pose_extended, left_hand_extended, right_hand_extended
+
+
+def process_single_json_file(json_file,
+                             output_directory):
+
+    with open(json_file, 'r') as f:
+        properties = json.load(f)
+
+    file_name = json_file[0:(len(json_file) - 16)]
+
+    file_main_name = os.path.basename(file_name)
+
+    face_df = pd.read_csv(file_name + '_face.csv').iloc[:, 1:]
+    pose_df = pd.read_csv(file_name + '_pose.csv').iloc[:, 1:]
+    left_hand_df = pd.read_csv(file_name + '_left_hand.csv').iloc[:, 1:]
+    right_hand_df = pd.read_csv(file_name + '_right_hand.csv').iloc[:, 1:]
+
+    face_extended, \
+        pose_extended, \
+        left_hand_extended, \
+        right_hand_extended = extend_landmarks_dfs(face_df,
+                                                   pose_df,
+                                                   left_hand_df,
+                                                   right_hand_df,
+                                                   properties['Width'],
+                                                   properties['Height'])
 
     os.makedirs(output_directory, exist_ok=True)
 
