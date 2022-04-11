@@ -128,11 +128,6 @@ def impute_landmark_coordinates(landmarks_df: pd.DataFrame):
                                                   limit_direction='both',
                                                   inplace=True)
 
-    # landmarks_df.interpolate(method='linear',
-    #                          axis="index",
-    #                          limit_direction='both',
-    #                          inplace=True)
-
     return landmarks_df
 
 
