@@ -8,7 +8,7 @@ from datasets.transforms_creator import TransformsCreator
 from models.model import GlossTranslationModel
 
 
-def analyse(model_config_path: str, model_ckpt_path: str):
+def analyse(model_config_path: str, model_path: str):
     with open(model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -27,7 +27,15 @@ def analyse(model_config_path: str, model_ckpt_path: str):
 
     test_dataset = dataset_creator.get_test_subset()
 
-    model = GlossTranslationModel.load_from_checkpoint(model_ckpt_path)
+    model = GlossTranslationModel(
+        general_parameters=model_config["general_parameters"],
+        train_parameters=model_config["train_parameters"],
+        feature_extractor_parameters=model_config["feature_extractor"],
+        transformer_parameters=model_config["transformer"],
+        heads=model_config["heads"],
+        freeze_scheduler=model_config["freeze_scheduler"])
+
+    model.load_state_dict(torch.load(model_path))
     model.eval()
 
     with torch.no_grad():
@@ -44,4 +52,6 @@ def get_args_parser():
 
 
 if __name__ == '__main__':
-    ...
+    parser = get_args_parser()
+    args = parser.parse_args()
+    analyse(args.model_config_path, args.model_path)

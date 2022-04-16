@@ -148,6 +148,7 @@ class GlossTranslationModel(pl.LightningModule):
     def forward(self, input, **kwargs):
         predictions = []
         frames, landmarks = input
+        # frames = input
 
         if self.use_frames:
             x = self.multi_frame_feature_extractor(frames.to(self.device))
