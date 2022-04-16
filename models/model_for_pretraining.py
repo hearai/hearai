@@ -1,5 +1,6 @@
 from typing import Dict
 
+import neptune
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -171,9 +172,13 @@ class PreTrainingModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.RAdam(self.parameters(), lr=self.lr)
 
-        steps_per_epoch = self.steps_per_epoch // self.trainer.accumulate_grad_batches
-        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr, epochs=self.trainer.max_epochs,
-                                                             steps_per_epoch=steps_per_epoch)
+        self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
+                                                             max_lr=self.lr,
+                                                             div_factor=100,
+                                                             final_div_factor=10,
+                                                             pct_start=0.2,
+                                                             epochs=self.trainer.max_epochs,
+                                                             steps_per_epoch=self.steps_per_epoch + 2)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(

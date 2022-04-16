@@ -5,20 +5,17 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
-from utils.summary_loss import SummaryLoss
-from math import ceil
 
+from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
-from models.model_loader import ModelLoader
-from models.common.simple_sequential_model import SimpleSequentialModel
-from models.landmarks_models.lanmdarks_sequential_model import LandmarksSequentialModel
 from models.head_models.head_sequential_model import HeadClassificationSequentialModel
+from models.model_loader import ModelLoader
+from utils.summary_loss import SummaryLoss
 
-# initialize neptune logging
+
 def initialize_neptun(tags):
     return neptune.init(
         api_token=NEPTUNE_API_TOKEN,
@@ -33,15 +30,15 @@ class GlossTranslationModel(pl.LightningModule):
     """Awesome model for Gloss Translation"""
 
     def __init__(
-        self,
-        general_parameters: Dict = None,
-        train_parameters: Dict = None,
-        feature_extractor_parameters: Dict = None,
-        transformer_parameters: Dict = None,
-        heads: Dict = None,
-        freeze_scheduler: Dict = None,
-        loss_function=nn.BCEWithLogitsLoss,
-        steps_per_epoch: int = 1000
+            self,
+            general_parameters: Dict = None,
+            train_parameters: Dict = None,
+            feature_extractor_parameters: Dict = None,
+            transformer_parameters: Dict = None,
+            heads: Dict = None,
+            freeze_scheduler: Dict = None,
+            loss_function=nn.BCEWithLogitsLoss,
+            steps_per_epoch: int = 1000
     ):
         """
         Args:
@@ -76,7 +73,8 @@ class GlossTranslationModel(pl.LightningModule):
         super().__init__()
 
         if general_parameters["neptune"]:
-            tags = [train_parameters["classification_mode"], feature_extractor_parameters["name"], transformer_parameters["name"]]
+            tags = [train_parameters["classification_mode"], feature_extractor_parameters["name"],
+                    transformer_parameters["name"]]
             self.run = initialize_neptun(tags)
             self.run["parameters"] = {
                 "general_parameters": general_parameters,
@@ -132,13 +130,12 @@ class GlossTranslationModel(pl.LightningModule):
         else:
             self.multi_frame_feature_extractor = None
 
-
         self.transformer = self.model_loader.load_transformer(
-                transformer_name=transformer_parameters["name"],
-                feature_extractor_parameters=feature_extractor_parameters,
-                transformer_parameters=transformer_parameters,
-                train_parameters=train_parameters
-            )
+            transformer_name=transformer_parameters["name"],
+            feature_extractor_parameters=feature_extractor_parameters,
+            transformer_parameters=transformer_parameters,
+            train_parameters=train_parameters
+        )
 
         self.steps_per_epoch = steps_per_epoch
         if freeze_scheduler is not None:
@@ -245,7 +242,8 @@ class GlossTranslationModel(pl.LightningModule):
                                                              div_factor=100,
                                                              final_div_factor=10,
                                                              pct_start=0.2,
-                                                             total_steps=self.trainer.max_epochs * self.steps_per_epoch + 2)
+                                                             epochs=self.trainer.max_epochs,
+                                                             steps_per_epoch=self.steps_per_epoch + 2)
         return [optimizer], [self.scheduler]
 
     def optimizer_step(
