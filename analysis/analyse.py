@@ -1,12 +1,14 @@
 import argparse
 
+import torch
 import yaml
 
 from datasets.dataset_creator import DatasetCreator
 from datasets.transforms_creator import TransformsCreator
+from models.model import GlossTranslationModel
 
 
-def analyse(model_config_path: str):
+def analyse(model_config_path: str, model_ckpt_path: str):
     with open(model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -24,6 +26,12 @@ def analyse(model_config_path: str):
         transforms_creator=transforms_creator)
 
     test_dataset = dataset_creator.get_test_subset()
+
+    model = GlossTranslationModel.load_from_checkpoint(model_ckpt_path)
+    model.eval()
+
+    with torch.no_grad():
+        output = model(test_dataset)
 
 
 def get_args_parser():
