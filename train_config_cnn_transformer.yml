@@ -1,8 +1,8 @@
 general_parameters:
-    data_paths: ["assets/sanity_check_data"]
+    data_paths: ["/dih4/dih4_2/hearai/training_data/frames/pjm", "/dih4/dih4_2/hearai/training_data/frames/basic-lexicon", "/dih4/dih4_2/hearai/training_data/frames/galex", "/dih4/dih4_2/hearai/training_data/frames/glex", "/dih4/dih4_2/hearai/training_data/frames/gsll/"]
     ratio_train_test: 0.8
-    workers: 16
-    gpu: 0
+    workers: 32
+    gpu: 1
     path_to_save: "saved_model.pth"
     seed: 2021
     neptune: True
@@ -28,12 +28,12 @@ train_parameters:
     epochs: 10000
     batch_size: 16
     lr: 0.001
-    num_segments: 64
+    num_segments: 16
     fast_dev_run: False
     pre_training: False
     use_frames: False
     use_landmarks: True
-    time: 0.1
+    time: 0.125
     warmup_steps: 5000.0
     multiply_lr_step: 1
 
@@ -89,5 +89,5 @@ freeze_scheduler:
         feature_extractor: [False]
         transformer: [False]
     freeze_pattern_repeats: [1]
-    freeze_mode: "step"
+    freeze_mode: "epoch"
     verbose: False
