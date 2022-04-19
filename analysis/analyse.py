@@ -2,10 +2,13 @@ import argparse
 
 import torch
 import yaml
+from torch.utils.data import DataLoader
 
+from datasets.dataset import PadCollate
 from datasets.dataset_creator import DatasetCreator
 from datasets.transforms_creator import TransformsCreator
 from models.model import GlossTranslationModel
+from utils.select_n_largest_sums import select_n_largest_sums
 
 
 def analyse(model_config_path: str, model_path: str):
@@ -26,6 +29,14 @@ def analyse(model_config_path: str, model_path: str):
         transforms_creator=transforms_creator)
 
     test_dataset = dataset_creator.get_test_subset()
+    test_dataloader = DataLoader(
+        test_dataset,
+        shuffle=False,
+        batch_size=model_config['train_parameters']['batch_size'],
+        num_workers=model_config['general_parameters']['workers'],
+        collate_fn=PadCollate(total_length=model_config['train_parameters']['num_segments']),
+        drop_last=False,
+    )
 
     model = GlossTranslationModel(
         general_parameters=model_config["general_parameters"],
@@ -38,8 +49,11 @@ def analyse(model_config_path: str, model_path: str):
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
-    with torch.no_grad():
-        output = model(test_dataset)
+    for frames, landmarks, _ in test_dataloader:
+        with torch.no_grad():
+            output = model((frames, landmarks))
+            output = [class_output.cpu().detach().numpy().tolist()[0] for class_output in output]
+            output = select_n_largest_sums(output, n=10)
 
 
 def get_args_parser():
