@@ -18,6 +18,8 @@ class ModelLoader:
         "hubert_transformer": transformers.HubertTransformer,
         "sign_language_transformer": transformers.SignLanguageTransformer,
         "sign_language_cnn_transformer": transformers.SignLanguageCNNTransformer,
+        "sign_language_double_transformer": transformers.SignLanguageDoubleTransformer,
+        "sign_language_keyframe_selector": transformers.SignLanguageKeyframeSelector,
         "lstm": transformers.LSTM,
     }
 

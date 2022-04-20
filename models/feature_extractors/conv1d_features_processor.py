@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Conv1DFeaturesProcessor(nn.Module):
     """ Basic sequential model for processing landmarks """
 
