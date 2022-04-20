@@ -42,6 +42,7 @@ class SignLanguageKeyframeSelector(nn.Module):
         self._attention_heads = transformer_parameters["num_attention_heads"]
         self._num_encoder_layers = transformer_parameters["num_encoder_layers"]
         self._dropout_rate = transformer_parameters["dropout_rate"]
+        self._mix_coordinates = False
 
         self._velocity_modules = nn.ModuleList()
         self._mixing_layers = nn.ModuleList()
@@ -78,22 +79,23 @@ class SignLanguageKeyframeSelector(nn.Module):
                 )
                 self._acceleration_modules.append(acceleration_module)
 
-            mixing_module = nn.ModuleList()
-            mixing_module.append(
-                nn.Dropout(self._dropout_rate)
-            )
-            mixing_module.append(
-                nn.Conv2d(in_channels=self._attention_heads,
-                          out_channels=self._attention_heads,
-                          groups=self._attention_heads,
-                          kernel_size=(1, int((i + 1) * self._input_size / 8)),
-                          padding='same',
-                          padding_mode='replicate')
-            )
-            mixing_module.append(
-                nn.ELU(0.1)
-            )
-            self._mixing_layers.append(mixing_module)
+            if self._mix_coordinates:
+                mixing_module = nn.ModuleList()
+                mixing_module.append(
+                    nn.Dropout(self._dropout_rate)
+                )
+                mixing_module.append(
+                    nn.Conv2d(in_channels=self._attention_heads,
+                              out_channels=self._attention_heads,
+                              groups=self._attention_heads,
+                              kernel_size=(1, int((i + 1) * self._input_size / 8)),
+                              padding='same',
+                              padding_mode='replicate')
+                )
+                mixing_module.append(
+                    nn.ELU(0.1)
+                )
+                self._mixing_layers.append(mixing_module)
 
         self._importance_dropout = nn.Dropout(self._dropout_rate)
         self._importance_calculator = nn.Conv2d(
@@ -128,8 +130,9 @@ class SignLanguageKeyframeSelector(nn.Module):
                     a = a_layer(a)
                 a = torch.concat([v, a], dim=-1)
 
-            for m_layer in self._mixing_layers[i]:
-                a = m_layer(a)
+            if self._mix_coordinates:
+                for m_layer in self._mixing_layers[i]:
+                    a = m_layer(a)
 
         w = self._importance_dropout(a)
         w = self._importance_calculator(w)
