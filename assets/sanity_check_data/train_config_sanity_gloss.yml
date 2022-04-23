@@ -8,20 +8,22 @@ general_parameters:
     neptune: False
     
 augmentations_parameters:
-    apply_resize: True
-    apply_center_crop: True
-    apply_random_erasing: True
-    apply_random_rotation: True
-    apply_color_jitter: True
+    apply_random_rotation: False
+    apply_color_jitter: False
+    apply_rgb_shift: False
+    apply_blur: False
 
     resize_size: 256
     center_crop_size: 256
-    random_erasing_probability: 0.5
     random_rotation_degree: 5
     color_jitter_brightness: 0.1
     color_jitter_contrast: 0.1
     color_jitter_saturation: 0.1
     color_jitter_hue: 0.05
+    rgb_shift_r_shift_limit: 0.2
+    rgb_shift_g_shift_limit: 0.2
+    rgb_shift_b_shift_limit: 0.2
+    blur_limit: 1
 
 train_parameters:
     classification_mode: "gloss"
