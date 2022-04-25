@@ -106,7 +106,7 @@ class SignLanguageKeyframeSelector(nn.Module):
         )
         self._importance_activation = nn.Softmax(dim=-2)
 
-        # self._final_sequential = SimpleSequentialModel(layers=2,
+        # self._final_sequential = SimpleSequentialModel(layers=10,
         #                                                representation_size=transformer_parameters["output_size"],
         #                                                dropout_rate=transformer_parameters["dropout_rate"])
 

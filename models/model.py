@@ -104,7 +104,7 @@ class GlossTranslationModel(pl.LightningModule):
             self.cls_head.append(
                 HeadClassificationSequentialModel(
                     classes_number=value["num_class"],
-                    representation_size=3 * value["num_class"],
+                    representation_size=heads["model"]["size"],
                     additional_layers=heads["model"]["additional_layers"],
                     dropout_rate=heads["model"]["dropout_rate"]
                 )
@@ -242,7 +242,7 @@ class GlossTranslationModel(pl.LightningModule):
 
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,
                                                              max_lr=self.lr,
-                                                             div_factor=100,
+                                                             div_factor=1000,
                                                              final_div_factor=10,
                                                              pct_start=0.2,
                                                              total_steps=self.trainer.max_epochs * self.steps_per_epoch + 2)
