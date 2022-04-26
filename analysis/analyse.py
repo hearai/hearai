@@ -1,5 +1,6 @@
 import argparse
 
+import numpy as np
 import torch
 import yaml
 from torch.utils.data import DataLoader
@@ -8,16 +9,22 @@ from datasets.dataset import PadCollate
 from datasets.dataset_creator import DatasetCreator
 from datasets.transforms_creator import TransformsCreator
 from models.model import GlossTranslationModel
-from utils.select_n_largest_sums import select_n_largest_sums
+from utils import load_head_to_word_dict, translate_heads
 
 
-def analyse(model_config_path: str, model_path: str):
+def analyse(model_config_path: str, model_path: str, input_dir_path: str, hamnosys_anns_path: str,
+            hamnosys_anns_dict_path: str):
+    """
+    Function to analyse the input frames and translate it to the understandable gloss.
+    """
+
     with open(model_config_path) as file:
         model_config = yaml.load(file, Loader=yaml.FullLoader)
 
     transforms_creator = TransformsCreator(model_config["augmentations_parameters"])
+
     dataset_creator = DatasetCreator(
-        data_paths=model_config["general_parameters"]["data_paths"],
+        data_paths=input_dir_path,
         classification_mode=model_config["train_parameters"]["classification_mode"],
         classification_heads=model_config["heads"][model_config["train_parameters"]["classification_mode"]],
         num_segments=model_config["train_parameters"]["num_segments"],
@@ -49,23 +56,36 @@ def analyse(model_config_path: str, model_path: str):
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
+    head_to_word_dict = load_head_to_word_dict(hamnosys_anns_path, hamnosys_anns_dict_path)
+
     for frames, landmarks, _ in test_dataloader:
         with torch.no_grad():
             output = model((frames, landmarks))
             output = [class_output.cpu().detach().numpy().tolist()[0] for class_output in output]
-            output = select_n_largest_sums(output, n=10)
+            heads = [np.argmax(class_output) for class_output in output]
+            min_distance, gloss_translation = translate_heads(heads, head_to_word_dict)
+            print(f'The most probable gloss translation (min distance: {min_distance}) are: {gloss_translation}')
 
 
 def get_args_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str)
-    parser.add_argument("--model-config-path", type=str)
-    parser.add_argument("--input-dir-path", type=str)
-    parser.add_argument("--output-dir-path", type=str)
+    parser.add_argument("--model_path", type=str,
+                        help="Path to saved model in pth format. "
+                             "Architecture should be defined in the model config file.")
+    parser.add_argument("--model_config_path", type=str,
+                        help="Path to the model config file in yml format. "
+                             "The same structure as model config for training is needed.")
+    parser.add_argument("--input_dir_path", type=str,
+                        help="Path to the directory with input for the analysis. "
+                             "It should contain subdirs with frames and annotation file in txt form.")
+    parser.add_argument("--hamnosys_anns_path", type=str,
+                        help="Path to the source of the fully hamnosys annotations file.")
+    parser.add_argument("--hamnosys_anns_dict_path", type=str,
+                        help="Path to the source of the fully hamnosys annotations dict file.")
     return parser
 
 
 if __name__ == '__main__':
     parser = get_args_parser()
     args = parser.parse_args()
-    analyse(args.model_config_path, args.model_path)
+    analyse(args.model_config_path, args.model_path, args.hamnosys_anns_path, args.hamnosys_anns_dict_path)

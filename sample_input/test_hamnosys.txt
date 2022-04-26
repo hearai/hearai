@@ -1,2 +1,0 @@
-name start end "Symmetry operator" "Dom hand - Handshape - base form" "Dom hand - Handhape - Thumb position" "Dom hand - Handshape - Bending" "Dom hand - Handposition - Ext finger direction" "Dom hand - Handposition - Palm orientation" "Dom hand - Handlocation - Frontal plane l/r" "Dom hand - Handlocation - Frontal plane t/b"
-10 7 17 0 5 1 0 0 6 0 4
