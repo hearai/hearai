@@ -232,9 +232,9 @@ class VideoFrameDataset(torch.utils.data.Dataset):
 
             start_indices = np.array(
                 [
-                    int(x)
-                    for x in range(record.num_frames)
-                    if x % int(record.fps * self.time) == 0
+                    round(x * record.fps * self.time - record.start_frame)
+                    for x in range(min(self.num_segments, record.num_frames))
+                    if round(x * record.fps * self.time) <= record.end_frame
                 ]
             )
             if len(start_indices) > self.num_segments:

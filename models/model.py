@@ -244,7 +244,7 @@ class GlossTranslationModel(pl.LightningModule):
                                                              max_lr=self.lr,
                                                              div_factor=1000,
                                                              final_div_factor=10,
-                                                             pct_start=0.2,
+                                                             pct_start=0.02,
                                                              total_steps=self.trainer.max_epochs * self.steps_per_epoch + 2)
         return [optimizer], [self.scheduler]
 
