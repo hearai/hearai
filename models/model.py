@@ -269,6 +269,11 @@ class GlossTranslationModel(pl.LightningModule):
         # check if values are bools
         self.freeze_scheduler["current_pattern"] = 0
         self.freeze_scheduler["current_counter"] = 0
+        self.freeze_scheduler["patterns_num"] = len(
+            self.freeze_scheduler["model_params"][
+                list(self.freeze_scheduler["model_params"].keys())[0]
+            ]
+        )
         self.freeze_step()
 
     def freeze_step(self):
@@ -286,40 +291,42 @@ class GlossTranslationModel(pl.LightningModule):
         if self.freeze_scheduler is not None:
             self.freeze_update()
             for params_to_freeze in list(self.freeze_scheduler["model_params"].keys()):
-                if self.freeze_scheduler["current_pattern"] >= len(
+                if self.freeze_scheduler["current_pattern"] <= len(
                         self.freeze_scheduler["model_params"][params_to_freeze]
                 ):
-                    current_pattern = True
-                else:
-                    current_pattern = self.freeze_scheduler["model_params"][
-                        params_to_freeze
-                    ][self.freeze_scheduler["current_pattern"]]
+                    if self.freeze_scheduler["current_pattern"] == len(
+                            self.freeze_scheduler["model_params"][params_to_freeze]
+                    ):
+                        current_pattern = False
+                    else:
+                        current_pattern = self.freeze_scheduler["model_params"][
+                            params_to_freeze
+                        ][self.freeze_scheduler["current_pattern"]]
 
-                for name, child in self.named_children():
-                    if params_to_freeze in name:
-                        for param in child.parameters():
-                            param.requires_grad = not current_pattern
-                if self.freeze_scheduler["verbose"]:
-                    print(
-                        "Freeze status:",
-                        params_to_freeze,
-                        "set to",
-                        str(current_pattern),
-                    )
+                    for name, child in self.named_children():
+                        if params_to_freeze == name:
+                            for param in child.parameters():
+                                if hasattr(param, "requires_grad"):
+                                    param.requires_grad = not current_pattern
+                    if self.freeze_scheduler["verbose"]:
+                        print(
+                            "Freeze status:",
+                            params_to_freeze,
+                            "set to",
+                            str(current_pattern),
+                        )
 
     def freeze_update(self):
-        if self.freeze_scheduler["current_pattern"] >= len(
-                self.freeze_scheduler["model_params"][
-                    list(self.freeze_scheduler["model_params"].keys())[0]
-                ]
-        ):
-            return
-        if (
-                self.freeze_scheduler["current_counter"]
-                >= self.freeze_scheduler["freeze_pattern_repeats"][
-            self.freeze_scheduler["current_pattern"]
-        ]
-        ):
-            self.freeze_scheduler["current_pattern"] += 1
-            self.freeze_scheduler["current_counter"] = 0
-        self.freeze_scheduler["current_counter"] += 1
+        if self.freeze_scheduler["current_pattern"] >= self.freeze_scheduler["patterns_num"]:
+            if self.freeze_scheduler["current_pattern"] > self.freeze_scheduler["patterns_num"]:
+                self.freeze_scheduler["current_pattern"] += 1
+        else:
+            if (
+                    self.freeze_scheduler["current_counter"]
+                    >= self.freeze_scheduler["freeze_pattern_repeats"][
+                self.freeze_scheduler["current_pattern"]
+            ]
+            ):
+                self.freeze_scheduler["current_pattern"] += 1
+                self.freeze_scheduler["current_counter"] = 0
+            self.freeze_scheduler["current_counter"] += 1
