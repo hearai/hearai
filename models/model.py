@@ -322,8 +322,7 @@ class GlossTranslationModel(pl.LightningModule):
 
     def freeze_update(self):
         if self.freeze_scheduler["current_pattern"] >= self.freeze_scheduler["patterns_num"]:
-            if self.freeze_scheduler["current_pattern"] > self.freeze_scheduler["patterns_num"]:
-                self.freeze_scheduler["current_pattern"] += 1
+            return
         else:
             if (
                     self.freeze_scheduler["current_counter"] >=
