@@ -291,8 +291,12 @@ class GlossTranslationModel(pl.LightningModule):
         if self.freeze_scheduler is not None:
             self.freeze_update()
             for params_to_freeze in list(self.freeze_scheduler["model_params"].keys()):
-                if self.freeze_scheduler["current_pattern"] <= len(
-                        self.freeze_scheduler["model_params"][params_to_freeze]
+                if (
+                        self.freeze_scheduler["current_pattern"] <= len(
+                            self.freeze_scheduler["model_params"][params_to_freeze]
+                        )
+                        and
+                        self.freeze_scheduler["current_counter"] == 1
                 ):
                     if self.freeze_scheduler["current_pattern"] == len(
                             self.freeze_scheduler["model_params"][params_to_freeze]
@@ -322,10 +326,8 @@ class GlossTranslationModel(pl.LightningModule):
                 self.freeze_scheduler["current_pattern"] += 1
         else:
             if (
-                    self.freeze_scheduler["current_counter"]
-                    >= self.freeze_scheduler["freeze_pattern_repeats"][
-                self.freeze_scheduler["current_pattern"]
-            ]
+                    self.freeze_scheduler["current_counter"] >=
+                    self.freeze_scheduler["freeze_pattern_repeats"][self.freeze_scheduler["current_pattern"]]
             ):
                 self.freeze_scheduler["current_pattern"] += 1
                 self.freeze_scheduler["current_counter"] = 0
