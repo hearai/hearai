@@ -87,8 +87,8 @@ heads:
 
 freeze_scheduler:
     model_params:
-        feature_extractor: [False]
-        transformer: [False]
-    freeze_pattern_repeats: [1]
-    freeze_mode: "..."
+        transformer: [False, False, True, False, True, False, True, False, True, False, False, True, False, True, False, True, False, True, False, False, True, False, True, False, True, False, True, False]
+        cls_head: [False, True, False, True, False, True, False, True, False, False, True, False, True, False, True, False, True, False, False, True, False, True, False, True, False, True, False, False]
+    freeze_pattern_repeats: [50, 100, 50, 100, 50, 100, 50, 100, 50, 100, 100, 50, 100, 50, 100, 50, 100, 50, 100, 100, 50, 100, 50, 100, 50, 100, 50, 100]
+    freeze_mode: "epoch"
     verbose: False
