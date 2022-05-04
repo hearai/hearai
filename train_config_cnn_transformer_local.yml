@@ -27,7 +27,7 @@ train_parameters:
     classification_mode: "hamnosys"
     epochs: 10000
     batch_size: 64
-    lr: 0.0001
+    lr: 0.001
     num_segments: 96
     fast_dev_run: False
     pre_training: False
