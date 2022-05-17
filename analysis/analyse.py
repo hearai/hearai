@@ -24,7 +24,7 @@ def analyse(model_config_path: str, model_path: str, input_dir_path: str, hamnos
     transforms_creator = TransformsCreator(model_config["augmentations_parameters"])
 
     dataset_creator = DatasetCreator(
-        data_paths=input_dir_path,
+        data_paths=[input_dir_path],
         classification_mode=model_config["train_parameters"]["classification_mode"],
         classification_heads=model_config["heads"][model_config["train_parameters"]["classification_mode"]],
         num_segments=model_config["train_parameters"]["num_segments"],
@@ -69,12 +69,12 @@ def analyse(model_config_path: str, model_path: str, input_dir_path: str, hamnos
 
 def get_args_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_path", type=str,
-                        help="Path to saved model in pth format. "
-                             "Architecture should be defined in the model config file.")
     parser.add_argument("--model_config_path", type=str,
                         help="Path to the model config file in yml format. "
                              "The same structure as model config for training is needed.")
+    parser.add_argument("--model_path", type=str,
+                        help="Path to saved model in pth format. "
+                             "Architecture should be defined in the model config file.")
     parser.add_argument("--input_dir_path", type=str,
                         help="Path to the directory with input for the analysis. "
                              "It should contain subdirs with frames and annotation file in txt form.")
@@ -88,4 +88,4 @@ def get_args_parser():
 if __name__ == '__main__':
     parser = get_args_parser()
     args = parser.parse_args()
-    analyse(args.model_config_path, args.model_path, args.hamnosys_anns_path, args.hamnosys_anns_dict_path)
+    analyse(args.model_config_path, args.model_path, args.input_dir_path, args.hamnosys_anns_path, args.hamnosys_anns_dict_path)
