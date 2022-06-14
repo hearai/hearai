@@ -52,6 +52,11 @@ class DatasetCreator:
 
         return train_subset, val_subset
 
+    def get_test_subset(self) -> torch.utils.data.dataset.Subset:
+        test_transforms = self.transforms_creator.get_val_transforms()
+        test_dataset = self._get_video_frame_datasets(test_transforms)
+        return test_dataset
+
     def _get_video_frame_datasets(self, transform: T.Compose) -> torch.utils.data.ConcatDataset:
         datasets = []
         for video_root in self.videos_root:

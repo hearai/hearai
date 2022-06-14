@@ -7,15 +7,12 @@ import torch
 import torch.nn as nn
 from config import NEPTUNE_API_TOKEN, NEPTUNE_PROJECT_NAME
 from sklearn.metrics import classification_report, f1_score
-from utils.summary_loss import SummaryLoss
-from math import ceil
+from models.utils.summary_loss import SummaryLoss
 
 from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
-from models.common.simple_sequential_model import SimpleSequentialModel
-from models.landmarks_models.lanmdarks_sequential_model import LandmarksSequentialModel
 from models.head_models.head_sequential_model import HeadClassificationSequentialModel
 
 # initialize neptune logging

@@ -10,7 +10,7 @@ from models.feature_extractors.multi_frame_feature_extractor import (
     MultiFrameFeatureExtractor,
 )
 from models.model_loader import ModelLoader
-from utils.summary_loss import SummaryLoss
+from models.utils.summary_loss import SummaryLoss
 
 
 # initialize neptune logging
