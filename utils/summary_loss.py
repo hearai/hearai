@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 
 class SummaryLoss(torch.nn.Module):
@@ -20,7 +21,7 @@ class SummaryLoss(torch.nn.Module):
         for prediction, target, loss_weight in zip(predictions, targets, self.loss_weights):
             one_loss = self.loss(prediction.to("cpu"), target.to("cpu"))
             losses.append(one_loss)
-            loss_sum = loss_sum + (loss_weight*one_loss)
+            loss_sum = loss_sum + (np.log(loss_weight)*one_loss)
             loss_weight_sum = loss_weight_sum + loss_weight
         loss_sum = loss_sum/loss_weight_sum    
         return loss_sum

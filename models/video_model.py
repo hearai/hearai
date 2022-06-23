@@ -12,7 +12,7 @@ from torchvision import models
 from utils.summary_loss import SummaryLoss
 
 from models.model_loader import ModelLoader
-from models.feature_extractors.video_resnet import CustomVideoResNet
+from models.feature_extractors.video_resnet import CustomVideoResNet, r3d_18
 
 
 # initialize neptune logging
@@ -66,7 +66,7 @@ class GlossTranslationModel(pl.LightningModule):
         if general_parameters["neptune"]:
             tags = [
                 train_parameters["classification_mode"],
-                "CustomVideoResNet"
+                "r3d_18"
             ]
             self.run = initialize_neptun(tags)
             self.run["parameters"] = {
@@ -103,7 +103,7 @@ class GlossTranslationModel(pl.LightningModule):
 
         # models-parts
         self.model_loader = ModelLoader()
-        self.multi_frame_feature_extractor = CustomVideoResNet(feature_extractor_parameters["representation_size"])
+        self.multi_frame_feature_extractor = r3d_18(feature_extractor_parameters["representation_size"], True)
 
     def forward(self, input, **kwargs):
         predictions = []

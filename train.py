@@ -14,6 +14,8 @@ from datasets.dataset_creator import DatasetCreator
 from datasets.transforms_creator import TransformsCreator
 from models.model import GlossTranslationModel
 from models.model_for_pretraining import PreTrainingModel
+#from models.model import GlossTranslationModel
+from models.video_model import GlossTranslationModel
 
 warnings.filterwarnings("ignore")
 

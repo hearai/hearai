@@ -1,9 +1,9 @@
 general_parameters:
-    data_paths: ["/dih4/dih4_2/hearai/nczerep/glex-keyframes/", "/dih4/dih4_2/hearai/nczerep/basiclexicon-keyframes/", "/dih4/dih4_2/hearai/nczerep/galex-keyframes/", "/dih4/dih4_2/hearai/nczerep/pjm-keyframes/"]
+    data_paths: ["/dih4/dih4_2/hearai/training_data/keyframes/basic_lexicon_keyframes", "/dih4/dih4_2/hearai/training_data/keyframes/galex_keyframes", "/dih4/dih4_2/hearai/training_data/keyframes/glex_keyframes", "/dih4/dih4_2/hearai/training_data/keyframes/pjm_keyframes", "/dih4/dih4_2/hearai/training_data/keyframes/gsll_keyframes"]
     ratio_train_test: 0.8
     workers: 8
     gpu: 0
-    path_to_save: "saved_model.pth"
+    path_to_save: "model.pth"
     seed: 2021
     neptune: True
 
@@ -25,20 +25,22 @@ augmentations_parameters:
 
 train_parameters:
     classification_mode: "hamnosys"
-    epochs: 10
-    batch_size: 1
+    epochs: 15
+    batch_size: 8
     accumulate_grad_batches: 16
-    lr: 0.0005
-    num_segments: 5
+    lr: 0.0003
+    num_segments: 20
     fast_dev_run: False
     pre_training: False
     landmarks: False
     time: null
     warmup_steps: 20.0
     multiply_lr_step: 0.95
+    use_frames: True
+    use_landmarks: False
 
 feature_extractor:
-    representation_size: 1024
+    representation_size: 400
 
 transformer: None
 
