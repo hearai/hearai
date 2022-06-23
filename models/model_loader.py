@@ -17,6 +17,7 @@ class ModelLoader:
         "fake_transformer": transformers.FakeTransformer,
         "hubert_transformer": transformers.HubertTransformer,
         "sign_language_transformer": transformers.SignLanguageTransformer,
+        "sign_language_cnn_transformer": transformers.SignLanguageCNNTransformer,
         "lstm": transformers.LSTM,
     }
 

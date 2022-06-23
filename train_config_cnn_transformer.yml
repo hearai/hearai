@@ -1,11 +1,11 @@
 general_parameters:
     data_paths: ["assets/sanity_check_data"]
     ratio_train_test: 0.8
-    workers: 0
-    gpu: -1
+    workers: 16
+    gpu: 0
     path_to_save: "saved_model.pth"
-    seed: 1234
-    neptune: False
+    seed: 2021
+    neptune: True
 
 augmentations_parameters:
     apply_random_rotation: False
@@ -27,69 +27,69 @@ augmentations_parameters:
 
 train_parameters:
     classification_mode: "hamnosys"
-    epochs: 10
-    batch_size: 4
+    epochs: 10000
+    batch_size: 16
     lr: 0.001
-    num_segments: 8
-    fast_dev_run: True
+    num_segments: 64
+    fast_dev_run: False
     pre_training: False
-    use_frames: True
-    use_landmarks: False
-    time: null
-    warmup_steps: 20.0
-    multiply_lr_step: 0.95
+    use_frames: False
+    use_landmarks: True
+    time: 0.1
+    warmup_steps: 5000.0
+    multiply_lr_step: 1
 
 feature_extractor:
     name: "cnn_extractor"
     model_path: "efficientnet_b1"
-    representation_size: 512
+    representation_size: 64
 
 transformer:
-    name: "sign_language_transformer"
-    feedforward_size: 1024
-    num_attention_heads: 4
-    num_encoder_layers: 2
-    output_size: 1024
-    dropout_rate: 0.1
+    name: "sign_language_cnn_transformer"
+    feedforward_size: 64
+    num_attention_heads: 1
+    num_encoder_layers: 4
+    output_size: 64
+    dropout_rate: 0.2
 
 heads:
     model:
-        additional_layers: 1
-        dropout_rate: 0.1
+        additional_layers: 3
+        dropout_rate: 0.3
     gloss:
         gloss:
             num_class: 2400
             loss_weight: 1
     hamnosys:
         symmetry_operator:
-            num_class: 9
-            loss_weight: 0
+            num_class: 3
+            loss_weight: 1
         hand_shape_base_form:
             num_class: 12
-            loss_weight: 0.5
+            loss_weight: 1
         hand_shape_thumb_position:
             num_class: 4
-            loss_weight: 0.5
+            loss_weight: 1
         hand_shape_bending:
-            num_class: 6
-            loss_weight: 0
+            num_class: 2
+            loss_weight: 1
         hand_position_finger_direction:
-            num_class: 18
-            loss_weight: 0
+            num_class: 9
+            loss_weight: 1
         hand_position_palm_orientation:
             num_class: 8
-            loss_weight: 0
+            loss_weight: 1
         hand_location_x:
-            num_class: 5
-            loss_weight: 0
+            num_class: 3
+            loss_weight: 1
         hand_location_y:
-            num_class: 37
-            loss_weight: 0
+            num_class: 15
+            loss_weight: 1
 
 freeze_scheduler:
     model_params:
-        feature_extractor: [True, False]
-        transformer: [False, True]
-    freeze_pattern_repeats: [5, 3]
-    freeze_mode: "epoch"
-    verbose: True
+        feature_extractor: [False]
+        transformer: [False]
+    freeze_pattern_repeats: [1]
+    freeze_mode: "step"
+    verbose: False

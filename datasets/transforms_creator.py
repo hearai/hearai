@@ -1,8 +1,7 @@
 from typing import Dict
 
-import torchvision.transforms as T
-
-from datasets.dataset import ImglistToTensor
+import albumentations as A
+from albumentations.pytorch.transforms import ToTensorV2
 
 
 class TransformsCreator:
@@ -15,11 +14,10 @@ class TransformsCreator:
         Args:
             augmentations_parameters (Dict): Dict containing parameters regarding currently used augmentations.
                 [Warning] Must contain fields:
-                    - "apply_resize" (bool)
-                    - "apply_center_crop" (bool)
-                    - "apply_random_erasing" (bool)
                     - "apply_random_rotation" (bool)
                     - "apply_color_jitter" (bool)
+                    - "apply_rgb_shift" (bool)
+                    - "apply_blur" (bool)
 
                     - "resize_size" (int)
                     - "center_crop_size" (int)
@@ -31,56 +29,57 @@ class TransformsCreator:
                     - "color_jitter_brcolor_jitter_hueightness" (float)
         """
 
-        self.apply_resize = augmentations_parameters["apply_resize"]
-        self.apply_center_crop = augmentations_parameters["apply_center_crop"]
-        self.apply_random_erasing = augmentations_parameters["apply_random_erasing"]
         self.apply_random_rotation = augmentations_parameters["apply_random_rotation"]
         self.apply_color_jitter = augmentations_parameters["apply_color_jitter"]
+        self.apply_rgb_shift = augmentations_parameters["apply_rgb_shift"]
+        self.apply_blur = augmentations_parameters["apply_blur"]
 
         self.resize_size = augmentations_parameters["resize_size"]
-
         self.center_crop_size = augmentations_parameters["center_crop_size"]
 
-        self.random_erasing_probability = augmentations_parameters["random_erasing_probability"]
-
         self.random_rotation_degree = augmentations_parameters["random_rotation_degree"]
-
         self.color_jitter_brightness = augmentations_parameters["color_jitter_brightness"]
         self.color_jitter_contrast = augmentations_parameters["color_jitter_contrast"]
         self.color_jitter_saturation = augmentations_parameters["color_jitter_saturation"]
         self.color_jitter_hue = augmentations_parameters["color_jitter_hue"]
+        self.rgb_shift_r_shift_limit = augmentations_parameters["rgb_shift_r_shift_limit"]
+        self.rgb_shift_g_shift_limit = augmentations_parameters["rgb_shift_g_shift_limit"]
+        self.rgb_shift_b_shift_limit = augmentations_parameters["rgb_shift_b_shift_limit"]
+        self.blur_limit = augmentations_parameters["blur_limit"]
 
-    def get_train_transforms(self) -> T.Compose:
-        pil_augmentations = []
-        tensor_augmentations = []
-
-        if self.apply_random_erasing:
-            tensor_augmentations.append(T.RandomErasing(self.random_erasing_probability))
+    def get_train_transforms(self) -> A.Compose:
+        additional_augmentations = []
 
         if self.apply_random_rotation:
-            tensor_augmentations.append(T.RandomRotation(degrees=self.random_rotation_degree))
+            additional_augmentations.append(A.Rotate(limit=self.random_rotation_degree))
 
         if self.apply_color_jitter:
-            tensor_augmentations.append(T.ColorJitter(brightness=self.color_jitter_brightness,
-                                                      contrast=self.color_jitter_contrast,
-                                                      saturation=self.color_jitter_saturation,
-                                                      hue=self.color_jitter_hue))
+            additional_augmentations.append(A.ColorJitter(brightness=self.color_jitter_brightness,
+                                                          contrast=self.color_jitter_contrast,
+                                                          saturation=self.color_jitter_saturation,
+                                                          hue=self.color_jitter_hue))
 
-        return self._get_transforms(pil_augmentations, tensor_augmentations)
+        if self.apply_rgb_shift:
+            additional_augmentations.append(A.RGBShift(r_shift_limit=self.rgb_shift_r_shift_limit,
+                                                       g_shift_limit=self.rgb_shift_g_shift_limit,
+                                                       b_shift_limit=self.rgb_shift_b_shift_limit))
 
-    def get_val_transforms(self) -> T.Compose:
-        pil_augmentations = []
-        tensor_augmentations = []
-        return self._get_transforms(pil_augmentations, tensor_augmentations)
+        if self.apply_blur:
+            additional_augmentations.append(A.Blur(blur_limit=self.blur_limit))
 
-    def _get_transforms(self, pil_augmentations: list, tensor_augmentations: list) -> T.Compose:
-        return T.Compose(
+        return self._get_transforms(additional_augmentations)
+
+    def get_val_transforms(self) -> A.Compose:
+        additional_augmentations = []
+        return self._get_transforms(additional_augmentations)
+
+    def _get_transforms(self, additional_augmentations: list) -> A.Compose:
+        return A.Compose(
             [
-                *pil_augmentations,
-                ImglistToTensor(),  # list of PIL images to (FRAMES x CHANNELS x HEIGHT x WIDTH) tensor
-                *tensor_augmentations,
-                T.Resize(self.resize_size),  # image batch, resize smaller edge to 256
-                T.CenterCrop(self.center_crop_size),  # image batch, center crop to square 256x256
-                T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                *additional_augmentations,
+                A.SmallestMaxSize(max_size=self.resize_size),
+                A.CenterCrop(width=self.center_crop_size, height=self.center_crop_size),
+                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=1),
+                ToTensorV2()
             ]
         )
